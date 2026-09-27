@@ -422,123 +422,123 @@
     <h1 id="resources">Resources</h1>
 <h2 id="resource">Resource</h2>
 <p>Resources in the game are represented by the <code>DiceKingdoms.Game.Resource</code> enum:</p>
-<pre class="codehilite"><code class="language-c#">namespace DiceKingdoms.Game;
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
 
-public enum Resource
-{
-    FOOD,
-    WOOD,
-    STONE,
-    GOLD,
-    HAMMER,
-    CULTURE,
-    MILITARY,
-    DISASTER
-}
-</code></pre>
+<span class="k">public</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="n">Resource</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">FOOD</span><span class="p">,</span>
+<span class="w">    </span><span class="n">WOOD</span><span class="p">,</span>
+<span class="w">    </span><span class="n">STONE</span><span class="p">,</span>
+<span class="w">    </span><span class="n">GOLD</span><span class="p">,</span>
+<span class="w">    </span><span class="n">HAMMER</span><span class="p">,</span>
+<span class="w">    </span><span class="n">CULTURE</span><span class="p">,</span>
+<span class="w">    </span><span class="n">MILITARY</span><span class="p">,</span>
+<span class="w">    </span><span class="n">DISASTER</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>The enum values act as identifiers: the code uses them to address a resource in indexers, arrays, and lists, pass it to methods, and serialize it in network messages.</p>
 <h2 id="resourceamount">ResourceAmount</h2>
 <p>Resource amounts are represented by <code>the DiceKingdoms.Game.ResourceAmount</code> struct:</p>
-<pre class="codehilite"><code class="language-c#">namespace DiceKingdoms.Game;
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
 
-[Serializable]
-[StructLayout(LayoutKind.Explicit)]
-public struct ResourceAmount
-{
-    [FieldOffset(0)]  public int food;
-    [FieldOffset(4)]  public int wood;
-    [FieldOffset(8)]  public int stone;
-    [FieldOffset(12)] public int gold;
-    [FieldOffset(16)] public int hammer;
-    [FieldOffset(20)] public int culture;
-    [FieldOffset(24)] public int military;
-    [FieldOffset(28)] public int disaster;
+<span class="na">[Serializable]</span>
+<span class="na">[StructLayout(LayoutKind.Explicit)]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">ResourceAmount</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="na">[FieldOffset(0)]</span><span class="w">  </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">food</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(4)]</span><span class="w">  </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">wood</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(8)]</span><span class="w">  </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">stone</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(12)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">gold</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(16)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">hammer</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(20)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">culture</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(24)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">military</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(28)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">disaster</span><span class="p">;</span>
 
-    public static ResourceAmount ZERO { get; set; }
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">ZERO</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="k">set</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
 
-    public int this[Resource resource] { get; set; }
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="k">this</span><span class="p">[</span><span class="n">Resource</span><span class="w"> </span><span class="n">resource</span><span class="p">]</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="k">set</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
 
-    public int Total { get; }
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">Total</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
 
-    public override bool Equals(ResourceAmount other);
-    public override bool Equals(object obj);
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Equals</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">other</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Equals</span><span class="p">(</span><span class="kt">object</span><span class="w"> </span><span class="n">obj</span><span class="p">);</span>
 
-    public override int GetHashCode();
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">GetHashCode</span><span class="p">();</span>
 
-    public override string ToString();
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="nf">ToString</span><span class="p">();</span>
 
-    public static ResourceAmount operator +(ResourceAmount a);
-    public static ResourceAmount operator -(ResourceAmount a);
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">+</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">-</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">);</span>
 
-    public static ResourceAmount operator +(ResourceAmount a, ResourceAmount b);
-    public static ResourceAmount operator -(ResourceAmount a, ResourceAmount b);
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">+</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">-</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
 
-    public static ResourceAmount operator *(int a, ResourceAmount b);
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">*</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
 
-    public static bool operator &gt;=(ResourceAmount a, ResourceAmount b);
-    public static bool operator &lt;=(ResourceAmount a, ResourceAmount b);
-    public static bool operator ==(ResourceAmount a, ResourceAmount b);
-    public static bool operator !=(ResourceAmount a, ResourceAmount b);
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">&gt;=</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">&lt;=</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">==</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">!=</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
 
-    public static ResourceAmount Max(ResourceAmount a, ResourceAmount b);
-    public static ResourceAmount Min(ResourceAmount a, ResourceAmount b);
-}
-</code></pre>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="nf">Max</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="nf">Min</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>The indexer by Resource allows reading and writing the amount of a specific resource through the enum, e.g. <code>amount[Resource.WOOD]</code>. Binary and unary <code>+</code> and <code>-</code> are supported, along with multiplication by an int on the left (<code>int * ResourceAmount</code>). Operators <code>&gt;=</code>, <code>&lt;=</code>, <code>==</code>, <code>!=</code> - there are no separate <code>&lt;</code> and <code>&gt;</code>. The <code>Max</code> and <code>Min</code> methods return the component-wise maximum and minimum of two ResourceAmount values. The <code>Total</code> property returns the sum of all resources. The static <code>ZERO</code> is a constant with all fields set to zero.</p>
 <h2 id="resourcestorage">ResourceStorage</h2>
 <p>The player's resource storage is represented by the <code>DiceKingdoms.Game.ResourceStorage</code> struct:</p>
-<pre class="codehilite"><code class="language-c#">namespace DiceKingdoms.Game;
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
 
-[StructLayout(LayoutKind.Explicit)]
-public struct ResourceStorage
-{
-    [FieldOffset(0)]  public readonly ResourceAmount stored;
-    [FieldOffset(32)] public readonly ResourceAmount capacity;
+<span class="na">[StructLayout(LayoutKind.Explicit)]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">ResourceStorage</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="na">[FieldOffset(0)]</span><span class="w">  </span><span class="k">public</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">stored</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(32)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">capacity</span><span class="p">;</span>
 
-    public ResourceStorage(ResourceAmount stored, ResourceAmount capacity);
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="nf">ResourceStorage</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">stored</span><span class="p">,</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">capacity</span><span class="p">);</span>
 
-    public ResourceStorage WithCapacity(ResourceAmount capacity);
-    public ResourceStorage WithStored(ResourceAmount stored);
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ResourceStorage</span><span class="w"> </span><span class="nf">WithCapacity</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">capacity</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ResourceStorage</span><span class="w"> </span><span class="nf">WithStored</span><span class="p">(</span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">stored</span><span class="p">);</span>
 
-    public override string ToString();
-}
-</code></pre>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="nf">ToString</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>Two ResourceAmount fields - <code>stored</code> (the current amount of resources) and <code>capacity</code> (the storage's capacity). Both fields are declared readonly, making the struct immutable: once created, its state cannot be changed. <code>WithCapacity</code> returns a copy with the capacity replaced, <code>WithStored</code> — a copy with the stored amount replaced. The original instance remains unchanged.</p>
 <h2 id="resourcestorageinterface">ResourceStorageInterface</h2>
 <p>A single resource storage widget is represented by the <code>DiceKingdoms.Interface.ResourceStorageInterface</code> class:</p>
-<pre class="codehilite"><code class="language-c#">namespace DiceKingdoms.Interface;
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Interface</span><span class="p">;</span>
 
-public class ResourceStorageInterface : MonoBehaviour
-{
-    public ColorPalette colorPalette;
-    public Resource resource;
-    public Counter counterStored;
-    public Counter counterCapacity;
-    public Counter counterGain;
-    public Image icon;
-    public Ripple ripple;
-    public RectTransform counters;
-    public Sound incrementSound;
-    public Interface @interface;
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">ResourceStorageInterface</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">MonoBehaviour</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ColorPalette</span><span class="w"> </span><span class="n">colorPalette</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="n">resource</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Counter</span><span class="w"> </span><span class="n">counterStored</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Counter</span><span class="w"> </span><span class="n">counterCapacity</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Counter</span><span class="w"> </span><span class="n">counterGain</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Image</span><span class="w"> </span><span class="n">icon</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Ripple</span><span class="w"> </span><span class="n">ripple</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">RectTransform</span><span class="w"> </span><span class="n">counters</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Sound</span><span class="w"> </span><span class="n">incrementSound</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Interface</span><span class="w"> </span><span class="n">@interface</span><span class="p">;</span>
 
-    public Resource Resource { get; }
-    public int Stored { get; set; }
-    public int Capacity { get; set; }
-    public int? Gain { get; set; }
-    public Image Icon { get; }
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">Stored</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="k">set</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">Capacity</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="k">set</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int?</span><span class="w"> </span><span class="n">Gain</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="k">set</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Image</span><span class="w"> </span><span class="n">Icon</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
 
-    protected void Awake();
-    protected void OnEnable();
-    protected void OnDisable();
-    protected void Update();
+<span class="w">    </span><span class="k">protected</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Awake</span><span class="p">();</span>
+<span class="w">    </span><span class="k">protected</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnEnable</span><span class="p">();</span>
+<span class="w">    </span><span class="k">protected</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnDisable</span><span class="p">();</span>
+<span class="w">    </span><span class="k">protected</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Update</span><span class="p">();</span>
 
-    private void SetValuesFromIsland();
-    public void Increment(int value);
-}
-</code></pre>
+<span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">SetValuesFromIsland</span><span class="p">();</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Increment</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="k">value</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>This is a UI component for a single storage slot in the harvest panel (<code>HarvestInterface</code>). <code>HarvestInterfac</code>e holds an array of eight such widgets - one for each resource in the <code>Resource</code> enum - and uses them to display the storage values. </p>
 <p>Ten public fields bound in the prefab via the Unity Inspector: <code>colorPalette</code>, <code>resource</code> (the resource type this widget is responsible for), three counters <code>counterStored</code> / <code>counterCapacity</code> / <code>counterGain</code> (a custom UI component Counter), <code>icon</code> (resource icon), <code>ripple</code>, <code>counters</code> (a RectTransform container for the counters), <code>incrementSound</code> (gain sound), and <code>@interface</code> (a reference to the main Interface).</p>

@@ -465,14 +465,14 @@
 </li>
 <li>
 <p>Install the BepInEx templates. Open a terminal and run the following command to install the templates for BepInEx 6:</p>
-<pre class="codehilite"><code class="language-bash">dotnet new install BepInEx.Templates::2.0.0-be.4 --nuget-source https://nuget.bepinex.dev/v3/index.json
-</code></pre>
+<div class="codehilite"><pre><span></span><code>dotnet<span class="w"> </span>new<span class="w"> </span>install<span class="w"> </span>BepInEx.Templates::2.0.0-be.4<span class="w"> </span>--nuget-source<span class="w"> </span>https://nuget.bepinex.dev/v3/index.json
+</code></pre></div>
 
 </li>
 <li>
 <p>Navigate to the folder where you want to keep your project and run the command that creates an IL2CPP plugin structure:</p>
-<pre class="codehilite"><code class="language-bash">dotnet new bep6plugin_unity_il2cpp -n PluginName
-</code></pre>
+<div class="codehilite"><pre><span></span><code>dotnet<span class="w"> </span>new<span class="w"> </span>bep6plugin_unity_il2cpp<span class="w"> </span>-n<span class="w"> </span>PluginName
+</code></pre></div>
 
 </li>
 </ol>
@@ -480,28 +480,28 @@
 <h2 id="setting-up-access-to-game-code-interop">Setting up access to game code (Interop)</h2>
 <p>For your mod to access DiceKingdoms classes and methods, the project needs access to the Interop assemblies. BepInEx generates these on the first game launch, and they contain managed wrappers for the game's native code. The most convenient way is to create a symbolic link to the interop folder in the game root. This lets the project see up-to-date assemblies without copying them manually.</p>
 <div class="tabbed-set" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><label for="__tabbed_1_1">Linux</label><div class="tabbed-content">
-<pre class="codehilite"><code class="language-bash">ln -s &quot;/path/to/game/BepInEx/interop&quot; &quot;/path/to/your/project/PluginName/interop&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><code>ln<span class="w"> </span>-s<span class="w"> </span><span class="s2">"/path/to/game/BepInEx/interop"</span><span class="w"> </span><span class="s2">"/path/to/your/project/PluginName/interop"</span>
+</code></pre></div>
 
 </div>
 <input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><label for="__tabbed_1_2">Windows</label><div class="tabbed-content">
-<pre class="codehilite"><code class="language-powershell">mklink /D &quot;C:\path\to\your\project\PluginName\interop&quot; &quot;C:\path\to\game\BepInEx\interop&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">mklink</span> <span class="p">/</span><span class="n">D</span> <span class="s2">"C:\path\to\your\project\PluginName\interop"</span> <span class="s2">"C:\path\to\game\BepInEx\interop"</span>
+</code></pre></div>
 
 </div>
 </div>
 <p>Now you need to tell the project where to find the game DLLs. Open <code>PluginName.csproj</code> and add following element:</p>
-<pre class="codehilite"><code class="language-xml">&lt;ItemGroup&gt;
-    &lt;Reference Include=&quot;interop/*.dll&quot; /&gt;
-&lt;/ItemGroup&gt;
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nt">&lt;ItemGroup&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Reference</span><span class="w"> </span><span class="na">Include=</span><span class="s">"interop/*.dll"</span><span class="w"> </span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div>
 
 <h2 id="building-and-installing-the-mod">Building and installing the mod</h2>
 <ol>
 <li>
 <p>Build the project. In the terminal, from the project folder, run:</p>
-<pre class="codehilite"><code class="language-bash">dotnet build
-</code></pre>
+<div class="codehilite"><pre><span></span><code>dotnet<span class="w"> </span>build
+</code></pre></div>
 
 </li>
 <li>
@@ -512,13 +512,13 @@
 </li>
 </ol>
 <div class="tabbed-set" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><label for="__tabbed_2_1">Linux</label><div class="tabbed-content">
-<pre class="codehilite"><code class="language-bash">cp -f &quot;bin/Debug/net6.0/PluginName.dll&quot; &quot;/path/to/game/BepInEx/plugins/&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><code>cp<span class="w"> </span>-f<span class="w"> </span><span class="s2">"bin/Debug/net6.0/PluginName.dll"</span><span class="w"> </span><span class="s2">"/path/to/game/BepInEx/plugins/"</span>
+</code></pre></div>
 
 </div>
 <input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><label for="__tabbed_2_2">Windows</label><div class="tabbed-content">
-<pre class="codehilite"><code class="language-powershell">copy /Y &quot;bin\Debug\net6.0\PluginName.dll&quot; &quot;C:\path\to\game\BepInEx\plugins\&quot;
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="nb">copy </span><span class="p">/</span><span class="n">Y</span> <span class="s2">"bin\Debug\net6.0\PluginName.dll"</span> <span class="s2">"C:\path\to\game\BepInEx\plugins\"</span>
+</code></pre></div>
 
 </div>
 </div>
