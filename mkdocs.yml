@@ -1,0 +1,30 @@
+site_name: DiceModders
+
+theme:
+  name: shadcn
+  show_title: true
+  show_stargazers: true
+  hide_source_files: false
+  pygments_style: 
+        light: shadcn-light
+        dark: github-dark
+  icon: lucide:dice-6
+  topbar_sections: false 
+  show_datetime: false 
+  features:
+    - content.tabs.link
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.blocks.tab
+  - codehilite
+  - admonition
+
+nav:
+  - DiceModders: index.md
+  - Guides:
+    - Modding: guides/modding.md
+  - Game architecture:
+    - Resources: game-architecture/resources.md
