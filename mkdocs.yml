@@ -21,6 +21,8 @@ markdown_extensions:
   - pymdownx.blocks.tab
   - codehilite
   - admonition
+  - pymdownx.superfences:
+      css_class: codehilite
 
 nav:
   - DiceModders: index.md
