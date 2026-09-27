@@ -1,5 +1,7 @@
 site_name: DiceModders
 
+repo_url: https://github.com/DiceModders/DiceKingdoms-Modding-Wiki
+
 theme:
   name: shadcn
   show_title: true
