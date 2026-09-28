@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <script>
+        /* const base_url = "None"; */
+        const base_url = (new URL("../..", window.location)).href.replace(/\/+$/, ""); /* for search plugin notably */
+        /* const root_relative_url = "../.."; */
+    </script>
+    <script integrity="sha384-m6cZ+Whl1ci89lidlu8DH4C+sZLNOYBvImtjUIhUK+iaNffXhqtbYgBVuuPfRsa0" src="../../js/dark.js"></script>
+
+
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+
+    
+    
+
+
+<title>Island Generation</title>
+
+
+
+
+
+
+
+
+
+
+<!-- Open Graph (Facebook, LinkedIn) -->
+
+<meta property="og:title" content="Island Generation">
+
+
+
+
+
+
+
+
+
+
+<!-- Twitter Card -->
+
+<meta name="twitter:title" content="Island Generation">
+
+
+
+
+
+
+<!-- JSON-LD Structured Data -->
+
+
+
+    
+    <link href="lucide:dice-6" rel="icon" />
+
+    <link href="../../css/base.css" rel="stylesheet" />
+    <link href="../../css/geist.css" rel="stylesheet" />
+
+    
+    
+
+<link id="pygments-light" rel="stylesheet"
+    href="../../css/pygments/shadcn-light.css">
+<link id="pygments-dark" rel="stylesheet"
+    href="../../css/pygments/github-dark.css"
+    media="(prefers-color-scheme: dark)">
+
+
+    
+
+    <style>
+        :root {
+            --theme-accent: oklch(62.3% 0.214 259.815);
+        }
+    </style>
+
+    
+
+    <script integrity="sha384-V2jkXRy811qODUbfkLlkVJYBbf4h6XHAEjcU6ReASBPrJvTrlYh4GrI4t6GCju6n"
+        src="../../js/callbacks.js"></script>
+
+    
+
+    
+
+    
+
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("a.headerlink").forEach(function (link) {
+            link.addEventListener("click", function (e) {
+                e.preventDefault();
+
+                // Build the full URL with the anchor fragment
+                const url = window.location.origin + window.location.pathname + this.getAttribute("href");
+
+                navigator.clipboard.writeText(url).then(function () {
+                    // Optional: brief visual feedback
+                });
+            });
+        });
+    });
+</script>
+    
+
+    
+    
+</head>
+
+<body
+    class="text-foreground group/body overscroll-none font-sans antialiased [--footer-height:calc(var(--spacing)*14)] [--header-height:calc(var(--spacing)*14)] xl:[--footer-height:calc(var(--spacing)*24)] theme-default">
+    <div class="bg-background relative z-10 flex min-h-svh flex-col" id="inner-body">
+        <header class="bg-background sticky top-0 z-50 w-full" view-transition-name="header">
+    <div class="container-wrapper 3xl:fixed:px-0 px-6">
+        <div class="3xl:fixed:container flex h-(--header-height) items-center gap-2 **:data-[slot=separator]:!h-4">
+            <button id="menu-button" data-slot="popover-trigger" onclick="onMobileMenuButtonClick(event)"
+                class="group whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:text-accent-foreground px-4 py-2 has-[&gt;svg]:px-3 extend-touch-target h-8 touch-manipulation items-center justify-start gap-2.5 !p-0 hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 active:bg-transparent dark:hover:bg-transparent flex lg:hidden"
+                type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-«Rmplb»"
+                data-state="closed">
+                <div class="relative flex h-8 w-4 items-center justify-center">
+                    <div class="relative size-4">
+                        <!-- 16px x 16px -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="0" x2="16" y1="5" y2="5"
+                                class="group-data-[state=open]:translate-y-[2.25px] group-data-[state=open]:-translate-x-[2.25px] group-data-[state=open]:rotate-45 transition-all duration-300 origin-center" />
+                            <line x1="0" x2="16" y1="11" y2="11"
+                                class="group-data-[state=open]:-translate-y-[2.25px] group-data-[state=open]:-translate-x-[2.25px] group-data-[state=open]:-rotate-45 transition-all duration-300 origin-center" />
+                        </svg>
+                    </div>
+
+                    <span class="sr-only">Toggle Menu</span>
+                </div>
+                <span class="flex h-8 items-center text-lg leading-none font-medium">Menu</span>
+            </button>
+            <a data-slot="button"
+                class="items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-5 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 hidden h-8 lg:flex"
+                href="None">
+                <span class="size-8 flex flex-row justify-center items-center">
+                    
+
+<svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M16 8h.01M16 12h.01M16 16h.01M8 8h.01M8 12h.01M8 16h.01"/></g></svg>
+
+
+                </span>
+
+                
+                <h1 class="pr-2">DiceModders</h1>
+                
+            </a>
+            
+            <div class="ml-auto flex items-center gap-2 md:flex-1 md:justify-end">
+                <div class="hidden w-full flex-1 md:flex md:w-auto md:flex-none">
+                    <div class="hidden w-full flex-1 md:flex md:w-auto md:flex-none">
+    <button onclick="onSearchBarClick(event)" data-slot="dialog-trigger" data-variant="outline" data-size="default"
+        class="inline-flex shrink-0 items-center gap-2 text-sm whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&amp;_svg]:pointer-events-none [&amp;_svg]:shrink-0 [&amp;_svg:not([class*='size-'])]:size-4 border bg-background hover:text-accent-foreground dark:border-input dark:hover:bg-input/50 px-4 py-2 has-[&gt;svg]:px-3 relative h-8 w-full justify-start rounded-lg pl-3 font-normal text-foreground shadow-none hover:bg-muted/50 sm:pr-12 md:w-48 lg:w-56 xl:w-64 dark:bg-card"
+        type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-_r_1_" data-state="closed">
+        <span class="hidden lg:inline-flex">Search documentation...</span>
+        <span class="inline-flex lg:hidden">Search...</span>
+    </button>
+</div>
+<dialog id="search-dialog" onclick="onSearchDialogClick(event)"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background rounded-lg shadow-lg border overflow-hidden p-0">
+    <div class="w-lg gap-4">
+        <div class="flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground">
+            <div data-slot="command-input-wrapper" class="flex h-9 items-center gap-2 border-b px-3"><svg
+                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-search size-4 shrink-0 opacity-50">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                </svg>
+                <input data-slot="command-input"
+                    class="placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Search documentation..." cmdk-input="" autocomplete="off" autocorrect="off"
+                    spellcheck="false" aria-autocomplete="list" role="combobox" aria-expanded="true"
+                    aria-controls="radix-«r1t6»" aria-labelledby="radix-«r1t7»" id="radix-«r1t8»" type="text" value=""
+                    aria-activedescendant="radix-«r1th»" oninput="onInputHandler(event)">
+            </div>
+        </div>
+        <div id="mkdocs-search-results">
+            <!-- search results go there -->
+        </div>
+    </div>
+</dialog>
+<script>
+    document.removeEventListener("keydown", searchShortcutHandler);
+    document.addEventListener("keydown", searchShortcutHandler);
+</script>
+                </div>
+                
+                <div data-orientation="vertical" role="none" data-slot="separator"
+                    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px ml-2 hidden lg:block">
+                </div>
+                <a target="_blank" rel="noreferrer" data-slot="button"
+                    class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 h-8 shadow-none"
+                    href="https://github.com/DiceModders/DiceKingdoms-Modding-Wiki">
+                    <svg viewBox="0 0 438.549 438.549">
+                        <path fill="currentColor"
+                            d="M409.132 114.573c-19.608-33.596-46.205-60.194-79.798-79.8-33.598-19.607-70.277-29.408-110.063-29.408-39.781 0-76.472 9.804-110.063 29.408-33.596 19.605-60.192 46.204-79.8 79.8C9.803 148.168 0 184.854 0 224.63c0 47.78 13.94 90.745 41.827 128.906 27.884 38.164 63.906 64.572 108.063 79.227 5.14.954 8.945.283 11.419-1.996 2.475-2.282 3.711-5.14 3.711-8.562 0-.571-.049-5.708-.144-15.417a2549.81 2549.81 0 01-.144-25.406l-6.567 1.136c-4.187.767-9.469 1.092-15.846 1-6.374-.089-12.991-.757-19.842-1.999-6.854-1.231-13.229-4.086-19.13-8.559-5.898-4.473-10.085-10.328-12.56-17.556l-2.855-6.57c-1.903-4.374-4.899-9.233-8.992-14.559-4.093-5.331-8.232-8.945-12.419-10.848l-1.999-1.431c-1.332-.951-2.568-2.098-3.711-3.429-1.142-1.331-1.997-2.663-2.568-3.997-.572-1.335-.098-2.43 1.427-3.289 1.525-.859 4.281-1.276 8.28-1.276l5.708.853c3.807.763 8.516 3.042 14.133 6.851 5.614 3.806 10.229 8.754 13.846 14.842 4.38 7.806 9.657 13.754 15.846 17.847 6.184 4.093 12.419 6.136 18.699 6.136 6.28 0 11.704-.476 16.274-1.423 4.565-.952 8.848-2.383 12.847-4.285 1.713-12.758 6.377-22.559 13.988-29.41-10.848-1.14-20.601-2.857-29.264-5.14-8.658-2.286-17.605-5.996-26.835-11.14-9.235-5.137-16.896-11.516-22.985-19.126-6.09-7.614-11.088-17.61-14.987-29.979-3.901-12.374-5.852-26.648-5.852-42.826 0-23.035 7.52-42.637 22.557-58.817-7.044-17.318-6.379-36.732 1.997-58.24 5.52-1.715 13.706-.428 24.554 3.853 10.85 4.283 18.794 7.952 23.84 10.994 5.046 3.041 9.089 5.618 12.135 7.708 17.705-4.947 35.976-7.421 54.818-7.421s37.117 2.474 54.823 7.421l10.849-6.849c7.419-4.57 16.18-8.758 26.262-12.565 10.088-3.805 17.802-4.853 23.134-3.138 8.562 21.509 9.325 40.922 2.279 58.24 15.036 16.18 22.559 35.787 22.559 58.817 0 16.178-1.958 30.497-5.853 42.966-3.9 12.471-8.941 22.457-15.125 29.979-6.191 7.521-13.901 13.85-23.131 18.986-9.232 5.14-18.182 8.85-26.84 11.136-8.662 2.286-18.415 4.004-29.263 5.146 9.894 8.562 14.842 22.077 14.842 40.539v60.237c0 3.422 1.19 6.279 3.572 8.562 2.379 2.279 6.136 2.95 11.276 1.995 44.163-14.653 80.185-41.062 108.068-79.226 27.88-38.161 41.825-81.126 41.825-128.906-.01-39.771-9.818-76.454-29.414-110.049z">
+                        </path>
+                    </svg>
+                    
+                    <span id="stargazers" class="text-muted-foreground w-8 text-xs tabular-nums" onload="test()">
+                    </span>
+                    
+                </a>
+                
+                <div data-orientation="vertical" role="none" data-slot="separator"
+                    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px 3xl:flex hidden">
+                </div>
+                
+                <button data-slot="button"
+                    class="items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 size-8 3xl:flex hidden"
+                    title="Toggle layout" onclick="toggleLayout(event)">
+                    <span class="sr-only">Toggle layout</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-gallery-horizontal">
+                        <path d="M2 3v18"></path>
+                        <rect width="12" height="18" x="6" y="3" rx="2"></rect>
+                        <path d="M22 3v18"></path>
+                    </svg>
+                </button>
+                <div data-orientation="vertical" role="none" data-slot="separator"
+                    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
+                </div>
+                <button data-slot="button"
+                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 group/toggle extend-touch-target size-8"
+                    title="Toggle theme" onclick="onThemeSwitch(event)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="size-4.5">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+                        <path d="M12 3l0 18"></path>
+                        <path d="M12 9l4.65 -4.65"></path>
+                        <path d="M12 14.3l7.37 -7.37"></path>
+                        <path d="M12 19.6l8.85 -8.85"></path>
+                    </svg>
+                    <span class="sr-only">Toggle theme</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+        <main class="flex flex-1 flex-col">
+            <div class="container-wrapper flex flex-1 flex-col px-2">
+                <div class="group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex w-full 3xl:fixed:container 3xl:fixed:px-3 min-h-min flex-1 items-start px-0 [--sidebar-width:220px] [--top-spacing:0] lg:grid lg:grid-cols-[var(--sidebar-width)_minmax(0,1fr)] lg:[--sidebar-width:240px] lg:[--top-spacing:calc(var(--spacing)*4)]"
+                    data-slot="sidebar-wrapper"
+                    style="--sidebar-width:calc(var(--spacing) * 72);--sidebar-width-icon:3rem;">
+                    <div class="w-(--sidebar-width) flex-col text-sidebar-foreground sticky top-[calc(var(--header-height)+0.6rem)] z-30 hidden h-[calc(100svh-10rem)] overscroll-none bg-transparent [--sidebar-menu-width:--spacing(56)] lg:flex"
+                        data-slot="sidebar">
+                        <div class="h-9"></div>
+                        <div
+                            class="absolute top-8 z-10 h-8 w-(--sidebar-menu-width) shrink-0 bg-gradient-to-b from-background via-background/80 to-background/50 blur-xs">
+                        </div>
+                        <div
+                            class="absolute top-12 right-2 bottom-0 hidden h-full w-px bg-gradient-to-b from-transparent via-border to-transparent lg:flex">
+                        </div>
+                        <div class="flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden mx-auto no-scrollbar w-(--sidebar-menu-width) overflow-x-hidden px-2"
+                            data-sidebar="content" data-slot="sidebar-content" view-transition-name="sidebar">
+                            
+
+
+
+
+
+
+
+
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2 pt-6">
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../.."
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+
+        
+        DiceModders
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+    <div data-slot="sidebar-group-label" data-sidebar="group-label"
+        class="flex h-8 shrink-0 items-center rounded-md px-2 text-xs ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 font-medium text-muted-foreground">
+        Guides</div>
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../guides/modding/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+
+        
+        Modding
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+<div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+    <div data-slot="sidebar-group-label" data-sidebar="group-label"
+        class="flex h-8 shrink-0 items-center rounded-md px-2 text-xs ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 font-medium text-muted-foreground">
+        Game architecture</div>
+    <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+        <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="true" data-sidebar="menu-button"
+        data-size="default" href="./"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+
+        
+        Island Generation
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../resources/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+
+        
+        Resources
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+            
+            
+        </ul>
+    </div>
+</div>
+
+
+
+
+
+<div
+    class="sticky -bottom-1 z-10 h-16 shrink-0 bg-gradient-to-t from-background via-background/80 to-background/50 blur-xs">
+</div>
+
+                        </div>
+                    </div>
+                    <div class="h-full w-full">
+                        <div class="flex items-stretch text-[1.05rem] sm:text-[15px] xl:w-full" data-slot="docs">
+
+                            <div class="flex min-w-0 flex-1 flex-col">
+                                <div class="h-(--top-spacing) shrink-0"></div>
+                                
+                                
+                                <article class="w-full" view-transition-name="page">
+  <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2">
+      <div id="page-header" class="flex items-start justify-between">
+        <h1 class="scroll-m-20 text-4xl font-semibold tracking-tight sm:text-3xl xl:text-4xl">
+          Island Generation
+        </h1>
+
+        <div class="flex items-center gap-2 pt-1.5">
+          
+          <button
+    onclick="fetch(`../..`).then((r) => r.text()).then((text) => navigator.clipboard.write([new ClipboardItem({ 'text/plain': text })]))"
+    data-slot="button" class="secondary cursor-pointer">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-copy ">
+        <path
+            d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z">
+        </path>
+        <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"></path>
+    </svg>
+    <span class="max-md:hidden">Copy Page</span>
+</button>
+          
+          
+          <a data-slot="button" id="previous-button"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
+            href="../../guides/modding/">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="tabler-icon tabler-icon-arrow-left">
+              <path d="M5 12l14 0"></path>
+              <path d="M5 12l6 6"></path>
+              <path d="M5 12l6 -6"></path>
+            </svg>
+            <span class="sr-only">Previous</span>
+          </a>
+          
+          
+          <a data-slot="button" id="next-button"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
+            href="../resources/">
+            <span class="sr-only">Next</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="tabler-icon tabler-icon-arrow-right">
+              <path d="M5 12l14 0"></path>
+              <path d="M13 18l6 -6"></path>
+              <path d="M13 6l6 6"></path>
+            </svg>
+          </a>
+          
+        </div>
+      </div>
+      
+    </div>
+    <div class="flex justify-end items-center">
+      
+      
+    </div>
+  </div>
+  <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
+    <h1 id="island-generation">Island Generation</h1>
+<p>The island generation system turns a <strong>seed</strong> and a set of <strong>tuning parameters</strong> into a playable island. It runs in two stages: first the <strong>tile</strong> stage - every grid cell gets a ground type and possibly a nature object; then the <strong>mesh</strong> stage - the tile layer is turned into a <code>PolygonMesh</code> with a <code>HeightMap</code>. Both stages are Burst‑compiled <code>IJob</code>s launched from static methods of <code>IslandGeneration</code>.</p>
+<h2 id="islandgeneration">IslandGeneration</h2>
+<p><code>IslandGeneration</code> is the central class responsible for the entire island generation pipeline. The bodies of nested types (<code>Parameters</code>, <code>NoiseLayers</code>, <code>GenerateJob</code>, etc.) are expanded in the following sections.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">IslandGeneration</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">EPSILON</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">WATER_MAX_DEPTH</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">ConnectedComponents</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="w">        </span><span class="k">where</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="k">new</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "ConnectedComponents" */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="na">[Serializable, StructLayout(LayoutKind.Explicit)]</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Parameters</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "Parameters" */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">References</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "References" */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="na">[StructLayout(LayoutKind.Explicit)]</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">NoiseLayers</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "NoiseLayers" */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">GenerateOutput</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "GenerateOutput" */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">GenerateJob</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "GenerateJob" */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">HeightMap</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "HeightMap" */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Bounds</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "Bounds" */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">MeshOutput</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "MeshOutput" */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">MeshJob</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section "MeshJob" */</span><span class="w"> </span><span class="p">}</span>
+
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">GenerateOutput</span><span class="w"> </span><span class="nf">Generate</span><span class="p">(</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">Parameters</span><span class="w"> </span><span class="n">parameters</span><span class="p">,</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">IEnumerable</span><span class="o">&lt;</span><span class="n">InnerCliff</span><span class="p">.</span><span class="n">Key</span><span class="o">&gt;</span><span class="w"> </span><span class="n">innerCliffKeys</span><span class="p">,</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">int2</span><span class="w"> </span><span class="n">size</span><span class="p">,</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="kt">uint</span><span class="w"> </span><span class="n">seed</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">MeshOutput</span><span class="w"> </span><span class="nf">BuildMesh</span><span class="p">(</span>
+<span class="w">        </span><span class="n">IslandGrid</span><span class="p">.</span><span class="n">Layer</span><span class="o">&lt;</span><span class="n">GroundTile</span><span class="o">&gt;</span><span class="w"> </span><span class="n">layer</span><span class="p">,</span>
+<span class="w">        </span><span class="n">Biome</span><span class="w"> </span><span class="n">biome</span><span class="p">,</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">heightMapSubdivide</span><span class="p">,</span>
+<span class="w">        </span><span class="n">PolygonMesh</span><span class="w"> </span><span class="n">lavaTileMesh</span><span class="p">,</span>
+<span class="w">        </span><span class="n">PolygonMesh</span><span class="w"> </span><span class="n">pierTileMesh</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">PolygonMesh</span><span class="w"> </span><span class="nf">BuildAltitudeMesh</span><span class="p">(</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">Parameters</span><span class="w"> </span><span class="n">parameters</span><span class="p">,</span>
+<span class="w">        </span><span class="n">float2</span><span class="w"> </span><span class="n">center</span><span class="p">,</span>
+<span class="w">        </span><span class="n">int2</span><span class="w"> </span><span class="n">size</span><span class="p">,</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">Unity</span><span class="p">.</span><span class="n">Mathematics</span><span class="p">.</span><span class="n">Random</span><span class="w"> </span><span class="n">random</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">PolygonMesh</span><span class="w"> </span><span class="nf">BuildHeightMapMesh</span><span class="p">(</span>
+<span class="w">        </span><span class="n">IslandGrid</span><span class="p">.</span><span class="n">Layer</span><span class="o">&lt;</span><span class="n">GroundTile</span><span class="o">&gt;</span><span class="w"> </span><span class="n">layer</span><span class="p">,</span>
+<span class="w">        </span><span class="n">Biome</span><span class="w"> </span><span class="n">biome</span><span class="p">,</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">heightMapSubdivide</span><span class="p">,</span>
+<span class="w">        </span><span class="n">PolygonMesh</span><span class="w"> </span><span class="n">lavaTileMesh</span><span class="p">,</span>
+<span class="w">        </span><span class="n">PolygonMesh</span><span class="w"> </span><span class="n">pierTileMesh</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">HeightMapFromMesh</span><span class="p">(</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">PolygonMesh</span><span class="w"> </span><span class="n">mesh</span><span class="p">,</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">HeightMap</span><span class="w"> </span><span class="n">heightMap</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">MaxFilter</span><span class="p">(</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">HeightMap</span><span class="w"> </span><span class="n">heightMap</span><span class="p">,</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">radius</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">private</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">ConnectedComponents</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ComputeConnectedComponents</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">P</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">        </span><span class="n">UnsafeLayer</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">layer</span><span class="p">,</span><span class="w"> </span><span class="n">P</span><span class="w"> </span><span class="n">predicate</span><span class="p">,</span><span class="w"> </span><span class="n">Allocator</span><span class="w"> </span><span class="n">allocator</span><span class="p">)</span>
+<span class="w">        </span><span class="k">where</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="k">unmanaged</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Generation is split into two sequential stages.</p>
+<p><strong>The first stage - tiles.</strong> The entry point is <code>Generate(ref parameters, ref innerCliffKeys, ref size, ref seed)</code>. First, <code>NoiseLayers.Generate(...)</code> is called: it fixes random offsets for the altitude and moisture noise and produces <code>NoiseLayers</code> - an immutable struct from which <code>Altitude(position)</code> and <code>Moisture(position)</code> can later be sampled. Then a <code>GenerateJob</code> is created, which in its Burst <code>Execute()</code> walks every grid cell and makes four passes:</p>
+<ul>
+<li><strong>AssignGround</strong> - picks the ground type from altitude, moisture, and <code>HardLimit</code>.</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="k">public</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="n">GroundTile</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">WATER</span><span class="p">,</span>
+<span class="w">    </span><span class="n">WATER_ROCK</span><span class="p">,</span>
+<span class="w">    </span><span class="n">GRASS</span><span class="p">,</span>
+<span class="w">    </span><span class="n">SAND</span><span class="p">,</span>
+<span class="w">    </span><span class="n">INNER_CLIFF</span><span class="p">,</span>
+<span class="w">    </span><span class="n">METEORITE</span><span class="p">,</span>
+<span class="w">    </span><span class="n">PIER</span>
+<span class="p">}</span>
+</code></pre></div>
+<ul>
+<li><strong>PlaceInnerCliffs</strong> - places inland cliffs using <code>numberMains</code>, <code>numberExtensions</code>, <code>minDistance</code>, <code>minSpacing</code>.</li>
+<li><strong>PlaceBlobs</strong> - plants trees and rocks as clusters ("blobs"), filtered by <code>moistureRange</code> and <code>minDistance</code>.</li>
+<li><strong>PlaceDots</strong> - places point objects (fish) via a probability mask; flowers are distributed along the way by <code>flowerProbability</code>.</li>
+<li><strong>ScoreTerritory</strong> - computes three scores (<code>buildSpace</code>, <code>naturalResources</code>, <code>cliffs</code>) and their sum in <code>ScoreData</code>.</li>
+</ul>
+<p><code>Generate</code> returns a <code>GenerateOutput</code> — a job handle. The caller can either <code>Complete()</code> it and pull the layers via <code>GetGround</code> / <code>GetNature</code>, or compare several <code>GenerateOutput</code>s via <code>CompareTo</code> (sorted by score) and keep the best.</p>
+<p><strong>The second stage - mesh.</strong> <code>BuildMesh(layer, biome, …)</code> takes the already classified tile layer and builds geometry. Inside <code>MeshJob.Execute()</code> it walks the four diagonals of each cell (<code>Diagonal</code>), classifies corners (<code>CornerKind</code>), and assembles the <code>PolygonMesh</code>. Height differences between neighboring cells become vertical walls via <code>WallHorizontalStep</code> and <code>WallVerticalStep</code>. The result is <code>MeshOutput</code>: the <code>PolygonMesh</code> itself and the <code>HeightMap</code>.</p>
+<p>Both stages are fully deterministic: the same <code>seed</code> and <code>Parameters</code> produce the same island.</p>
+<h2 id="parameters">Parameters</h2>
+<p><code>IslandGeneration.Parameters</code> carries every tunable value.</p>
+<div class="codehilite"><pre><span></span><code><span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Parameters</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="na">[FieldOffset(0)]</span><span class="w">  </span><span class="k">public</span><span class="w"> </span><span class="n">HardLimit</span><span class="w">   </span><span class="n">hardLimit</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(8)]</span><span class="w">  </span><span class="k">public</span><span class="w"> </span><span class="n">Altitude</span><span class="w">    </span><span class="n">altitude</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(36)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">Moisture</span><span class="w">    </span><span class="n">moisture</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(44)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">Sand</span><span class="w">        </span><span class="n">sand</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(52)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">InnerCliffs</span><span class="w"> </span><span class="n">innerCliffs</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(76)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">Nature</span><span class="w">      </span><span class="n">nature</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">HardLimit</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section 1 */</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Altitude</span><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section 2 */</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Moisture</span><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section 3 */</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Sand</span><span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section 4 */</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">InnerCliffs</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section 5 */</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Nature</span><span class="w">      </span><span class="p">{</span><span class="w"> </span><span class="cm">/* section 6 */</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Gaussian</span><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">average</span><span class="p">;</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">deviation</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="1-hardlimit">1. HardLimit</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">HardLimit</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">radius</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">power</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsWithin</span><span class="p">(</span><span class="n">int2</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="n">int2</span><span class="w"> </span><span class="n">position</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>radius</code></td>
+<td>22</td>
+<td>Radius of the hard circular boundary (in tiles). Beyond it there is no land.</td>
+</tr>
+<tr>
+<td><code>power</code></td>
+<td>3</td>
+<td>no info</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>IsWithin(size, position)</code> is a predicate called for every cell. It cuts off everything outside the <code>radius</code> circle before any altitude thresholds kick in.</p>
+<h3 id="2-altitude">2. Altitude</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Altitude</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">noiseHorizontalOffsetScale</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">noiseHorizontalScale</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">distancePower</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">noiseVerticalScale</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">distanceVerticalScale</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">verticalOffset</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w">   </span><span class="n">islandMinSize</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>noiseHorizontalOffsetScale</code></td>
+<td>5</td>
+<td>noise offset — determines where hills and hollows land.</td>
+</tr>
+<tr>
+<td><code>noiseHorizontalScale</code></td>
+<td>0.05</td>
+<td>Horizontal noise scale. Larger - smoother terrain features.</td>
+</tr>
+<tr>
+<td><code>distancePower</code></td>
+<td>3.5</td>
+<td>Exponent of distance from the center. Larger it is, the flatter the interior and the steeper the shore.</td>
+</tr>
+<tr>
+<td><code>noiseVerticalScale</code></td>
+<td>0.4</td>
+<td>Amplitude of the vertical noise.</td>
+</tr>
+<tr>
+<td><code>distanceVerticalScale</code></td>
+<td>1.4</td>
+<td>How quickly height drops toward the island edge.</td>
+</tr>
+<tr>
+<td><code>verticalOffset</code></td>
+<td>0.61</td>
+<td>Global vertical shift.</td>
+</tr>
+<tr>
+<td><code>islandMinSize</code></td>
+<td>6</td>
+<td>Minimum island size in cells, smaller ones are rejected.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="3-moisture">3. Moisture</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Moisture</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">horizontalOffsetScale</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">horizontalScale</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>horizontalOffsetScale</code></td>
+<td>1</td>
+<td>Moisture noise offset - shifts drought and humidity zones.</td>
+</tr>
+<tr>
+<td><code>horizontalScale</code></td>
+<td>0.05</td>
+<td>Moisture noise scale. Larger - bigger and smoother zones.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="4-sand">4. Sand</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Sand</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">margin</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w">   </span><span class="n">minSize</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>margin</code></td>
+<td>2</td>
+<td>Width of the sand strip along the shore (offset from water).</td>
+</tr>
+<tr>
+<td><code>minSize</code></td>
+<td>8</td>
+<td>Minimum size of a sand patch - prevents micro‑beaches.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Sand is applied to cells whose height sits just above the water level within <code>margin</code> of the shore. <code>minSize</code> prunes isolated sand tiles.</p>
+<h3 id="5-innercliffs">5. InnerCliffs</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">InnerCliffs</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="w"> </span><span class="n">numberMains</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="w"> </span><span class="n">numberExtensions</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">minDistance</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">minSpacing</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>numberMains</code></td>
+<td><code>[2..3]</code></td>
+<td>(min, max) number of main cliff formations.</td>
+</tr>
+<tr>
+<td><code>numberExtensions</code></td>
+<td><code>[1..3]</code></td>
+<td>(min, max) number of branches per main cliff.</td>
+</tr>
+<tr>
+<td><code>minDistance</code></td>
+<td>8</td>
+<td>Minimum distance between neighboring cliffs.</td>
+</tr>
+<tr>
+<td><code>minSpacing</code></td>
+<td>5</td>
+<td>Minimum gap between branches within a single cliff.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="6-nature">6. Nature</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Nature</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Blobs</span><span class="w"> </span><span class="n">trees</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Blobs</span><span class="w"> </span><span class="n">rocks</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Dots</span><span class="w">  </span><span class="n">fish</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">flowerProbability</span><span class="p">;</span>
+
+<span class="w">    </span><span class="na">[Serializable]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Blobs</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* 6.1 */</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="na">[Serializable]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Dots</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="cm">/* 6.2 */</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="61-blobs">6.1. Blobs</h4>
+<div class="codehilite"><pre><span></span><code><span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Blobs</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">float2</span><span class="w">   </span><span class="n">moistureRange</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w">    </span><span class="n">minDistance</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Gaussian</span><span class="w"> </span><span class="n">count</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Gaussian</span><span class="w"> </span><span class="n">size</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value (Trees)</th>
+<th>Value (Rocks)</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>moistureRange</code></td>
+<td><code>[-0.5 .. 1]</code></td>
+<td><code>[-1 .. 0.5]</code></td>
+<td>Humidity range in which this type can appear.</td>
+</tr>
+<tr>
+<td><code>minDistance</code></td>
+<td>4</td>
+<td>5</td>
+<td>Minimum distance between neighboring blobs.</td>
+</tr>
+<tr>
+<td><code>count</code></td>
+<td><code>N(3.3, 0.4)</code></td>
+<td><code>N(8.5, 1)</code></td>
+<td>Number of blobs: mean and sigma of a Gaussian</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td><code>N(30, 10)</code></td>
+<td><code>N(4, 0.8)</code></td>
+<td>Blob radius: mean and sigma.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Trees and rocks are generated as <strong>blobs</strong> — clusters of same‑type cells rather than single tiles. <code>count</code> and <code>size</code> are Gaussian, so a single run produces natural variety. The <code>moistureRange</code> of trees and rocks overlaps — formally, both types may land on the same cell; <code>PlaceBlobs</code> resolves overlaps by iteration order.</p>
+<h4 id="62-dots">6.2. Dots</h4>
+<div class="codehilite"><pre><span></span><code><span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Dots</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">idealMoisture</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">maximumMoistureAmplitude</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">probabilityAtIdealMoisture</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">probabilityAtMaximumMoistureAmplitude</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">probabilityPower</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">maximumDistance</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w">   </span><span class="n">validMarginDistance</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w">   </span><span class="n">maxCount</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>idealMoisture</code></td>
+<td>0.4</td>
+<td>Humidity at which fish probability is maximal.</td>
+</tr>
+<tr>
+<td><code>maximumMoistureAmplitude</code></td>
+<td>0.3</td>
+<td>Maximum deviation from <code>idealMoisture</code> where fish is still possible.</td>
+</tr>
+<tr>
+<td><code>probabilityAtIdealMoisture</code></td>
+<td>0.6</td>
+<td>Fish probability at the ideal point (0..1).</td>
+</tr>
+<tr>
+<td><code>probabilityAtMaximumMoistureAmplitude</code></td>
+<td>0</td>
+<td>Probability at maximum deviation.</td>
+</tr>
+<tr>
+<td><code>probabilityPower</code></td>
+<td>1.5</td>
+<td>Curve exponent: how fast probability falls off with deviation.</td>
+</tr>
+<tr>
+<td><code>maximumDistance</code></td>
+<td>22</td>
+<td>Maximum distance from the shore where fish may appear.</td>
+</tr>
+<tr>
+<td><code>validMarginDistance</code></td>
+<td>2</td>
+<td>Allowed offset from the water edge.</td>
+</tr>
+<tr>
+<td><code>maxCount</code></td>
+<td>20</td>
+<td>Hard cap on the number of fish dots.</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="63-flowers">6.3. Flowers</h4>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>flowerProbability</code></td>
+<td>0.05</td>
+<td>Probability of flowers on a suitable cell (0..1).</td>
+</tr>
+</tbody>
+</table></div>
+<p>Flowers are neither blobs nor dots — just a simple per‑tile probability. It applies to cells whose ground type is suitable.</p>
+<h3 id="7-gaussian">7. Gaussian</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Gaussian</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">average</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">deviation</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>average</code></td>
+<td>Mean value.</td>
+</tr>
+<tr>
+<td><code>deviation</code></td>
+<td>Standard deviation (σ) of the normal distribution.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A helper struct for <code>count</code> and <code>size</code> in <code>Blobs</code>. Sampling goes through <code>Unity.Mathematics.Random</code> so it works in Burst.</p>
+<hr />
+<h2 id="noiselayers">NoiseLayers</h2>
+<p><code>NoiseLayers</code> is the deterministic sampler consumed by both stages.</p>
+<div class="codehilite"><pre><span></span><code><span class="na">[StructLayout(LayoutKind.Explicit)]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">NoiseLayers</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="na">[FieldOffset(0)]</span><span class="w">   </span><span class="k">public</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">Parameters</span><span class="w"> </span><span class="n">parameters</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(168)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">float2</span><span class="w">     </span><span class="n">center</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(176)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">int2</span><span class="w">       </span><span class="n">size</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(184)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">float2</span><span class="w">     </span><span class="n">altitudeOffset</span><span class="p">;</span>
+<span class="w">    </span><span class="na">[FieldOffset(192)]</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">float2</span><span class="w">     </span><span class="n">moistureOffset</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="nf">Distance</span><span class="p">(</span><span class="n">float2</span><span class="w"> </span><span class="n">p</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="nf">Altitude</span><span class="p">(</span><span class="n">float2</span><span class="w"> </span><span class="n">position</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="nf">Moisture</span><span class="p">(</span><span class="n">float2</span><span class="w"> </span><span class="n">position</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">NoiseLayers</span><span class="w"> </span><span class="nf">Generate</span><span class="p">(</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">Parameters</span><span class="w"> </span><span class="n">parameters</span><span class="p">,</span><span class="w"> </span><span class="n">float2</span><span class="w"> </span><span class="n">center</span><span class="p">,</span><span class="w"> </span><span class="n">int2</span><span class="w"> </span><span class="n">size</span><span class="p">,</span>
+<span class="w">        </span><span class="k">ref</span><span class="w"> </span><span class="n">Unity</span><span class="p">.</span><span class="n">Mathematics</span><span class="p">.</span><span class="n">Random</span><span class="w"> </span><span class="n">random</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>parameters</code></td>
+<td>A copy of <code>Parameters</code></td>
+</tr>
+<tr>
+<td><code>center</code></td>
+<td>Island center in tile coordinates.</td>
+</tr>
+<tr>
+<td><code>altitudeOffset</code></td>
+<td>Random altitude noise offset, chosen once in <code>Generate</code>.</td>
+</tr>
+<tr>
+<td><code>moistureOffset</code></td>
+<td>Random moisture noise offset.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="generateoutput-generatejob-and-scoredata">GenerateOutput, GenerateJob and ScoreData</h2>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">GenerateOutput</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">GenerateJob</span><span class="w"> </span><span class="n">job</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">JobHandle</span><span class="w">   </span><span class="n">handle</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Il2CppStructArray</span><span class="o">&lt;</span><span class="n">InnerCliff</span><span class="o">&gt;</span><span class="w"> </span><span class="n">InnerCliffs</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ScoreData</span><span class="w">                     </span><span class="n">Score</span><span class="w">       </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="nf">GenerateOutput</span><span class="p">(</span><span class="n">GenerateJob</span><span class="w"> </span><span class="n">job</span><span class="p">,</span><span class="w"> </span><span class="n">JobHandle</span><span class="w"> </span><span class="n">handle</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Complete</span><span class="p">();</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">GetGround</span><span class="p">(</span><span class="n">IslandGrid</span><span class="p">.</span><span class="n">Layer</span><span class="o">&lt;</span><span class="n">GroundTile</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ground</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">GetNature</span><span class="p">(</span><span class="n">IslandGrid</span><span class="p">.</span><span class="n">Layer</span><span class="o">&lt;</span><span class="n">Nullable</span><span class="o">&lt;</span><span class="n">NatureTile</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">nature</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">virtual</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">CompareTo</span><span class="p">(</span><span class="n">GenerateOutput</span><span class="w"> </span><span class="n">other</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Complete()</code></td>
+<td>Wait for the job to finish.</td>
+</tr>
+<tr>
+<td><code>GetGround(ground)</code></td>
+<td>Copy the job result into the ground layer.</td>
+</tr>
+<tr>
+<td><code>GetNature(nature)</code></td>
+<td>Copy the job result into the nature layer.</td>
+</tr>
+<tr>
+<td><code>CompareTo(other)</code></td>
+<td>Compare by score — allows iterating several <code>GenerateOutput</code>s and keeping the best.</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>ScoreData</code> is a component‑wise quality estimate:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">ScoreData</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">buildSpace</span><span class="p">;</span><span class="w">        </span><span class="c1">// room for building</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">naturalResources</span><span class="p">;</span><span class="w">  </span><span class="c1">// trees, rocks, fish</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">cliffs</span><span class="p">;</span><span class="w">            </span><span class="c1">// inland cliffs</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Total</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">     </span><span class="c1">// sum of the three</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>GenerateJob</code> is the Burst executor. Besides its fields (<code>parameters</code>, <code>references</code>, <code>seed</code>, <code>ground</code>, <code>nature</code>, <code>innerCliffs</code>, <code>score</code>) it carries a set of static helpers:</p>
+<div class="codehilite"><pre><span></span><code>IsInIsland(distance, moistureRange)
+Gaussian(ref displayClass)
+Height(int2 position, ref displayClass)
+Moisture(int2 position, ref displayClass)
+GetGroundTile(GroundTile a, GroundTile b)  // blending neighboring types
+AssignGround(...)                          // ground type from alt/moisture/limit
+PlaceInnerCliffs(...)
+PlaceBlobs(...)
+PlaceDots(...)
+ScoreTerritory(...)
+</code></pre></div>
+<p><code>AssignGround</code> is where a concrete <code>GroundTile</code> is picked from altitude, moisture, and <code>HardLimit</code>. It runs first because all subsequent nature passes filter by ground type.</p>
+<h2 id="buildmesh-meshoutput-and-meshjob">BuildMesh, MeshOutput and MeshJob</h2>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">MeshOutput</span><span class="w"> </span><span class="nf">BuildMesh</span><span class="p">(</span>
+<span class="w">    </span><span class="n">IslandGrid</span><span class="p">.</span><span class="n">Layer</span><span class="o">&lt;</span><span class="n">GroundTile</span><span class="o">&gt;</span><span class="w"> </span><span class="n">layer</span><span class="p">,</span>
+<span class="w">    </span><span class="n">Biome</span><span class="w"> </span><span class="n">biome</span><span class="p">,</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">heightMapSubdivide</span><span class="p">,</span>
+<span class="w">    </span><span class="n">PolygonMesh</span><span class="w"> </span><span class="n">lavaTileMesh</span><span class="p">,</span>
+<span class="w">    </span><span class="n">PolygonMesh</span><span class="w"> </span><span class="n">pierTileMesh</span><span class="p">);</span>
+</code></pre></div>
+<p><code>BuildMesh</code> takes the classified tile layer and builds 3D geometry.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">MeshOutput</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">MeshJob</span><span class="w">   </span><span class="n">job</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">JobHandle</span><span class="w"> </span><span class="n">handle</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w">         </span><span class="n">IsCompleted</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">PolygonMesh</span><span class="w">  </span><span class="n">Mesh</span><span class="w">        </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">HeightMap</span><span class="w">    </span><span class="n">HeightMap</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="nf">MeshOutput</span><span class="p">(</span><span class="n">MeshJob</span><span class="w"> </span><span class="n">job</span><span class="p">,</span><span class="w"> </span><span class="n">JobHandle</span><span class="w"> </span><span class="n">handle</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Complete</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IsCompleted</code></td>
+<td>Whether the job is ready.</td>
+</tr>
+<tr>
+<td><code>Mesh</code></td>
+<td>The built <code>PolygonMesh</code>.</td>
+</tr>
+<tr>
+<td><code>HeightMap</code></td>
+<td>The height map extracted from mesh.</td>
+</tr>
+<tr>
+<td><code>Complete()</code></td>
+<td>Wait for the job to finish.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">MeshJob</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="n">CornerKind</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kt">byte</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">EMPTY</span><span class="p">,</span><span class="w"> </span><span class="n">STRAIGHT</span><span class="p">,</span><span class="w"> </span><span class="n">CORNER</span><span class="p">,</span><span class="w"> </span><span class="n">FULL</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Diagonal</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="w">  </span><span class="n">CenterToCornerOffset</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="n">Angle</span><span class="w"> </span><span class="n">Angle</span><span class="w">                </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w">   </span><span class="n">X</span><span class="w">                    </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w">   </span><span class="n">Y</span><span class="w">                    </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="n">Diagonal</span><span class="w"> </span><span class="n">Next</span><span class="w">              </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="n">Diagonal</span><span class="w"> </span><span class="n">Previous</span><span class="w">          </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="n">Diagonal</span><span class="w"> </span><span class="n">Opposite</span><span class="w">          </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="w"> </span><span class="nf">Corner</span><span class="p">(</span><span class="n">int2</span><span class="w"> </span><span class="n">center</span><span class="p">);</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="w"> </span><span class="nf">Center</span><span class="p">(</span><span class="n">int2</span><span class="w"> </span><span class="n">corner</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Angle</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="kt">byte</span><span class="w"> </span><span class="k">value</span><span class="p">;</span><span class="w">   </span><span class="c1">// 0..255 -&gt; 0..2π</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">Angle</span><span class="w"> </span><span class="n">ZERO</span><span class="p">;</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">Angle</span><span class="w"> </span><span class="n">PI</span><span class="p">;</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Sin</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">Cos</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="c1">// +, -, *, /, Lerp, ==, !=</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">WallHorizontalStep</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">WallVerticalStep</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><code>MeshJob</code> walks the four diagonals of each cell. <code>CornerKind</code> classifies a corner by how the cell connects to its neighbors (<code>EMPTY</code> — isolated, <code>FULL</code> — connected on all sides). <code>Angle</code> is packed into a single byte (<code>0..255</code> → <code>0..2π</code>) with precomputed sin/cos — compact, cache‑friendly, and Burst‑safe. Vertical geometry on height differences is emitted via <code>WallHorizontalStep</code> and <code>WallVerticalStep</code>.</p>
+<h2 id="heightmap">HeightMap</h2>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">HeightMap</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">PositionsEnumerable</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* ... */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="w">  </span><span class="n">Size</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="k">this</span><span class="p">[</span><span class="n">float2</span><span class="w"> </span><span class="n">position</span><span class="p">]</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="k">this</span><span class="p">[</span><span class="n">int2</span><span class="w"> </span><span class="n">position</span><span class="p">]</span><span class="w">   </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="k">set</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">HeightMap</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">+</span><span class="p">(</span><span class="n">HeightMap</span><span class="w"> </span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">HeightMap</span><span class="w"> </span><span class="n">b</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">PositionsEnumerable</span><span class="w"> </span><span class="nf">Indexes</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">threshold</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">HeightMap</span><span class="w"> </span><span class="nf">Copy</span><span class="p">(</span><span class="n">Allocator</span><span class="w"> </span><span class="n">allocator</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Size</code></td>
+<td>Map size in cells.</td>
+</tr>
+<tr>
+<td><code>this[float2]</code> / <code>this[int2]</code></td>
+<td>Access to the height at a position.</td>
+</tr>
+<tr>
+<td><code>operator +</code></td>
+<td>Element‑wise addition of two height maps.</td>
+</tr>
+<tr>
+<td><code>Indexes(threshold)</code></td>
+<td>Enumerates all positions above a threshold.</td>
+</tr>
+<tr>
+<td><code>Copy(allocator)</code></td>
+<td>A copy of the map with a given allocator.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="helper-types">Helper types</h2>
+<h3 id="bounds">Bounds</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Bounds</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">float2</span><span class="w"> </span><span class="n">min</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">float2</span><span class="w"> </span><span class="n">max</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">Bounds</span><span class="w"> </span><span class="n">EMPTY</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="nf">Bounds</span><span class="p">(</span><span class="n">float2</span><span class="w"> </span><span class="n">min</span><span class="p">,</span><span class="w"> </span><span class="n">float2</span><span class="w"> </span><span class="n">max</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Add</span><span class="p">(</span><span class="n">float2</span><span class="w"> </span><span class="n">point</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>min</code>, <code>max</code></td>
+<td>AABB corners.</td>
+</tr>
+<tr>
+<td><code>EMPTY</code></td>
+<td>Empty bounds (for accumulation via <code>Add</code>).</td>
+</tr>
+<tr>
+<td><code>Add(point)</code></td>
+<td>Extend bounds so they include the point.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="connectedcomponents">ConnectedComponents</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">ConnectedComponents</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="w">    </span><span class="k">where</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="k">new</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">NativeList</span><span class="o">&lt;</span><span class="n">Component</span><span class="o">&gt;</span><span class="w"> </span><span class="n">components</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">Component</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="n">UnsafeList</span><span class="o">&lt;</span><span class="n">int2</span><span class="o">&gt;</span><span class="w"> </span><span class="n">positions</span><span class="p">;</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Add</span><span class="p">(</span><span class="n">int2</span><span class="w"> </span><span class="n">position</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="nf">ConnectedComponents</span><span class="p">(</span><span class="n">Allocator</span><span class="w"> </span><span class="n">allocator</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Add</span><span class="p">(</span><span class="n">Component</span><span class="w"> </span><span class="n">component</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>components</code></td>
+<td>List of found connected components.</td>
+</tr>
+<tr>
+<td><code>Add(position)</code></td>
+<td>Add a position to the component.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A BFS over <code>UnsafeLayer&lt;T&gt;</code> grouping same‑type cells. Driven by a predicate <code>P</code> - the caller decides what counts as "connectivity". Used, for example, to reject nature blobs that are too small or severed pieces of the island.</p>
+<h3 id="references">References</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">References</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Il2CppSystem</span><span class="p">.</span><span class="n">ValueType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">UnsafeList</span><span class="o">&lt;</span><span class="n">InnerCliff</span><span class="p">.</span><span class="n">Key</span><span class="o">&gt;</span><span class="w"> </span><span class="n">innerCliffKeys</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="nf">References</span><span class="p">(</span><span class="n">IEnumerable</span><span class="o">&lt;</span><span class="n">InnerCliff</span><span class="p">.</span><span class="n">Key</span><span class="o">&gt;</span><span class="w"> </span><span class="n">innerCliffKeys</span><span class="p">,</span><span class="w"> </span><span class="n">Allocator</span><span class="w"> </span><span class="n">allocator</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>innerCliffKeys</code></td>
+<td>Cliff prefab keys used by <code>PlaceInnerCliffs</code> to pick a cliff type.</td>
+</tr>
+</tbody>
+</table></div>
+  </div>
+  
+  <script>
+    document.querySelectorAll('article h2, article h3').forEach((header) => {
+      toc.observer.observe(header);
+    });
+  </script>
+</article>
+                                <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
+    
+    <a data-slot="button"
+        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 shadow-none"
+        href="../../guides/modding/">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="tabler-icon tabler-icon-arrow-left ">
+            <path d="M5 12l14 0"></path>
+            <path d="M5 12l6 6"></path>
+            <path d="M5 12l6 -6"></path>
+        </svg>
+        <span class="max-[500px]:hidden">Modding</span>
+    </a>
+    
+    
+    <a data-slot="button"
+        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 ml-auto shadow-none"
+        href="../resources/">
+        <span class="max-[500px]:hidden">Resources</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="tabler-icon tabler-icon-arrow-right ">
+            <path d="M5 12l14 0"></path>
+            <path d="M13 18l6 -6"></path>
+            <path d="M13 6l6 6"></path>
+        </svg>
+    </a>
+    
+</div>
+                                
+                                
+                            </div>
+                            
+                            <dialog id="bottom-sidebar" onclick="onBottomSidebarDialogClick(event)" class="bg-transparent"
+    style="position: fixed; left: 0px; top: 0px; transform: translate(0px, 58px); min-width: max-content; --radix-popper-transform-origin: 0% 0px; will-change: transform; z-index: 50; --radix-popper-available-width: 504px; --radix-popper-available-height: 857px; --radix-popper-anchor-width: 72.94999694824219px; --radix-popper-anchor-height: 32px;">
+    <div data-side="bottom" data-align="start" data-state="open" role="dialog" data-slot="popover-content"
+        class="text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 origin-(--radix-popover-content-transform-origin) border outline-hidden bg-background/90 no-scrollbar h-(--radix-popper-available-height) w-(--radix-popper-available-width) overflow-y-auto rounded-none border-none p-0 shadow-none backdrop-blur duration-100"
+        style="--radix-popover-content-transform-origin: var(--radix-popper-transform-origin); --radix-popover-content-available-width: var(--radix-popper-available-width); --radix-popover-content-available-height: var(--radix-popper-available-height); --radix-popover-trigger-width: var(--radix-popper-anchor-width); --radix-popover-trigger-height: var(--radix-popper-anchor-height);"
+        tabindex="-1">
+        <div class="flex flex-col gap-12 overflow-auto px-6 py-6">
+            
+            
+            
+
+            
+            <div class="flex flex-col gap-4">
+                <div class="text-muted-foreground text-sm font-medium">Menu</div>
+                <div class="flex flex-col gap-3">
+                    
+                    <a class="text-2xl font-medium" href="../..">
+                        
+                        DiceModders
+                        
+                    </a>
+                    
+                </div>
+            </div>
+            
+
+            
+            <div class="flex flex-col gap-8">
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Guides</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../guides/modding/">
+                            
+                            Modding
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Game architecture</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="./">
+                            
+                            Island Generation
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../resources/">
+                            
+                            Resources
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+            </div>
+            
+            
+
+        </div>
+    </div>
+</dialog>
+                            <div
+                                class="sticky top-[calc(var(--header-height)+1px)] ml-auto hidden h-[calc(100svh-var(--header-height)-var(--footer-height))] w-72 flex-col gap-4 overflow-hidden overscroll-none pb-8 xl:flex">
+                                <div class="h-(--top-spacing) shrink-0"></div>
+                                
+                                
+                                <div id="toc" view-transition-name="toc" class="no-scrollbar overflow-y-auto px-8">
+    <div class="flex flex-col gap-2 p-4 pt-0 text-sm">
+        <p class="text-muted-foreground bg-background sticky top-0 h-6 text-xs">On This Page</p>
+        
+        
+        
+        
+        <a href="#islandgeneration"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#islandgeneration');">
+            IslandGeneration
+        </a>
+        
+
+        
+        <a href="#parameters"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#parameters');">
+            Parameters
+        </a>
+        
+        
+        <a href="#1-hardlimit"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#1-hardlimit');">
+            1. HardLimit
+        </a>
+        
+        <a href="#2-altitude"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#2-altitude');">
+            2. Altitude
+        </a>
+        
+        <a href="#3-moisture"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#3-moisture');">
+            3. Moisture
+        </a>
+        
+        <a href="#4-sand"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#4-sand');">
+            4. Sand
+        </a>
+        
+        <a href="#5-innercliffs"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#5-innercliffs');">
+            5. InnerCliffs
+        </a>
+        
+        <a href="#6-nature"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#6-nature');">
+            6. Nature
+        </a>
+        
+        <a href="#7-gaussian"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#7-gaussian');">
+            7. Gaussian
+        </a>
+        
+        
+
+        
+        <a href="#noiselayers"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#noiselayers');">
+            NoiseLayers
+        </a>
+        
+
+        
+        <a href="#generateoutput-generatejob-and-scoredata"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#generateoutput-generatejob-and-scoredata');">
+            GenerateOutput, GenerateJob and ScoreData
+        </a>
+        
+
+        
+        <a href="#buildmesh-meshoutput-and-meshjob"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#buildmesh-meshoutput-and-meshjob');">
+            BuildMesh, MeshOutput and MeshJob
+        </a>
+        
+
+        
+        <a href="#heightmap"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#heightmap');">
+            HeightMap
+        </a>
+        
+
+        
+        <a href="#helper-types"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#helper-types');">
+            Helper types
+        </a>
+        
+        
+        <a href="#bounds"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#bounds');">
+            Bounds
+        </a>
+        
+        <a href="#connectedcomponents"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#connectedcomponents');">
+            ConnectedComponents
+        </a>
+        
+        <a href="#references"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#references');">
+            References
+        </a>
+        
+        
+
+        
+        
+        
+        
+
+    </div>
+    <div class="h-12"></div>
+
+</div>
+                                
+                                
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer view-transition-name="footer"
+    class="group-has-[.section-soft]/body:bg-surface/40 3xl:fixed:bg-transparent dark:bg-transparent">
+    <div class="container-wrapper px-4 xl:px-6">
+        <div class="flex h-(--footer-height) items-center justify-between">
+            <div class="text-muted-foreground w-full text-center text-xs leading-loose sm:text-sm">
+                
+                <a href="https://github.com/asiffer/mkdocs-shadcn">shadcn theme</a> provided by
+                <a href="https://github.com/asiffer">@asiffer</a>
+            </div>
+        </div>
+    </div>
+</footer>
+    </div>
+     
+
+<script src="../../search/main.js"></script>
+
+
+    
+
+    <script integrity="sha384-JLNLRFGzvOp0up707XKgSnAjjt1w5BF/+lbeLQvlf6mNwf0m89IXFdpNAk4t6Hcs"
+        src="../../js/copy-button.js"></script>
+    <script integrity="sha384-JBx6cBEiyhK1KPwZgBHiI6GDaAmvlOxMQFyWAZTEpW5Ifo5XQ2LBcJ61GVOumwF1"
+        src="../../js/sidebar.js"></script>
+    <script integrity="sha384-fNURFMRt0p/HqXnQnV4+CT9dX1GiU5F0fC3pFbg7gfoANytoUMErSW7suWSBkSuF"
+        src="../../js/slider.js"></script>
+    <script>updatePygmentsStylesheet();</script>
+    
+    <script>fetchStargazers("https://github.com/DiceModders/DiceKingdoms-Modding-Wiki");</script>
+    
+    
+    
+    <script type="speculationrules">
+{
+  "prerender": [
+    {
+      "where": {
+          "selector_matches": ["#next-button", "#previous-button"]
+      }
+    }
+  ]
+}
+</script>
+</body>
+
+</html>
