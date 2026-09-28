@@ -118,6 +118,9 @@ Both stages are fully deterministic: the same `seed` and `Parameters` produce th
 
 ## Parameters
 
+!!! info "Example mode:" 
+    [IslandConfig](https://github.com/DiceModders/IslandConfig) - adds configuration for island generation parameters
+
 `IslandGeneration.Parameters` carries every tunable value.
 
 ```c#
