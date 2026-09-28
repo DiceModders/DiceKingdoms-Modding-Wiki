@@ -576,6 +576,10 @@
 <p><strong>The second stage - mesh.</strong> <code>BuildMesh(layer, biome, …)</code> takes the already classified tile layer and builds geometry. Inside <code>MeshJob.Execute()</code> it walks the four diagonals of each cell (<code>Diagonal</code>), classifies corners (<code>CornerKind</code>), and assembles the <code>PolygonMesh</code>. Height differences between neighboring cells become vertical walls via <code>WallHorizontalStep</code> and <code>WallVerticalStep</code>. The result is <code>MeshOutput</code>: the <code>PolygonMesh</code> itself and the <code>HeightMap</code>.</p>
 <p>Both stages are fully deterministic: the same <code>seed</code> and <code>Parameters</code> produce the same island.</p>
 <h2 id="parameters">Parameters</h2>
+<div class="admonition info">
+<p class="admonition-title">Example mode:</p>
+<p><a href="https://github.com/DiceModders/IslandConfig">IslandConfig</a> - adds configuration for island generation parameters</p>
+</div>
 <p><code>IslandGeneration.Parameters</code> carries every tunable value.</p>
 <div class="codehilite"><pre><span></span><code><span class="na">[Serializable]</span>
 <span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Parameters</span>
