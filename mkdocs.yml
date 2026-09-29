@@ -29,7 +29,9 @@ markdown_extensions:
 nav:
   - DiceModders: index.md
   - Guides:
-    - Modding: guides/modding.md
+    - Mods Installation: guides/mod-installation.md
+    - Modding: 
+      - Project Setup: guides/modding/project-setup.md
   - Game architecture:
     - Island Generation: game-architecture/island-generation.md
     - Resources: game-architecture/resources.md

@@ -1,5 +1,5 @@
 ---
-title: How to mode DiceKingdoms with BepInEx
+summary: How to setup C# project for modding DiceKingdoms with BepInEx
 ---
 
 ## Installing BepInEx
