@@ -249,9 +249,7 @@ function blank(side){
 }
 function cell(x,y){return y*SIDE+x}
 
-let yUp=true, problems=[], showLimit=true;
-const LIM_DEFAULT=22, LIM_MOD=24; // IslandGeneration HardLimit.radius: game default / value DiceMod sets
-const dist=(x,y)=>Math.hypot(x-(SIDE-1)/2,y-(SIDE-1)/2);
+let yUp=true, problems=[];
 function draw(){
   const cs=cv.width/SIDE;
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
@@ -279,9 +277,6 @@ function draw(){
   ctx.fillStyle='#00000099';
   ctx.strokeStyle='#00000099';
   for(const r of data.remains){ for(const [fx,fy] of buildingFootprint(r)) ctx.strokeRect(fx*cs+cs*0.15,fy*cs+cs*0.15,cs*0.7,cs*0.7); }
-  if(showLimit){ ctx.lineWidth=2; const c=SIDE/2*cs;
-    for(const [r,col] of [[LIM_DEFAULT,'#ffffffcc'],[LIM_MOD,'#ffcc00cc']]){ ctx.strokeStyle=col; ctx.setLineDash([6,5]); ctx.beginPath(); ctx.arc(c,c,(r+0.5)*cs,0,7); ctx.stroke(); }
-    ctx.setLineDash([]); }
   ctx.strokeStyle='#ff2222'; ctx.lineWidth=2;
   for(const p of problems) ctx.strokeRect(p[0]*cs+1,p[1]*cs+1,cs-2,cs-2);
   ctx.lineWidth=1; ctx.setTransform(1,0,0,1,0,0);
@@ -293,9 +288,6 @@ function checkPlacement(){
       const nm=NAMES[b.type]||('type '+b.type), k=x+','+y;
       if(x<0||y<0||x>=SIDE||y>=SIDE){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': outside island'); continue; }
       if(data.nature[cell(x,y)]!==-1){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': nature on tile '+x+','+y); }
-      const dd=dist(x,y);
-      if(dd>LIM_MOD+0.5){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': beyond island radius '+LIM_MOD); }
-      else if(dd>LIM_DEFAULT+0.5){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': beyond default radius '+LIM_DEFAULT+' (only OK if the mod raised it to '+LIM_MOD+')'); }
       const g=data.ground[cell(x,y)]; if(g===0||g===1){ if(![6,21,22].includes(b.type)){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': water at '+x+','+y); } }
       if(occ.has(k)&&occ.get(k)!==i){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': overlaps '+(NAMES[data.buildings[occ.get(k)].type]||'building')+' at '+x+','+y); }
       occ.set(k,i);
@@ -372,7 +364,6 @@ function buildToolOptions(){
     (tool==='spray'?'<br>Radius <input id="sprayRadius" type="number" value="3" min="1" max="15" style="width:44px"> Density <input id="sprayDensity" type="number" value="35" min="1" max="100" style="width:44px">%':'')+
     '<div style="display:flex;gap:4px;margin-top:8px"><button class="action ghost" id="oUndo">Undo</button><button class="action ghost" id="oRedo">Redo</button></div>'+
     '<label style="margin-top:6px;display:block"><input type="checkbox" id="oYup" '+(yUp?'checked':'')+'> Game orientation (Y up)</label>'+
-    '<label style="display:block"><input type="checkbox" id="oLim" '+(showLimit?'checked':'')+'> Show island limit circles (white 22 = default, yellow 24 = mod)</label>'+
     '<div style="margin-top:8px;opacity:.7">Placement check:</div><div style="display:flex;gap:4px"><button class="action ghost" id="oCheck">Check buildings</button><button class="action ghost" id="oClrNat">Clear nature under buildings</button></div><pre id="chkOut" style="white-space:pre-wrap;font-size:.65rem;margin:4px 0"></pre>'+
     '<div style="margin-top:8px;opacity:.7">Whole-island (ground):</div>'+
     '<div style="display:flex;flex-wrap:wrap;gap:4px"><button class="action ghost" id="oOutline">Outline coast</button><button class="action ghost" id="oGrow">Grow</button><button class="action ghost" id="oShrink">Shrink</button></div>'+
@@ -381,7 +372,7 @@ function buildToolOptions(){
   if(g('oFill')) g('oFill').onchange=e=>fillShapes=e.target.checked;
   g('oSize').onchange=e=>bs=Math.max(1,Math.min(9,+e.target.value||1));
   g('oSymX').onchange=e=>symX=e.target.checked; g('oSymY').onchange=e=>symY=e.target.checked;
-  g('oYup').onchange=e=>{yUp=e.target.checked; draw();}; g('oLim').onchange=e=>{showLimit=e.target.checked; draw();}; g('oCheck').onclick=checkPlacement; g('oClrNat').onclick=clearNatureUnderBuildings;
+  g('oYup').onchange=e=>{yUp=e.target.checked; draw();}; g('oCheck').onclick=checkPlacement; g('oClrNat').onclick=clearNatureUnderBuildings;
   g('oUndo').onclick=undo; g('oRedo').onclick=redo;
   g('oOutline').onclick=()=>morph('outline'); g('oGrow').onclick=()=>morph('grow'); g('oShrink').onclick=()=>morph('shrink');
 }
