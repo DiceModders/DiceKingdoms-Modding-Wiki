@@ -153,7 +153,5 @@ int[] ReadRle(PackedReader r)
 }
 ```
 
-A complete JavaScript implementation (reader, writer, RLE) is in the [Island Editor](../tools/island-editor.md) source.
-
 !!! warning "Round-trip rule"
     When editing, always re-encode with the exact same field order. Unknown or unedited lists (`remains`, `innerCliffs`) must be written back untouched - the game rejects or mis-loads streams that are even one packed int off.

@@ -117,7 +117,7 @@ A building's current health is stored per building in the island code (see [Isla
 `maxHealth` values were read from the raw `BuildingType` memory: it is the 8th value counting back from the end of the 36-int block that starts at `+0x10`.
 
 !!! tip "Editing island codes"
-    When adding a building to an island code, set `health` to the type's max HP. The [Island Editor](../tools/island-editor.md) does this automatically and has a button to reset every building to its type default.
+    When adding a building to an island code, set `health` to the type's max HP. Island code editors should place new buildings at their type's max HP rather than a fixed default.
 
 ## Placement rules
 
@@ -131,7 +131,7 @@ A building will be refused (silently, when loaded through an island code) if any
 - overlapping another building.
 
 !!! bug "Open issue: Castle added from an edited code"
-    A Castle (id 2, 16 tiles) added through an edited island code did not appear after `loadisland` in some tests, with no error, while castles from the game's own saves loaded fine. In another test it loaded but showed `100/200` health, because the editor wrote a fixed health of 100 (fixed since: see [Health](#health)). Whether the wrong health was related to the earlier failures is unconfirmed. Other suspects: `CanPlaceBuilding` refusing the 4x4 footprint because of nature or terrain under it. If you find the cause, please update this page.
+    A Castle (id 2, 16 tiles) added through an edited island code did not appear after `loadisland` in some tests, with no error, while castles from the game's own saves loaded fine. In another test it loaded but showed `100/200` health, because the editor used for that test wrote a fixed health of 100 (see [Health](#health)). Whether the wrong health was related to the earlier failures is unconfirmed. Other suspects: `CanPlaceBuilding` refusing the 4x4 footprint because of nature or terrain under it. If you find the cause, please update this page.
 
 ## Unlocking and removing
 
