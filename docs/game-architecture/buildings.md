@@ -9,11 +9,12 @@ Each building kind is a `BuildingType` object held in a `BuildingTypes` collecti
 
 | Field | Type | Offset | Notes |
 |---|---|---|---|
+| `id` | `int` | `0x10` | The type id (equals the index in `BuildingTypes.Types`) |
 | `localPositions` | `int2[]` | `0x18` | Footprint, in building-local coordinates |
 | `localPositionsInWater` | `int2[]` | `0x20` | Footprint variant used in water |
-| category | `int` | `0x10` | meaning of values not mapped yet |
-| tier | `int` | `0x78` | probably the tier; only partly verified |
-| cost | struct | `0x58 - 0x74` | resource cost block |
+| cost block | struct | `0x58 - 0x74` | resource cost |
+| `tier` | `int` | `0x78` | 1-3, see the table below |
+| `maxHealth` | `int` | `0x80` | Maximum health, see [Health](#health) |
 
 !!! note "Offsets are build specific"
     Offsets and RVAs on this page come from one game build (see [Internals Reference](../reference/internals.md)). Field *names* are stable; numbers may move after a game update.
@@ -22,20 +23,32 @@ Each building kind is a `BuildingType` object held in a `BuildingTypes` collecti
 
 Ids `0-20` are alphabetical by display name; `21-23` were added later and sit at the end. There is no in-game build menu - buildings are panels at the bottom of the screen; picking one makes it follow the cursor until you left-click.
 
-| Id | Name | Tiles | Id | Name | Tiles |
-|---|---|---|---|---|---|
-| 0 | Archery Range | 5 | 12 | Lumber Camp | 4 |
-| 1 | Barracks | 6 | 13 | Market | 4 |
-| 2 | Castle | 16 | 14 | Sorcerer Tower | 3 |
-| 3 | Cathedral | 6 | 15 | Stone Quarry | 3 |
-| 4 | Church | 3 | 16 | Storage | 6 |
-| 5 | Cottage | 2 | 17 | University | 7 |
-| 6 | Dock | 12 | 18 | Wall | 1 |
-| 7 | Farm | 8 | 19 | Windmill | 4 |
-| 8 | Guard Tower | 4 | 20 | Wonder | 15 |
-| 9 | Guard Tower Up | 4 | 21 | Fishing Ship | 2 |
-| 10 | Hospital | 5 | 22 | Lighthouse | 4 |
-| 11 | House | 3 | 23 | Land Camp | 4 |
+| Id | Name | Tiles | Tier | Max HP |
+|---|---|---|---|---|
+| 0 | Archery Range | 5 | 2 | 60 |
+| 1 | Barracks | 6 | 1 | 60 |
+| 2 | Castle | 16 | 1 | 200 |
+| 3 | Cathedral | 6 | 2 | 40 |
+| 4 | Church | 3 | 1 | 15 |
+| 5 | Cottage | 2 | 1 | 10 |
+| 6 | Dock | 12 | 1 | 50 |
+| 7 | Farm | 8 | 1 | 15 |
+| 8 | Guard Tower | 4 | 2 | 40 |
+| 9 | Guard Tower Up | 4 | 2 | 40 |
+| 10 | Hospital | 5 | 2 | 40 |
+| 11 | House | 3 | 1 | 15 |
+| 12 | Lumber Camp | 4 | 3 | 20 |
+| 13 | Market | 4 | 3 | 10 |
+| 14 | Sorcerer Tower | 3 | 2 | 20 |
+| 15 | Stone Quarry | 3 | 3 | 20 |
+| 16 | Storage | 6 | 2 | 20 |
+| 17 | University | 7 | 1 | 50 |
+| 18 | Wall | 1 | 1 | 50 |
+| 19 | Windmill | 4 | 2 | 20 |
+| 20 | Wonder | 15 | 3 | 150 |
+| 21 | Fishing Ship | 2 | 2 | 30 |
+| 22 | Lighthouse | 4 | 3 | 50 |
+| 23 | Land Camp | 4 | 3 | 20 |
 
 ### Footprint data
 
@@ -97,6 +110,15 @@ IEnumerable<(int x, int y)> Footprint(BuildingType t, int bx, int by, int orient
     => t.localPositions.Select(o => { var (x, y) = Transform(o.x, o.y, orient, mirror); return (bx + x, by + y); });
 ```
 
+## Health
+
+A building's current health is stored per building in the island code (see [Island Save Format](island-save-format.md#stream-layout)), and its maximum comes from the `BuildingType` (`maxHealth`, `+0x80`, table above). A building whose stored `health` is lower than the type's max is shown as e.g. `100/200`.
+
+`maxHealth` values were read from the raw `BuildingType` memory: it is the 8th value counting back from the end of the 36-int block that starts at `+0x10`.
+
+!!! tip "Editing island codes"
+    When adding a building to an island code, set `health` to the type's max HP. The [Island Editor](../tools/island-editor.md) does this automatically and has a button to reset every building to its type default.
+
 ## Placement rules
 
 `BuildData.CanBuildType` checks, in order: `IsBuildable` -> `Unlocked` -> `SteamDemo` -> `HasResource`. The per-tile check is `IslandGrid.CanPlaceBuilding`.
@@ -108,8 +130,8 @@ A building will be refused (silently, when loaded through an island code) if any
 - covered by a nature tile (tree, rock, ...),
 - overlapping another building.
 
-!!! bug "Open issue: Castle placed from an edited code does not appear"
-    A Castle (id 2, 16 tiles) added through an edited island code never showed up after `loadisland`, with no error, while castles from the game's own saves loaded fine (even duplicates). Other building types placed the same way were fine. Cause is not confirmed; leading suspect is `CanPlaceBuilding` refusing the 4x4 footprint because of nature or terrain under it. If you find the answer, please update this page.
+!!! bug "Open issue: Castle added from an edited code"
+    A Castle (id 2, 16 tiles) added through an edited island code did not appear after `loadisland` in some tests, with no error, while castles from the game's own saves loaded fine. In another test it loaded but showed `100/200` health, because the editor wrote a fixed health of 100 (fixed since: see [Health](#health)). Whether the wrong health was related to the earlier failures is unconfirmed. Other suspects: `CanPlaceBuilding` refusing the 4x4 footprint because of nature or terrain under it. If you find the cause, please update this page.
 
 ## Unlocking and removing
 

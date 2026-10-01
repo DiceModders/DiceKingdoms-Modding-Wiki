@@ -65,7 +65,8 @@ RVAs are relative to the base of `GameAssembly.dll`.
 | `PlayerSummary` | `gameState` | `0xC8` |
 | `BuildingType` | `localPositions` (`int2[]`) | `0x18` |
 | `BuildingType` | `localPositionsInWater` | `0x20` |
-| `BuildingType` | category / tier | `0x10` / `0x78` |
+| `BuildingType` | `id` | `0x10` |
+| `BuildingType` | `tier` / `maxHealth` | `0x78` / `0x80` |
 | `BuildingType` | cost block | `0x58 - 0x74` |
 | `BuildData` | island grid chain | `+0xA0` -> grid `+0x98` |
 | `UnlockBuildingTechnology` | `BuildingTypes*` / id | `0x38` / `0x40` |

@@ -22,6 +22,7 @@ A single-file web tool that decodes an island code, lets you edit it visually an
 - **Terrain and nature painting**: point, fill, line, rectangle, square, circle/oval, spray; brush size; X/Y symmetry; fill or outline; undo/redo.
 - **Coast tools**: outline, grow and shrink the ground layer.
 - **Buildings**: pick a type by name, hover footprint preview, rotate (`R` / `Shift+R`), mirror (`M`), click any footprint tile to remove. The footprints are embedded (24 types), taken from the [Buildings](../game-architecture/buildings.md) dump.
+- **Health**: new buildings are placed with their type's max HP (24 types embedded, with tier), and "Set all HP to type default" resets every building on the island. If you paste a dump from a mod that includes `hp=`, those values are used instead.
 - **Checks**: "Check buildings" reports footprint tiles that are out of bounds, on water, under nature or overlapping; "Clear nature under buildings" fixes the most common refusal reason.
 - **Decoded JSON view**: the full decoded structure as editable JSON, applied back to the grid.
 - **Orientation toggle**: the game draws Y up, so the editor does too by default ("Game orientation" toggle).
@@ -43,5 +44,5 @@ const out = bytesToB64(await deflateRaw(encode(island)));
 
 ## Known limitations
 
-- Existing buildings' `health`, `disaster` and `turn` can be changed only through the JSON view, not the canvas.
+- Existing buildings' `health`, `disaster` and `turn` can be changed only through the JSON view, or reset to type defaults with the HP button.
 - A Castle added by the editor has been seen **not to appear** in game after `loadisland`; see the open issue on the [Buildings](../game-architecture/buildings.md#placement-rules) page. Use "Check buildings" first.

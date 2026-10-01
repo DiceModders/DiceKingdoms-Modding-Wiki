@@ -50,7 +50,7 @@ innerCliffs[] : i32 count, then count x { i32 c, i32 a, i32 b, i32 x, i32 y, i32
 | `x`, `y` | i32 | Grid position of the building origin |
 | `orient` | i32 | Rotation, 0-3 (see [Footprint and rotation](buildings.md#footprint-and-rotation)) |
 | `mirror` | i32 | `0` / `1` - mirrors X |
-| `health` | i32 | Current health |
+| `health` | i32 | Current health (max is `BuildingType.maxHealth`, see [Health](buildings.md#health)) |
 | `disaster` | `u64` flag, then `u64` payload if flag != 0 | Nullable disaster state |
 | `turn` | i32 | Turn counter |
 

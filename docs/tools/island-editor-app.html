@@ -171,37 +171,45 @@ if (typeof DecompressionStream === 'undefined' || typeof CompressionStream === '
 }
 let SIDE=49, data=null;
 let SHAPES={}, NAMES={}, META={}, hov=null; // typeId -> [[dx,dy],...]
-const DEFAULT_DUMP=`0: Archery Range [[0,0],[-1,0],[0,-1],[-1,-1],[-1,-2]]
-1: Barracks [[-1,1],[0,1],[0,0],[0,-1],[1,0],[1,-1]]
-2: Castle [[-1,-1],[-1,0],[-1,1],[-1,2],[0,-1],[0,0],[0,1],[0,2],[1,-1],[1,0],[1,1],[1,2],[2,-1],[2,0],[2,1],[2,2]]
-3: Cathedral [[1,0],[0,0],[-1,0],[-2,0],[0,1],[0,-1]]
-4: Church [[0,0],[-1,0],[-2,0]]
-5: Cottage [[0,0],[0,1]]
-6: Dock [[0,0],[1,0],[2,0],[2,1],[3,0],[3,1],[4,-1],[4,0],[4,1],[5,-1],[5,0],[5,1]]
-7: Farm [[0,1],[0,0],[0,-1],[0,-2],[1,1],[1,0],[1,-1],[1,-2]]
-8: Guard Tower [[0,0],[-1,0],[0,-1],[-1,-1]]
-9: Guard Tower Up [[0,0],[-1,0],[0,-1],[-1,-1]]
-10: Hospital [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
-11: House [[0,0],[-1,0],[0,-1]]
-12: Lumber Camp [[0,0],[-1,0],[-1,1],[-2,1]]
-13: Market [[0,0],[1,0],[1,1],[0,1]]
-14: Sorcerer Tower [[0,0],[1,0],[0,1]]
-15: Stone Quarry [[0,0],[0,1],[1,0]]
-16: Storage [[0,0],[1,0],[0,-1],[1,-1],[0,1],[1,1]]
-17: University [[0,1],[0,0],[0,-1],[1,1],[1,-1],[2,1],[2,-1]]
-18: Wall [[0,0]]
-19: Windmill [[0,0],[-1,0],[-1,1],[0,1]]
-20: Wonder [[3,-1],[3,0],[3,1],[2,-1],[2,0],[2,1],[1,-1],[1,0],[1,1],[0,-1],[0,0],[0,1],[-1,-1],[-1,0],[-1,1]]
-21: Fishing Ship [[0,0],[0,1]]
-22: Lighthouse [[0,0],[-1,0],[0,-1],[-1,-1]]
-23: Land Camp [[0,0],[1,1],[0,1],[-1,1]]`;
+const DEFAULT_DUMP=`0: Archery Range | tier=2 hp=60 | [[0,0],[-1,0],[0,-1],[-1,-1],[-1,-2]]
+1: Barracks | tier=1 hp=60 | [[-1,1],[0,1],[0,0],[0,-1],[1,0],[1,-1]]
+2: Castle | tier=1 hp=200 | [[-1,-1],[-1,0],[-1,1],[-1,2],[0,-1],[0,0],[0,1],[0,2],[1,-1],[1,0],[1,1],[1,2],[2,-1],[2,0],[2,1],[2,2]]
+3: Cathedral | tier=2 hp=40 | [[1,0],[0,0],[-1,0],[-2,0],[0,1],[0,-1]]
+4: Church | tier=1 hp=15 | [[0,0],[-1,0],[-2,0]]
+5: Cottage | tier=1 hp=10 | [[0,0],[0,1]]
+6: Dock | tier=1 hp=50 | [[0,0],[1,0],[2,0],[2,1],[3,0],[3,1],[4,-1],[4,0],[4,1],[5,-1],[5,0],[5,1]]
+7: Farm | tier=1 hp=15 | [[0,1],[0,0],[0,-1],[0,-2],[1,1],[1,0],[1,-1],[1,-2]]
+8: Guard Tower | tier=2 hp=40 | [[0,0],[-1,0],[0,-1],[-1,-1]]
+9: Guard Tower Up | tier=2 hp=40 | [[0,0],[-1,0],[0,-1],[-1,-1]]
+10: Hospital | tier=2 hp=40 | [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
+11: House | tier=1 hp=15 | [[0,0],[-1,0],[0,-1]]
+12: Lumber Camp | tier=3 hp=20 | [[0,0],[-1,0],[-1,1],[-2,1]]
+13: Market | tier=3 hp=10 | [[0,0],[1,0],[1,1],[0,1]]
+14: Sorcerer Tower | tier=2 hp=20 | [[0,0],[1,0],[0,1]]
+15: Stone Quarry | tier=3 hp=20 | [[0,0],[0,1],[1,0]]
+16: Storage | tier=2 hp=20 | [[0,0],[1,0],[0,-1],[1,-1],[0,1],[1,1]]
+17: University | tier=1 hp=50 | [[0,1],[0,0],[0,-1],[1,1],[1,-1],[2,1],[2,-1]]
+18: Wall | tier=1 hp=50 | [[0,0]]
+19: Windmill | tier=2 hp=20 | [[0,0],[-1,0],[-1,1],[0,1]]
+20: Wonder | tier=3 hp=150 | [[3,-1],[3,0],[3,1],[2,-1],[2,0],[2,1],[1,-1],[1,0],[1,1],[0,-1],[0,0],[0,1],[-1,-1],[-1,0],[-1,1]]
+21: Fishing Ship | tier=2 hp=30 | [[0,0],[0,1]]
+22: Lighthouse | tier=3 hp=50 | [[0,0],[-1,0],[0,-1],[-1,-1]]
+23: Land Camp | tier=3 hp=20 | [[0,0],[1,1],[0,1],[-1,1]]`;
+// max health per BuildingType id (BuildingType +0x80), used when a pasted dump has no hp= values
+const DEFAULT_HP={0:60,1:60,2:200,3:40,4:15,5:10,6:50,7:15,8:40,9:40,10:40,11:15,12:20,13:10,14:20,15:20,16:20,17:50,18:50,19:20,20:150,21:30,22:50,23:20};
+const typeHp=t=>(META[t]&&META[t].hp!==undefined)?META[t].hp:(DEFAULT_HP[t]!==undefined?DEFAULT_HP[t]:100);
 let fillShapes=true, bs=1, symX=false, symY=false, undoS=[], redoS=[];
 function ingestShapes(txt){
   const out={}, nm={}, mt={}; let n=0;
   for(const line of txt.split('\n')){
-    const m=line.match(/^\s*(\d+)\s*:\s*(.*?)\s*(?:\|\s*tier=(-?\d+)\s+cat=(-?\d+)\s*\|\s*)?(\[.*\])\s*$/);
+    const m=line.match(/^\s*(\d+)\s*:\s*(.*?)\s*(?:\|\s*(.*?)\s*\|\s*)?(\[.*\])\s*$/);
     if(!m) continue;
-    try{ out[+m[1]]=JSON.parse(m[5]); nm[+m[1]]=m[2]; if(m[3]!==undefined) mt[+m[1]]={tier:+m[3],cat:+m[4]}; n++; }catch{}
+    try{
+      out[+m[1]]=JSON.parse(m[4]); nm[+m[1]]=m[2];
+      if(m[3]){ const t=m[3].match(/tier=(-?\d+)/), h=m[3].match(/hp=(-?\d+)/), c=m[3].match(/cat=(-?\d+)/);
+        mt[+m[1]]={tier:t?+t[1]:undefined, hp:h?+h[1]:undefined, cat:c?+c[1]:undefined}; }
+      n++;
+    }catch{}
   }
   if(n){ SHAPES=out; NAMES=nm; META=mt; }
   return n;
@@ -216,7 +224,7 @@ function transformOffset(dx,dy,orient,mirror){
 }
 function fillTypeSelect(){
   const sel=document.getElementById('bTypeSel'); if(!sel) return;
-  sel.innerHTML=Object.keys(NAMES).map(k=>`<option value="${k}">${k}: ${NAMES[k]} (${SHAPES[k].length} tiles${META[k]?', tier '+META[k].tier:''})</option>`).join('');
+  sel.innerHTML=Object.keys(NAMES).map(k=>`<option value="${k}">${k}: ${NAMES[k]} (${SHAPES[k].length} tiles${META[k]&&META[k].tier!==undefined?', tier '+META[k].tier:''}, HP ${typeHp(k)})</option>`).join('');
   sel.onchange=()=>{document.getElementById('bTypeId').value=sel.value; draw();};
   sel.value=document.getElementById('bTypeId').value;
 }
@@ -296,6 +304,10 @@ function checkPlacement(){
   const o=document.getElementById('chkOut'); if(o) o.textContent=msgs.length?[...new Set(msgs)].slice(0,12).join('\n')+(msgs.length>12?'\n...':''):'No problems found (water/nature/overlap/bounds).';
   draw();
 }
+function setAllHpToDefault(){
+  pushUndo(); for(const b of data.buildings) b.health=typeHp(b.type);
+  draw(); maybeLiveUpdate();
+}
 function clearNatureUnderBuildings(){
   pushUndo(); for(const b of data.buildings) for(const [x,y] of buildingFootprint(b)) if(x>=0&&y>=0&&x<SIDE&&y<SIDE) data.nature[cell(x,y)]=-1;
   problems=[]; draw(); maybeLiveUpdate();
@@ -364,7 +376,7 @@ function buildToolOptions(){
     (tool==='spray'?'<br>Radius <input id="sprayRadius" type="number" value="3" min="1" max="15" style="width:44px"> Density <input id="sprayDensity" type="number" value="35" min="1" max="100" style="width:44px">%':'')+
     '<div style="display:flex;gap:4px;margin-top:8px"><button class="action ghost" id="oUndo">Undo</button><button class="action ghost" id="oRedo">Redo</button></div>'+
     '<label style="margin-top:6px;display:block"><input type="checkbox" id="oYup" '+(yUp?'checked':'')+'> Game orientation (Y up)</label>'+
-    '<div style="margin-top:8px;opacity:.7">Placement check:</div><div style="display:flex;gap:4px"><button class="action ghost" id="oCheck">Check buildings</button><button class="action ghost" id="oClrNat">Clear nature under buildings</button></div><pre id="chkOut" style="white-space:pre-wrap;font-size:.65rem;margin:4px 0"></pre>'+
+    '<div style="margin-top:8px;opacity:.7">Placement check:</div><div style="display:flex;gap:4px"><button class="action ghost" id="oCheck">Check buildings</button><button class="action ghost" id="oClrNat">Clear nature under buildings</button></div><div style=\"margin-top:4px\"><button class=\"action ghost\" id=\"oHp\">Set all HP to type default</button></div><pre id="chkOut" style="white-space:pre-wrap;font-size:.65rem;margin:4px 0"></pre>'+
     '<div style="margin-top:8px;opacity:.7">Whole-island (ground):</div>'+
     '<div style="display:flex;flex-wrap:wrap;gap:4px"><button class="action ghost" id="oOutline">Outline coast</button><button class="action ghost" id="oGrow">Grow</button><button class="action ghost" id="oShrink">Shrink</button></div>'+
     '<div style="margin-top:6px;opacity:.6">Ctrl+Z / Ctrl+Y undo/redo. Right-click = pick tile (or remove building). Outline coast / Grow use the selected ground brush.</div>';
@@ -372,7 +384,7 @@ function buildToolOptions(){
   if(g('oFill')) g('oFill').onchange=e=>fillShapes=e.target.checked;
   g('oSize').onchange=e=>bs=Math.max(1,Math.min(9,+e.target.value||1));
   g('oSymX').onchange=e=>symX=e.target.checked; g('oSymY').onchange=e=>symY=e.target.checked;
-  g('oYup').onchange=e=>{yUp=e.target.checked; draw();}; g('oCheck').onclick=checkPlacement; g('oClrNat').onclick=clearNatureUnderBuildings;
+  g('oYup').onchange=e=>{yUp=e.target.checked; draw();}; g('oCheck').onclick=checkPlacement; g('oClrNat').onclick=clearNatureUnderBuildings; g('oHp').onclick=setAllHpToDefault;
   g('oUndo').onclick=undo; g('oRedo').onclick=redo;
   g('oOutline').onclick=()=>morph('outline'); g('oGrow').onclick=()=>morph('grow'); g('oShrink').onclick=()=>morph('shrink');
 }
@@ -477,7 +489,7 @@ function pointerDown(clientX,clientY){
     if(idx>=0) data.buildings.splice(idx,1);
     else{
       const g=curBuilding(x,y);
-      data.buildings.push({type:g.type,x,y,orient:g.orient,mirror:g.mirror,health:100,disaster:null,turn:0});
+      data.buildings.push({type:g.type,x,y,orient:g.orient,mirror:g.mirror,health:typeHp(g.type),disaster:null,turn:0});
     }
     draw(); maybeLiveUpdate(); return;
   }
