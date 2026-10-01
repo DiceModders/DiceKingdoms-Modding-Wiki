@@ -40,5 +40,3 @@ nav:
     - Buildings: game-architecture/buildings.md
   - Reference:
     - Internals Reference: reference/internals.md
-  - Tools:
-    - Island Editor: tools/island-editor.md
