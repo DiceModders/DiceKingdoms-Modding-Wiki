@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Island Editor</title>
+<style>
+:root{
+  --sand:#e8d5a8; --sand-dk:#c9ae74; --water:#1f6f8b; --water-lt:#3a95b5;
+  --ink:#1c2b2f; --paper:#f6efdd; --line:#00000022; --accent:#c1572b;
+  --panel-bg:#efe4c8; --accent-dim:#c1572b2a;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --paper:#1b1712; --ink:#ecdfc4; --line:#ffffff22; --panel-bg:#241f18; --accent-dim:#c1572b40; }
+}
+:root[data-theme="dark"]{ --paper:#1b1712; --ink:#ecdfc4; --line:#ffffff22; --panel-bg:#241f18; --accent-dim:#c1572b40; }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;
+  display:flex; flex-direction:column; align-items:center; gap:14px; padding:20px 14px 32px;
+}
+h1{font-family:Georgia,serif; font-weight:700; font-size:1.4rem; margin:4px 0 0; letter-spacing:.02em}
+.sub{opacity:.65; font-size:.85rem; margin-top:-6px; text-align:center; max-width:520px}
+.wrap{display:flex; flex-wrap:wrap; gap:20px; justify-content:center; width:100%; max-width:980px}
+.panel{
+  background:var(--panel-bg);
+  border:1px solid var(--line); border-radius:10px; padding:14px; flex:1 1 260px; min-width:230px;
+}
+.panel h2{font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; margin:0 0 10px; opacity:.7; font-family:Georgia,serif}
+.tiles{display:grid; grid-template-columns:repeat(auto-fill,minmax(78px,1fr)); gap:6px}
+.tile-btn{
+  display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:7px; border:1px solid var(--line);
+  background:transparent; color:var(--ink); font-size:.78rem; cursor:pointer; font-family:inherit;
+}
+.tile-btn.active{outline:2px solid var(--accent); background:var(--accent-dim)}
+.swatch{width:15px; height:15px; border-radius:3px; flex:none; border:1px solid var(--line)}
+canvas{border-radius:8px; border:1px solid var(--line); touch-action:none; max-width:100%; display:block}
+.canvasWrap{display:flex; flex-direction:column; align-items:center; gap:8px; flex:2 1 480px; min-width:300px}
+.row{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+button.action{
+  font-family:inherit; font-size:.82rem; padding:8px 14px; border-radius:7px; border:1px solid var(--line);
+  background:var(--accent); color:#fff8ee; cursor:pointer;
+}
+button.action.ghost{background:transparent; color:var(--ink)}
+textarea{
+  width:100%; min-height:70px; font-family:ui-monospace,Menlo,monospace; font-size:.72rem;
+  background:transparent; color:var(--ink); border:1px solid var(--line); border-radius:7px; padding:8px; resize:vertical;
+}
+.status{font-size:.75rem; min-height:1.1em; opacity:.85}
+.legend{font-size:.72rem; opacity:.6; margin-top:6px; text-align:center}
+</style>
+</head>
+<body>
+<h1>Island Editor</h1>
+<div class="sub">Paints the same ground &amp; nature layers the game saves. Paste a code to load it, paint, then copy the new code back into DiceMod's clipboard-based Load hotkey.</div>
+
+<div class="wrap">
+  <div class="panel" style="flex-basis:220px">
+    <h2>Layer</h2>
+    <div class="tiles" id="layerTabs"></div>
+    <h2 style="margin-top:14px">Brush</h2>
+    <div class="tiles" id="palette"></div>
+  </div>
+
+  <div class="panel" style="flex-basis:150px">
+    <h2>Tools</h2>
+    <div class="tiles" id="toolTabs" style="grid-template-columns:1fr"></div>
+    <div id="toolOptions" style="font-size:.75rem; margin-top:10px"></div>
+  </div>
+
+  <div class="canvasWrap">
+    <canvas id="cv" width="686" height="686"></canvas>
+    <div class="row">
+      <button class="action ghost" id="btnNew">New blank island</button>
+      <button class="action ghost" id="btnLoad">Load code below</button>
+      <button class="action" id="btnGet">Get code</button>
+      <label style="font-size:.8rem; display:flex; align-items:center; gap:5px">
+        <input type="checkbox" id="chkLive"> Live-update code while drawing
+      </label>
+    </div>
+    <div class="status" id="status">Paint tools ready. Load a code or start a blank island.</div>
+    <div class="status" id="fatal" style="color:#c1572b; font-weight:700; white-space:pre-wrap"></div>
+  </div>
+
+  <div class="panel" style="flex-basis:260px">
+    <h2>Code</h2>
+    <textarea id="code" placeholder="Paste an island code here, or click &quot;Get code&quot; to fill this in..."></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="action ghost" id="btnCopy">Copy</button>
+      <button class="action ghost" id="btnPaste">Paste from clipboard</button>
+    </div>
+    <div class="legend">Buildings, remains and inner cliffs are kept as-is (shown as markers) — this editor only paints ground &amp; nature.</div>
+  </div>
+
+  <div class="panel" style="flex-basis:100%">
+    <h2>Decoded text (readable, editable JSON)</h2>
+    <textarea id="jsonView" style="min-height:160px" placeholder="Load a code above, then click &quot;Refresh from grid&quot;."></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="action ghost" id="btnToJson">Refresh from grid</button>
+      <button class="action" id="btnFromJson">Apply text -&gt; grid</button>
+    </div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('error', e => {
+  const f = document.getElementById('fatal');
+  if (f) f.textContent = 'Script error: ' + e.message + (e.filename ? ' (line ' + e.lineno + ')' : '');
+});
+try {
+// ---------- island code core (matches DiceMod's island_tool.py exactly) ----------
+const GROUND = ['WATER','WATER_ROCK','GRASS','SAND','INNER_CLIFF','METEORITE','PIER'];
+const GCOLOR = ['#1f6f8b','#5b6b73','#4a8f3c','#e8d5a8','#8a7a63','#9a9a9a','#b98a4d'];
+const NATURE = {'-1':'none',0:'TREE',1:'ROCK',2:'SCORCHED_EARTH',3:'LAVA',4:'FLOWER',5:'FISH'};
+const NCOLOR = {'-1':null,0:'#1c5e2a',1:'#6b6b6b',2:'#5a3d1f',3:'#c1572b',4:'#d43f7a',5:'#2ea3c7'};
+
+class Reader{constructor(b){this.b=b;this.p=0}
+  byte(){if(this.p>=this.b.length)throw new Error('unexpected end');return this.b[this.p++]}
+  u64(){const b=this.byte();if(b<=0xF0)return b;if(b<0xF9)return(b*256-0xF010)+this.byte();
+    if(b===0xF9){const hi=this.byte(),lo=this.byte();return hi*256+lo+0x8F0}
+    const n=b-0xF7;let v=0,m=1;for(let i=0;i<n;i++){v+=this.byte()*m;m*=256}return v}
+  i32(){const x=this.u64();return x%2===0?x/2:-(x+1)/2}}
+class Writer{constructor(){this.a=[]}
+  u64(v){if(v<=0xF0)this.a.push(v);
+    else if(v<=2287){v-=0xF0;this.a.push(Math.floor(v/256)+0xF1,v%256)}
+    else if(v<=67823){v-=0x8F0;this.a.push(0xF9,Math.floor(v/256),v%256)}
+    else{const n=Math.max(3,Math.ceil(v.toString(2).length/8));this.a.push(0xF7+n);
+      for(let i=0;i<n;i++){this.a.push(v%256);v=Math.floor(v/256)}}}
+  i32(v){this.u64(v>=0?v*2:-v*2-1)}
+  bytes(){return Uint8Array.from(this.a)}}
+
+function parse(raw){
+  const r=new Reader(raw);
+  const readBuildings=()=>{const n=r.i32(),out=[];if(n<0||n>100000)throw new Error('bad count');
+    for(let i=0;i<n;i++){const b={type:r.i32(),x:r.i32(),y:r.i32(),orient:r.i32(),mirror:r.i32(),health:r.i32()};
+      b.disaster=r.u64()?r.u64():null; b.turn=r.i32(); out.push(b)} return out};
+  const readRle=()=>{const total=r.i32(),vals=[];if(total<0||total>4000000)throw new Error('bad len');
+    while(vals.length<total){const n=r.i32(),v=r.i32();if(n<=0)throw new Error('bad run');
+      for(let i=0;i<n;i++)vals.push(v)} return vals};
+  const d={buildings:readBuildings(),remains:readBuildings(),ground:readRle(),nature:readRle(),cliffs:[]};
+  const nc=r.i32();
+  for(let i=0;i<nc;i++){const c=r.i32(),a=r.i32(),b=r.i32();
+    d.cliffs.push({key:[a,b,c],x:r.i32(),y:r.i32(),orient:r.i32(),mirror:r.i32()})}
+  d.consumed=r.p; d.total=raw.length; return d;
+}
+function encode(d){
+  const w=new Writer();
+  for(const list of [d.buildings,d.remains]){w.i32(list.length);
+    for(const b of list){w.i32(b.type);w.i32(b.x);w.i32(b.y);w.i32(b.orient);w.i32(b.mirror);w.i32(b.health);
+      if(b.disaster===null||b.disaster===undefined)w.u64(0);else{w.u64(1);w.u64(b.disaster)} w.i32(b.turn)}}
+  for(const arr of [d.ground,d.nature]){w.i32(arr.length);let i=0;
+    while(i<arr.length){let j=i;while(j<arr.length&&arr[j]===arr[i])j++;w.i32(j-i);w.i32(arr[i]);i=j}}
+  w.i32(d.cliffs.length);
+  for(const c of d.cliffs){const[a,b,cc]=c.key;for(const v of[cc,a,b,c.x,c.y,c.orient,c.mirror])w.i32(v)}
+  return w.bytes();
+}
+async function pipe(bytes,stream){const w=stream.writable.getWriter();w.write(bytes);w.close();
+  return new Uint8Array(await new Response(stream.readable).arrayBuffer())}
+const inflateRaw=b=>pipe(b,new DecompressionStream('deflate-raw'));
+const deflateRaw=b=>pipe(b,new CompressionStream('deflate-raw'));
+const b64ToBytes=s=>Uint8Array.from(atob(s.replace(/\s+/g,'')),c=>c.charCodeAt(0));
+function bytesToB64(b){let s='';for(let i=0;i<b.length;i+=8192)s+=String.fromCharCode.apply(null,b.subarray(i,i+8192));return btoa(s)}
+
+// ---------- editor state ----------
+if (typeof DecompressionStream === 'undefined' || typeof CompressionStream === 'undefined') {
+  document.getElementById('fatal').textContent =
+    'This browser has no CompressionStream/DecompressionStream support (needed to read/write island codes). Try a recent Chrome or Edge.';
+}
+let SIDE=49, data=null;
+let SHAPES={}, NAMES={}, META={}, hov=null; // typeId -> [[dx,dy],...]
+const DEFAULT_DUMP=`0: Archery Range [[0,0],[-1,0],[0,-1],[-1,-1],[-1,-2]]
+1: Barracks [[-1,1],[0,1],[0,0],[0,-1],[1,0],[1,-1]]
+2: Castle [[-1,-1],[-1,0],[-1,1],[-1,2],[0,-1],[0,0],[0,1],[0,2],[1,-1],[1,0],[1,1],[1,2],[2,-1],[2,0],[2,1],[2,2]]
+3: Cathedral [[1,0],[0,0],[-1,0],[-2,0],[0,1],[0,-1]]
+4: Church [[0,0],[-1,0],[-2,0]]
+5: Cottage [[0,0],[0,1]]
+6: Dock [[0,0],[1,0],[2,0],[2,1],[3,0],[3,1],[4,-1],[4,0],[4,1],[5,-1],[5,0],[5,1]]
+7: Farm [[0,1],[0,0],[0,-1],[0,-2],[1,1],[1,0],[1,-1],[1,-2]]
+8: Guard Tower [[0,0],[-1,0],[0,-1],[-1,-1]]
+9: Guard Tower Up [[0,0],[-1,0],[0,-1],[-1,-1]]
+10: Hospital [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
+11: House [[0,0],[-1,0],[0,-1]]
+12: Lumber Camp [[0,0],[-1,0],[-1,1],[-2,1]]
+13: Market [[0,0],[1,0],[1,1],[0,1]]
+14: Sorcerer Tower [[0,0],[1,0],[0,1]]
+15: Stone Quarry [[0,0],[0,1],[1,0]]
+16: Storage [[0,0],[1,0],[0,-1],[1,-1],[0,1],[1,1]]
+17: University [[0,1],[0,0],[0,-1],[1,1],[1,-1],[2,1],[2,-1]]
+18: Wall [[0,0]]
+19: Windmill [[0,0],[-1,0],[-1,1],[0,1]]
+20: Wonder [[3,-1],[3,0],[3,1],[2,-1],[2,0],[2,1],[1,-1],[1,0],[1,1],[0,-1],[0,0],[0,1],[-1,-1],[-1,0],[-1,1]]
+21: Fishing Ship [[0,0],[0,1]]
+22: Lighthouse [[0,0],[-1,0],[0,-1],[-1,-1]]
+23: Land Camp [[0,0],[1,1],[0,1],[-1,1]]`;
+let fillShapes=true, bs=1, symX=false, symY=false, undoS=[], redoS=[];
+function ingestShapes(txt){
+  const out={}, nm={}, mt={}; let n=0;
+  for(const line of txt.split('\n')){
+    const m=line.match(/^\s*(\d+)\s*:\s*(.*?)\s*(?:\|\s*tier=(-?\d+)\s+cat=(-?\d+)\s*\|\s*)?(\[.*\])\s*$/);
+    if(!m) continue;
+    try{ out[+m[1]]=JSON.parse(m[5]); nm[+m[1]]=m[2]; if(m[3]!==undefined) mt[+m[1]]={tier:+m[3],cat:+m[4]}; n++; }catch{}
+  }
+  if(n){ SHAPES=out; NAMES=nm; META=mt; }
+  return n;
+}
+(function(){ let t=null; try{ t=localStorage.getItem('dkShapes'); }catch{} if(!(t&&ingestShapes(t))) ingestShapes(DEFAULT_DUMP); })();
+function orientCosSin(o){ switch(((o%4)+4)%4){ case 0:return[1,0]; case 1:return[0,1]; case 2:return[-1,0]; default:return[0,-1]; } }
+function transformOffset(dx,dy,orient,mirror){
+  const [c,sn]=orientCosSin(orient);
+  let nx=dx*c-dy*sn, ny=dx*sn+dy*c;
+  if(mirror) nx=-nx;
+  return [nx,ny];
+}
+function fillTypeSelect(){
+  const sel=document.getElementById('bTypeSel'); if(!sel) return;
+  sel.innerHTML=Object.keys(NAMES).map(k=>`<option value="${k}">${k}: ${NAMES[k]} (${SHAPES[k].length} tiles${META[k]?', tier '+META[k].tier:''})</option>`).join('');
+  sel.onchange=()=>{document.getElementById('bTypeId').value=sel.value; draw();};
+  sel.value=document.getElementById('bTypeId').value;
+}
+function curBuilding(x,y){
+  return {type:parseInt(document.getElementById('bTypeId')?.value??'0',10)||0,x,y,
+    orient:parseInt(document.getElementById('bOrient')?.value??'0',10)||0,
+    mirror:document.getElementById('bMirror')?.checked?1:0};
+}
+function hitBuilding(x,y){
+  return data.buildings.findIndex(b=>buildingFootprint(b).some(([fx,fy])=>fx===x&&fy===y));
+}
+function buildingFootprint(b){
+  const shape=SHAPES[b.type];
+  if(!shape || !shape.length) return [[b.x,b.y]];
+  return shape.map(([dx,dy])=>{ const [ox,oy]=transformOffset(dx,dy,b.orient,b.mirror?1:0); return [b.x+ox,b.y+oy]; });
+}
+function parseShapeData(){
+  const txt=document.getElementById('shapeData').value, n=ingestShapes(txt);
+  if(n){ try{localStorage.setItem('dkShapes',txt);}catch{} fillTypeSelect(); }
+  document.getElementById('shapeStatus').textContent=n?`Loaded ${n} building types (saved in this browser).`:'No valid lines found.';
+  draw();
+}
+let layer='ground', brush=2; // default brush: GRASS
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const statusEl=document.getElementById('status'), codeEl=document.getElementById('code');
+
+function blank(side){
+  const n=side*side;
+  return {buildings:[],remains:[],ground:new Array(n).fill(0),nature:new Array(n).fill(-1),cliffs:[]};
+}
+function cell(x,y){return y*SIDE+x}
+
+let yUp=true, problems=[], showLimit=true;
+const LIM_DEFAULT=22, LIM_MOD=24; // IslandGeneration HardLimit.radius: game default / value DiceMod sets
+const dist=(x,y)=>Math.hypot(x-(SIDE-1)/2,y-(SIDE-1)/2);
+function draw(){
+  const cs=cv.width/SIDE;
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
+  if(yUp) ctx.setTransform(1,0,0,-1,0,cv.height); // game orientation: grid y increases upward
+  for(let y=0;y<SIDE;y++)for(let x=0;x<SIDE;x++){
+    const g=data.ground[cell(x,y)];
+    ctx.fillStyle=GCOLOR[g]||'#000';
+    ctx.fillRect(x*cs,y*cs,cs+0.6,cs+0.6);
+    const nv=data.nature[cell(x,y)];
+    if(nv!==-1){
+      ctx.fillStyle=NCOLOR[nv];
+      ctx.beginPath(); ctx.arc(x*cs+cs/2,y*cs+cs/2,cs*0.28,0,7); ctx.fill();
+    }
+  }
+  for(const b of data.buildings){
+    ctx.fillStyle=`hsla(${(b.type*47)%360},70%,35%,0.75)`;
+    for(const [fx,fy] of buildingFootprint(b)) ctx.fillRect(fx*cs+cs*0.08,fy*cs+cs*0.08,cs*0.84,cs*0.84);
+    ctx.fillStyle='#ffffffcc'; ctx.fillRect(b.x*cs+cs*0.35,b.y*cs+cs*0.35,cs*0.3,cs*0.3); // anchor marker
+    if(NAMES[b.type]){ ctx.font=Math.max(8,cs*0.45)+'px sans-serif'; ctx.save(); ctx.translate(b.x*cs,b.y*cs+cs*0.3); if(yUp) ctx.scale(1,-1); ctx.fillText(NAMES[b.type].slice(0,7),0,0); ctx.restore(); }
+  }
+  if(layer==='buildings' && hov){
+    const g=curBuilding(hov[0],hov[1]); ctx.fillStyle='#ffff0088';
+    for(const [fx,fy] of buildingFootprint(g)) ctx.fillRect(fx*cs+cs*0.08,fy*cs+cs*0.08,cs*0.84,cs*0.84);
+  }
+  ctx.fillStyle='#00000099';
+  ctx.strokeStyle='#00000099';
+  for(const r of data.remains){ for(const [fx,fy] of buildingFootprint(r)) ctx.strokeRect(fx*cs+cs*0.15,fy*cs+cs*0.15,cs*0.7,cs*0.7); }
+  if(showLimit){ ctx.lineWidth=2; const c=SIDE/2*cs;
+    for(const [r,col] of [[LIM_DEFAULT,'#ffffffcc'],[LIM_MOD,'#ffcc00cc']]){ ctx.strokeStyle=col; ctx.setLineDash([6,5]); ctx.beginPath(); ctx.arc(c,c,(r+0.5)*cs,0,7); ctx.stroke(); }
+    ctx.setLineDash([]); }
+  ctx.strokeStyle='#ff2222'; ctx.lineWidth=2;
+  for(const p of problems) ctx.strokeRect(p[0]*cs+1,p[1]*cs+1,cs-2,cs-2);
+  ctx.lineWidth=1; ctx.setTransform(1,0,0,1,0,0);
+}
+function checkPlacement(){
+  problems=[]; const occ=new Map(), msgs=[];
+  data.buildings.forEach((b,i)=>{
+    for(const [x,y] of buildingFootprint(b)){
+      const nm=NAMES[b.type]||('type '+b.type), k=x+','+y;
+      if(x<0||y<0||x>=SIDE||y>=SIDE){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': outside island'); continue; }
+      if(data.nature[cell(x,y)]!==-1){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': nature on tile '+x+','+y); }
+      const dd=dist(x,y);
+      if(dd>LIM_MOD+0.5){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': beyond island radius '+LIM_MOD); }
+      else if(dd>LIM_DEFAULT+0.5){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': beyond default radius '+LIM_DEFAULT+' (only OK if the mod raised it to '+LIM_MOD+')'); }
+      const g=data.ground[cell(x,y)]; if(g===0||g===1){ if(![6,21,22].includes(b.type)){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': water at '+x+','+y); } }
+      if(occ.has(k)&&occ.get(k)!==i){ problems.push([x,y]); msgs.push(nm+' @'+b.x+','+b.y+': overlaps '+(NAMES[data.buildings[occ.get(k)].type]||'building')+' at '+x+','+y); }
+      occ.set(k,i);
+    }
+  });
+  const o=document.getElementById('chkOut'); if(o) o.textContent=msgs.length?[...new Set(msgs)].slice(0,12).join('\n')+(msgs.length>12?'\n...':''):'No problems found (water/nature/overlap/bounds).';
+  draw();
+}
+function clearNatureUnderBuildings(){
+  pushUndo(); for(const b of data.buildings) for(const [x,y] of buildingFootprint(b)) if(x>=0&&y>=0&&x<SIDE&&y<SIDE) data.nature[cell(x,y)]=-1;
+  problems=[]; draw(); maybeLiveUpdate();
+}
+
+function buildPalette(){
+  const layerTabs=document.getElementById('layerTabs');
+  layerTabs.innerHTML='';
+  [['ground','Ground'],['nature','Nature'],['buildings','Buildings']].forEach(([id,label])=>{
+    const b=document.createElement('button'); b.className='tile-btn'+(layer===id?' active':'');
+    b.textContent=label; b.onclick=()=>{layer=id; brush=id==='ground'?2:(id==='nature'?0:1); buildPalette()};
+    layerTabs.appendChild(b);
+  });
+  const pal=document.getElementById('palette'); pal.innerHTML='';
+  if (layer==='buildings') {
+    pal.innerHTML =
+      '<div style="font-size:.75rem; opacity:.8; line-height:1.5">Click an empty tile to place, an existing one to remove.</div>' +
+      '<div style="margin-top:8px; display:flex; flex-direction:column; gap:6px; font-size:.75rem">' +
+      '<select id="bTypeSel" style="width:100%; font-family:inherit"></select>' +
+      '<label>Type ID <input id="bTypeId" type="number" value="0" min="0" style="width:56px; font-family:inherit"></label>' +
+      '<label>Orient (0-3) <input id="bOrient" type="number" value="0" min="0" max="3" style="width:44px; font-family:inherit"></label>' +
+      '<label><input id="bMirror" type="checkbox"> Mirrored</label>' +
+      '<div style="display:flex;gap:4px"><button class="action ghost" onclick="rotateBrush(1)">Rotate (R)</button><button class="action ghost" onclick="toggleMirror()">Mirror (M)</button></div>' +
+      '</div>' +
+      '<h2 style="margin-top:12px">Building shapes</h2>' +
+      '<div style="font-size:.7rem; opacity:.7">Shapes are built in. Only re-load DiceMod_buildings.txt (made by the mod) after a game update; it also adds tiers. Hover shows a yellow preview; <b>R</b> rotates (Shift+R back), <b>M</b> or <b>F</b> mirrors, right-click removes, click places, click any tile of a building to remove it.</div>' +
+      '<input type="file" id="shapeFile" accept=".txt" style="font-size:.7rem; margin-top:4px">' +
+      '<textarea id="shapeData" style="min-height:80px; font-size:.65rem; margin-top:4px" placeholder="0: Lighthouse [[0,0],[1,0]]\n1: Dock [[0,0]]\n..."></textarea>' +
+      '<button class="action ghost" id="btnParseShapes" style="margin-top:6px; width:100%">Parse shapes</button>' +
+      '<div id="shapeStatus" style="font-size:.7rem; opacity:.7; margin-top:4px"></div>';
+    document.getElementById('btnParseShapes').onclick=parseShapeData;
+    document.getElementById('shapeFile').onchange=async e=>{const f=e.target.files[0]; if(f){document.getElementById('shapeData').value=await f.text(); parseShapeData();}};
+    try{const sv=localStorage.getItem('dkShapes'); if(sv && !Object.keys(NAMES).length){document.getElementById('shapeData').value=sv; parseShapeData();}}catch{}
+    fillTypeSelect();
+    return;
+  }
+  const entries = layer==='ground'
+    ? GROUND.map((n,i)=>[i,n,GCOLOR[i]])
+    : [[-1,'none','#888'],...Object.entries(NATURE).filter(([k])=>k!=='-1').map(([k,n])=>[+k,n,NCOLOR[k]])];
+  for(const [val,name,color] of entries){
+    const b=document.createElement('button'); b.className='tile-btn'+(brush===val?' active':'');
+    b.innerHTML=`<span class="swatch" style="background:${color}"></span>${name}`;
+    b.onclick=()=>{brush=val; buildPalette()};
+    pal.appendChild(b);
+  }
+}
+
+let tool='point'; // point | fill | line | rect | square | circle | spray
+const TOOLS=[['point','Point'],['fill','Fill'],['line','Line'],['rect','Rectangle'],['square','Square'],['circle','Circle'],['oval','Oval (box)'],['spray','Spray']];
+
+function buildToolTabs(){
+  const t=document.getElementById('toolTabs'); t.innerHTML='';
+  for(const [id,label] of TOOLS){
+    const b=document.createElement('button'); b.className='tile-btn'+(tool===id?' active':'');
+    b.style.justifyContent='flex-start';
+    b.textContent=label; b.onclick=()=>{tool=id; buildToolTabs(); buildToolOptions()};
+    t.appendChild(b);
+  }
+}
+function buildToolOptions(){
+  const o=document.getElementById('toolOptions'), shp=['rect','square','circle','oval'].includes(tool);
+  o.innerHTML=(shp?'<label><input type="checkbox" id="oFill" '+(fillShapes?'checked':'')+'> Filled (untick = outline only)</label><br>':'')+
+    '<label>Size / line width <input id="oSize" type="number" min="1" max="9" value="'+bs+'" style="width:44px"></label><br>'+
+    '<label><input type="checkbox" id="oSymX" '+(symX?'checked':'')+'> Symmetry left-right</label><br>'+
+    '<label><input type="checkbox" id="oSymY" '+(symY?'checked':'')+'> Symmetry top-bottom</label>'+
+    (tool==='spray'?'<br>Radius <input id="sprayRadius" type="number" value="3" min="1" max="15" style="width:44px"> Density <input id="sprayDensity" type="number" value="35" min="1" max="100" style="width:44px">%':'')+
+    '<div style="display:flex;gap:4px;margin-top:8px"><button class="action ghost" id="oUndo">Undo</button><button class="action ghost" id="oRedo">Redo</button></div>'+
+    '<label style="margin-top:6px;display:block"><input type="checkbox" id="oYup" '+(yUp?'checked':'')+'> Game orientation (Y up)</label>'+
+    '<label style="display:block"><input type="checkbox" id="oLim" '+(showLimit?'checked':'')+'> Show island limit circles (white 22 = default, yellow 24 = mod)</label>'+
+    '<div style="margin-top:8px;opacity:.7">Placement check:</div><div style="display:flex;gap:4px"><button class="action ghost" id="oCheck">Check buildings</button><button class="action ghost" id="oClrNat">Clear nature under buildings</button></div><pre id="chkOut" style="white-space:pre-wrap;font-size:.65rem;margin:4px 0"></pre>'+
+    '<div style="margin-top:8px;opacity:.7">Whole-island (ground):</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:4px"><button class="action ghost" id="oOutline">Outline coast</button><button class="action ghost" id="oGrow">Grow</button><button class="action ghost" id="oShrink">Shrink</button></div>'+
+    '<div style="margin-top:6px;opacity:.6">Ctrl+Z / Ctrl+Y undo/redo. Right-click = pick tile (or remove building). Outline coast / Grow use the selected ground brush.</div>';
+  const g=id=>document.getElementById(id);
+  if(g('oFill')) g('oFill').onchange=e=>fillShapes=e.target.checked;
+  g('oSize').onchange=e=>bs=Math.max(1,Math.min(9,+e.target.value||1));
+  g('oSymX').onchange=e=>symX=e.target.checked; g('oSymY').onchange=e=>symY=e.target.checked;
+  g('oYup').onchange=e=>{yUp=e.target.checked; draw();}; g('oLim').onchange=e=>{showLimit=e.target.checked; draw();}; g('oCheck').onclick=checkPlacement; g('oClrNat').onclick=clearNatureUnderBuildings;
+  g('oUndo').onclick=undo; g('oRedo').onclick=redo;
+  g('oOutline').onclick=()=>morph('outline'); g('oGrow').onclick=()=>morph('grow'); g('oShrink').onclick=()=>morph('shrink');
+}
+
+function put(x,y){
+  const pts=[[x,y]]; if(symX) pts.push([SIDE-1-x,y]); if(symY) pts.push([x,SIDE-1-y]); if(symX&&symY) pts.push([SIDE-1-x,SIDE-1-y]);
+  for(const [px,py] of pts) if(px>=0&&py>=0&&px<SIDE&&py<SIDE) data[layer][cell(px,py)]=brush;
+}
+function setPixel(x,y){ // stamp with brush size bs
+  const r=bs-1; if(r<=0){ put(x,y); return; }
+  for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++) if(dx*dx+dy*dy<=r*r+r*0.5) put(x+dx,y+dy);
+}
+function snap(){ return {ground:data.ground.slice(),nature:data.nature.slice(),buildings:JSON.parse(JSON.stringify(data.buildings)),remains:data.remains,cliffs:data.cliffs}; }
+function pushUndo(){ undoS.push(snap()); if(undoS.length>60) undoS.shift(); redoS=[]; }
+function applySnap(sn){ data.ground=sn.ground; data.nature=sn.nature; data.buildings=sn.buildings; draw(); maybeLiveUpdate(); }
+function undo(){ if(!undoS.length) return; redoS.push(snap()); applySnap(undoS.pop()); }
+function redo(){ if(!redoS.length) return; undoS.push(snap()); applySnap(redoS.pop()); }
+const isLand=g=>g!==0&&g!==1;
+function neigh4(x,y,f){ return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{const a=x+dx,b=y+dy; return a>=0&&b>=0&&a<SIDE&&b<SIDE&&f(data.ground[cell(a,b)]);}); }
+function morph(mode){ // ground layer only
+  pushUndo(); const g=data.ground, out=g.slice();
+  for(let y=0;y<SIDE;y++)for(let x=0;x<SIDE;x++){
+    const land=isLand(g[cell(x,y)]);
+    if(mode==='outline'&&land&&neigh4(x,y,v=>!isLand(v))) out[cell(x,y)]=layer==='ground'?brush:3;
+    if(mode==='grow'&&!land&&neigh4(x,y,isLand)) out[cell(x,y)]=layer==='ground'?brush:2;
+    if(mode==='shrink'&&land&&neigh4(x,y,v=>!isLand(v))) out[cell(x,y)]=0;
+  }
+  data.ground=out; draw(); maybeLiveUpdate();
+}
+function floodFill(x0,y0){
+  const arr=data[layer], target=arr[cell(x0,y0)];
+  if(target===brush) return;
+  const stack=[[x0,y0]], seen=new Set();
+  while(stack.length){
+    const [x,y]=stack.pop();
+    if(x<0||y<0||x>=SIDE||y>=SIDE) continue;
+    const idx=cell(x,y);
+    if(seen.has(idx) || arr[idx]!==target) continue;
+    seen.add(idx); arr[idx]=brush;
+    stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+  }
+}
+function drawLine(x0,y0,x1,y1){
+  let dx=Math.abs(x1-x0), sx=x0<x1?1:-1, dy=-Math.abs(y1-y0), sy=y0<y1?1:-1, err=dx+dy;
+  while(true){
+    setPixel(x0,y0);
+    if(x0===x1 && y0===y1) break;
+    const e2=2*err;
+    if(e2>=dy){ err+=dy; x0+=sx; }
+    if(e2<=dx){ err+=dx; y0+=sy; }
+  }
+}
+function drawRect(x0,y0,x1,y1){
+  const xa=Math.min(x0,x1), xb=Math.max(x0,x1), ya=Math.min(y0,y1), yb=Math.max(y0,y1);
+  if(fillShapes){ for(let y=ya;y<=yb;y++) for(let x=xa;x<=xb;x++) put(x,y); return; }
+  drawLine(xa,ya,xb,ya); drawLine(xb,ya,xb,yb); drawLine(xb,yb,xa,yb); drawLine(xa,yb,xa,ya);
+}
+function drawSquare(x0,y0,x1,y1){
+  const s=Math.max(Math.abs(x1-x0),Math.abs(y1-y0));
+  drawRect(x0,y0,x0+(x1>=x0?s:-s),y0+(y1>=y0?s:-s));
+}
+function drawBoxEllipse(xa,ya,xb,yb){ // ellipse inscribed in the tile box, symmetric, integer cells only
+  if(xa>xb)[xa,xb]=[xb,xa]; if(ya>yb)[ya,yb]=[yb,ya];
+  const cx=(xa+xb)/2, cy=(ya+yb)/2, rx=(xb-xa+1)/2, ry=(yb-ya+1)/2;
+  const inside=(x,y)=>((x-cx)/rx)**2+((y-cy)/ry)**2<=1;
+  for(let y=ya;y<=yb;y++) for(let x=xa;x<=xb;x++){
+    if(!inside(x,y)) continue;
+    if(fillShapes){ put(x,y); continue; }
+    let edge=false;
+    for(let k=1;k<=bs&&!edge;k++) edge=!inside(x+k,y)||!inside(x-k,y)||!inside(x,y+k)||!inside(x,y-k);
+    if(edge) put(x,y);
+  }
+}
+function drawCircle(cx,cy,x1,y1){ const r=Math.round(Math.hypot(x1-cx,y1-cy)); drawBoxEllipse(cx-r,cy-r,cx+r,cy+r); }
+function drawOval(x0,y0,x1,y1){ drawBoxEllipse(x0,y0,x1,y1); }
+function spray(cx,cy){
+  const r=parseInt(document.getElementById('sprayRadius')?.value??'3',10);
+  const density=(parseInt(document.getElementById('sprayDensity')?.value??'35',10))/100;
+  for(let y=-r;y<=r;y++) for(let x=-r;x<=r;x++){
+    if(x*x+y*y<=r*r && Math.random()<density) setPixel(cx+x,cy+y);
+  }
+}
+
+let liveTimer=null;
+function maybeLiveUpdate(){
+  if(!document.getElementById('chkLive').checked) return;
+  clearTimeout(liveTimer);
+  liveTimer=setTimeout(()=>{ document.getElementById('btnGet').onclick(); }, 250);
+}
+
+let dragStart=null, baseSnapshot=null;
+function toCell(clientX,clientY){
+  const r=cv.getBoundingClientRect();
+  const x=Math.floor((clientX-r.left)/(r.width/SIDE));
+  let y=Math.floor((clientY-r.top)/(r.height/SIDE)); if(yUp) y=SIDE-1-y;
+  return [x,y];
+}
+function pointerDown(clientX,clientY){
+  const [x,y]=toCell(clientX,clientY); if(x<0||y<0||x>=SIDE||y>=SIDE) return;
+  if(layer==='buildings'){
+    const idx=hitBuilding(x,y);
+    if(idx>=0) data.buildings.splice(idx,1);
+    else{
+      const g=curBuilding(x,y);
+      data.buildings.push({type:g.type,x,y,orient:g.orient,mirror:g.mirror,health:100,disaster:null,turn:0});
+    }
+    draw(); maybeLiveUpdate(); return;
+  }
+  if(tool==='point'){ setPixel(x,y); draw(); maybeLiveUpdate(); return; }
+  if(tool==='fill'){ floodFill(x,y); draw(); maybeLiveUpdate(); return; }
+  if(tool==='spray'){ spray(x,y); draw(); maybeLiveUpdate(); return; }
+  // shape tools: remember start + a snapshot to preview against without committing early
+  dragStart=[x,y];
+  baseSnapshot=data[layer].slice();
+}
+function pointerMove(clientX,clientY){
+  if(!dragStart || layer==='buildings' || tool==='point' || tool==='fill' || tool==='spray') return;
+  const [x,y]=toCell(clientX,clientY); if(x<0||y<0||x>=SIDE||y>=SIDE) return;
+  data[layer]=baseSnapshot.slice();
+  const [sx,sy]=dragStart;
+  if(tool==='line') drawLine(sx,sy,x,y);
+  else if(tool==='rect') drawRect(sx,sy,x,y);
+  else if(tool==='square') drawSquare(sx,sy,x,y);
+  else if(tool==='circle') drawCircle(sx,sy,x,y);
+  else if(tool==='oval') drawOval(sx,sy,x,y);
+  draw();
+}
+function pointerUp(){
+  if(dragStart){ dragStart=null; baseSnapshot=null; maybeLiveUpdate(); }
+}
+let painting=false;
+cv.addEventListener('pointerdown',e=>{ if(e.button===2) return; painting=true; pushUndo(); pointerDown(e.clientX,e.clientY)});
+cv.addEventListener('contextmenu',e=>{
+  e.preventDefault(); if(!data) return;
+  const [x,y]=toCell(e.clientX,e.clientY); if(x<0||y<0||x>=SIDE||y>=SIDE) return;
+  if(layer==='buildings'){ const i=hitBuilding(x,y); if(i>=0){ pushUndo(); data.buildings.splice(i,1); draw(); maybeLiveUpdate(); } }
+  else { brush=data[layer][cell(x,y)]; buildPalette(); }
+});
+window.addEventListener('pointerup',()=>{painting=false; pointerUp();});
+cv.addEventListener('pointermove',e=>{ if(layer==='buildings'){ hov=toCell(e.clientX,e.clientY); draw(); } });
+cv.addEventListener('pointerleave',()=>{hov=null; draw();});
+function rotateBrush(step){ const o=document.getElementById('bOrient'); if(o){ o.value=((+o.value+step)%4+4)%4; draw(); } }
+function toggleMirror(){ const m=document.getElementById('bMirror'); if(m){ m.checked=!m.checked; draw(); } }
+window.addEventListener('keydown',e=>{
+  const ae=document.activeElement, typing=ae&&(ae.tagName==='TEXTAREA'||(ae.tagName==='INPUT'&&/text|number/.test(ae.type)));
+  if(typing) return;
+  const c=e.code; // physical key: works on any keyboard layout (Russian etc.)
+  if(e.ctrlKey&&c==='KeyZ'){ e.preventDefault(); undo(); return; }
+  if(e.ctrlKey&&c==='KeyY'){ e.preventDefault(); redo(); return; }
+  if(layer!=='buildings'||e.ctrlKey||e.altKey) return;
+  if(c==='KeyR'){ rotateBrush(e.shiftKey?-1:1); }
+  if(c==='KeyM'||c==='KeyF'){ toggleMirror(); }
+},true);
+cv.addEventListener('pointerenter',()=>{ const a=document.activeElement; if(a&&a!==document.body&&a.tagName!=='TEXTAREA'&&!(a.tagName==='INPUT'&&/text/.test(a.type))) a.blur(); window.focus(); });
+cv.addEventListener('pointermove',e=>{
+  if(!painting) return;
+  if(tool==='point' && layer!=='buildings'){ pointerDown(e.clientX,e.clientY); return; } // point = drag-paint like before
+  if(tool==='spray' && layer!=='buildings'){ const [x,y]=toCell(e.clientX,e.clientY); spray(x,y); draw(); return; }
+  pointerMove(e.clientX,e.clientY);
+});
+
+document.getElementById('btnNew').onclick=()=>{
+  SIDE=49; data=blank(SIDE); draw();
+  statusEl.textContent='Blank 49x49 island (all water) - paint it however you like.';
+};
+document.getElementById('btnLoad').onclick=async()=>{
+  try{
+    const raw=await inflateRaw(b64ToBytes(codeEl.value));
+    const d=parse(raw);
+    const s=Math.round(Math.sqrt(d.ground.length));
+    if(s*s!==d.ground.length) throw new Error('ground layer is not a square grid ('+d.ground.length+' tiles) - cannot display it');
+    SIDE=s; data=d; draw();
+    statusEl.textContent=`Loaded: ${SIDE}x${SIDE} grid, ${d.buildings.length} buildings, ${d.remains.length} remains, ${d.cliffs.length} cliffs. (used ${d.consumed}/${d.total} bytes)`;
+  }catch(err){ statusEl.textContent='Could not load that code: '+err.message; }
+};
+document.getElementById('btnGet').onclick=async()=>{
+  if(!data){ statusEl.textContent='Nothing to export yet - load a code or start a blank island first.'; return; }
+  try{
+    const bytes=encode(data);
+    const comp=await deflateRaw(bytes);
+    codeEl.value=bytesToB64(comp);
+    statusEl.textContent='Code updated below - copy it and use the DiceMod Load hotkey.';
+  }catch(err){ statusEl.textContent='Could not encode: '+err.message; }
+};
+document.getElementById('btnCopy').onclick=async()=>{
+  try{ await navigator.clipboard.writeText(codeEl.value); statusEl.textContent='Copied to clipboard.'; }
+  catch{ codeEl.select(); document.execCommand('copy'); statusEl.textContent='Copied (fallback method).'; }
+};
+document.getElementById('btnPaste').onclick=async()=>{
+  try{ codeEl.value=await navigator.clipboard.readText(); statusEl.textContent='Pasted from clipboard - click "Load code below".'; }
+  catch{ statusEl.textContent='Clipboard read was blocked - paste manually into the box (Ctrl+V).'; }
+};
+
+document.getElementById('btnToJson').onclick=()=>{
+  if(!data){ statusEl.textContent='Nothing loaded yet.'; return; }
+  document.getElementById('jsonView').value = JSON.stringify({
+    side: SIDE,
+    ground: data.ground.map(v=>GROUND[v]),
+    nature: data.nature.map(v=>NATURE[v]===undefined?'none':NATURE[v]),
+    buildings: data.buildings, remains: data.remains, cliffs: data.cliffs
+  }, null, 1);
+  statusEl.textContent='Decoded text refreshed from the current grid.';
+};
+document.getElementById('btnFromJson').onclick=()=>{
+  try{
+    const j=JSON.parse(document.getElementById('jsonView').value);
+    const gi=Object.fromEntries(GROUND.map((n,i)=>[n,i]));
+    const ni=Object.fromEntries(Object.entries(NATURE).map(([k,v])=>[v,+k]));
+    SIDE=j.side;
+    data={
+      ground: j.ground.map(n=>gi[n]),
+      nature: j.nature.map(n=>n==='none'?-1:ni[n]),
+      buildings: j.buildings||[], remains: j.remains||[], cliffs: j.cliffs||[]
+    };
+    draw();
+    statusEl.textContent='Grid updated from the edited text.';
+  }catch(err){ statusEl.textContent='Could not apply text: '+err.message; }
+};
+
+buildPalette();
+buildToolTabs();
+buildToolOptions();
+data=blank(SIDE);
+draw();
+} catch (err) {
+  document.getElementById('fatal').textContent = 'Script error: ' + err.message;
+  console.error(err);
+}
+</script>
+</body>
+</html>

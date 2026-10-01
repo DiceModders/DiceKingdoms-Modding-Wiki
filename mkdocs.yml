@@ -35,3 +35,10 @@ nav:
   - Game architecture:
     - Island Generation: game-architecture/island-generation.md
     - Resources: game-architecture/resources.md
+    - Island Save Format: game-architecture/island-save-format.md
+    - Island Grid: game-architecture/island-grid.md
+    - Buildings: game-architecture/buildings.md
+  - Reference:
+    - Internals Reference: reference/internals.md
+  - Tools:
+    - Island Editor: tools/island-editor.md
