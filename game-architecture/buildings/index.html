@@ -611,6 +611,45 @@
     <h1 id="buildings">Buildings</h1>
 <h2 id="buildingtype">BuildingType</h2>
 <p>Each building kind is a <code>BuildingType</code> object held in a <code>BuildingTypes</code> collection (referenced by <code>RulesBuilding</code>). The <strong>index in <code>BuildingTypes.Types</code> is the id used in save files and island codes</strong>.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingTypeName</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="p">[]</span><span class="w"> </span><span class="n">localPositions</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="p">[]</span><span class="w"> </span><span class="n">localPositionsInWater</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">HeightOverride</span><span class="p">[]</span><span class="w"> </span><span class="n">heightOverrides</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingVisual</span><span class="w"> </span><span class="n">visualPrefab</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">storageCapacity</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">cost</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">tier</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">bulkSize</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">health</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">fortification</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">garrison</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">pillageReward</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="n">remainsReward</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Opt</span><span class="o">&lt;</span><span class="n">Tower</span><span class="o">&gt;</span><span class="w"> </span><span class="n">tower</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">hasEffectDescription</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">DisplayName</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">IsBuildable</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">HasEffectDescription</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">IsWaterPosition</span><span class="p">(</span><span class="n">int2</span><span class="w"> </span><span class="n">localPosition</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float?</span><span class="w"> </span><span class="n">GetHeightOverride</span><span class="p">(</span><span class="n">int2</span><span class="w"> </span><span class="n">localPosition</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="nf">ToString</span><span class="p">();</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">virtual</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Equals</span><span class="p">(</span><span class="n">BuildingType</span><span class="w"> </span><span class="n">other</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> <code>name</code> - the type identifier from the <code>BuildingTypeName</code> enum. <code>localPositions</code> - the tiles the building occupies, in building-local coordinates. <code>localPositionsInWater</code> - footprint variant for water. <code>heightOverrides</code> - per-tile visual height overrides. <code>visualPrefab</code> - the visual prefab. <code>storageCapacity</code> - storage capacity granted by the building. <code>cost</code> - building cost. <code>tier</code> - technology tier (1–3). <code>bulkSize</code> - bulk placement size. <code>health</code> - maximum health. <code>fortification</code> / <code>garrison</code> - "fortification" and "garrison" flags. <code>pillageReward</code> / <code>remainsReward</code> - rewards for pillaging and for being reduced to remains. <code>tower</code> - optional tower data. <code>hasEffectDescription</code> - whether an effect description is shown.</p>
+<p><strong>Properties.</strong> <code>DisplayName</code> returns the localized name. <code>IsBuildable</code> determines whether the type appears in the build menu. <code>HasEffectDescription</code> wraps the field.</p>
+<p><strong>Methods.</strong> <code>IsWaterPosition</code> checks whether a local offset is a water tile for this type. <code>GetHeightOverride</code> returns the height override for a specific tile.</p>
+<div class="admonition note">
+<p class="admonition-title">Offsets are build specific</p>
+<p>Offsets and RVAs on this page come from one game build (see <a href="https://../reference/internals.md">Internals Reference</a>). Field <em>names</em> are stable; numbers may move after a game update.</p>
+</div>
 <div class="table-wrapper"><table>
 <thead>
 <tr>
@@ -655,14 +694,251 @@
 <td><code>maxHealth</code></td>
 <td><code>int</code></td>
 <td><code>0x80</code></td>
-<td>Maximum health, see <a href="#health">Health</a></td>
+<td>Maximum health, see Health</td>
 </tr>
 </tbody>
 </table></div>
-<div class="admonition note">
-<p class="admonition-title">Offsets are build specific</p>
-<p>Offsets and RVAs on this page come from one game build (see <a href="../../reference/internals/">Internals Reference</a>). Field <em>names</em> are stable; numbers may move after a game update.</p>
-</div>
+<h3 id="class-hierarchy">Class hierarchy</h3>
+<p>Not every building type is a plain <code>BuildingType</code>. The game uses a small hierarchy of subclasses to attach specialized behaviour:</p>
+<ul>
+<li>
+<p><code>BuildingType</code> (base)</p>
+<ul>
+<li>
+<p><code>BuildingTypeHousing</code> - housing (rolls a die for yield)</p>
+<ul>
+<li>
+<p><code>BuildingTypeCastle</code> - castle</p>
+</li>
+<li>
+<p>Cottage, Church, House, Barracks, Sorcerer Tower</p>
+</li>
+</ul>
+</li>
+<li>
+<p><code>BuildingTypeProducer</code> (abstract)</p>
+<ul>
+<li>
+<p><code>BuildingTypeProducerFixed</code> - Farm</p>
+</li>
+<li>
+<p><code>BuildingTypeProducerNature</code> - Lumber Camp, Stone Quarry, Fishing Ship</p>
+</li>
+<li>
+<p><code>BuildingTypeProducerAmplifier</code> - Cathedral, Windmill, Market</p>
+</li>
+</ul>
+</li>
+<li>
+<p><code>BuildingTypeDock</code> - Dock</p>
+</li>
+<li>
+<p><code>BuildingTypeHospital</code> - Hospital</p>
+</li>
+<li>
+<p><code>BuildingTypeSoldierFamily</code> - Archery Range</p>
+</li>
+<li>
+<p><code>BuildingTypeTech</code> - University</p>
+</li>
+<li>
+<p><code>BuildingTypeWonder</code> - Wonder</p>
+</li>
+<li>
+<p><code>BuildingTypeApplyModifierInRange</code> - Lighthouse</p>
+</li>
+<li>
+<p><code>BuildingTypeLandExtension</code> - Land Camp (implements <code>IBuildingTypeUpdateOnHarvest</code>)</p>
+</li>
+<li>
+<p>Plain <code>BuildingType</code>: Wall, Guard Tower, Guard Tower Up, Storage</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="specialized-types">Specialized types</h2>
+<h3 id="buildingtypehousing">BuildingTypeHousing</h3>
+<p>Residential buildings that produce a unit and yield resources via a die roll.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeHousing</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="p">[]</span><span class="w"> </span><span class="n">possibleYields</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Color</span><span class="w"> </span><span class="n">diceColor</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Unit</span><span class="p">.</span><span class="n">Type</span><span class="w"> </span><span class="n">unitType</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Dice</span><span class="w"> </span><span class="n">dicePrefab</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> <code>possibleYields</code> - possible die outcomes. <code>diceColor</code> - die color. <code>unitType</code> - the unit type produced. <code>dicePrefab</code> - die prefab.</p>
+<h3 id="buildingtypecastle">BuildingTypeCastle</h3>
+<p>Castle. Extends <code>BuildingTypeHousing</code> without adding any fields of its own.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeCastle</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingTypeHousing</span>
+<span class="p">{</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="buildingtypeproducer">BuildingTypeProducer</h3>
+<p>Abstract base class for all resource producers. Defines a single abstract method.</p>
+<p>namespace DiceKingdoms.Game;</p>
+<div class="codehilite"><pre><span></span><code><span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">abstract</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeProducer</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">abstract</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="nf">Yield</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Methods.</strong> <code>Yield</code> returns the amount of resources produced for a specific building on a specific island. Each subclass implements it differently.</p>
+<h3 id="buildingtypeproducerfixed">BuildingTypeProducerFixed</h3>
+<p>A producer with a fixed yield - for example, a farm.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeProducerFixed</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingTypeProducer</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="k">yield</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="nf">Yield</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> <code>yield</code> - always the same amount of resources, regardless of surroundings. <code>Yield</code> simply returns <code>yield</code>.</p>
+<h3 id="buildingtypeproducernature">BuildingTypeProducerNature</h3>
+<p>A producer whose yield depends on nearby nature tiles - lumber camp, stone quarry, fishing ship.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeProducerNature</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingTypeProducer</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="n">yieldResource</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">NatureTile</span><span class="w"> </span><span class="n">natureTile</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">tilesNeeded</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="n">YieldResource</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">NatureTile</span><span class="w"> </span><span class="n">NatureTile</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">TilesNeeded</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">NatureNeighborsCount</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="nf">Yield</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="nf">AverageYield</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="p">[]</span><span class="w"> </span><span class="n">buildings</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> <code>yieldResource</code> - which resource is produced. <code>natureTile</code> - which nature tile is counted. <code>tilesNeeded</code> - how many such tiles are needed for full output.</p>
+<p><strong>Methods.</strong> <code>NatureNeighborsCount</code> counts the nature tiles of the required type around the building. <code>Yield</code> multiplies that count by the base rate. <code>AverageYield</code> computes the average yield across an array of buildings - used in UI and for previews.</p>
+<h3 id="buildingtypeproduceramplifier">BuildingTypeProducerAmplifier</h3>
+<p>Amplifier - boosts the production of another building type. For example, windmill, market, cathedral.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeProducerAmplifier</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingTypeProducer</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingTypes</span><span class="w"> </span><span class="n">buildingTypes</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="n">yieldResource</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingTypeName</span><span class="w"> </span><span class="n">amplifiedBuildingTypeName</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">amplifyFactor</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">amplifyFactorProximityBonus</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="n">YieldResource</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">AmplifyFactor</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">ProximityBonus</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">AmplifiedBuildingType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">AmplifiedCount</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">AmplifiedProximityCount</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="nf">AverageAmplifiedProximityCount</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="p">[]</span><span class="w"> </span><span class="n">buildings</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="n">ResourceAmount</span><span class="w"> </span><span class="nf">Yield</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="nf">AverageFactor</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="p">[]</span><span class="w"> </span><span class="n">buildings</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> <code>buildingTypes</code> - the type registry. <code>yieldResource</code> - the resource produced. <code>amplifiedBuildingTypeName</code> - which building type is amplified. <code>amplifyFactor</code> - the base amplification factor. <code>amplifyFactorProximityBonus</code> - bonus for being near the amplified building.</p>
+<p><strong>Methods.</strong> <code>AmplifiedCount</code> counts all amplified buildings on the island. <code>AmplifiedProximityCount</code> - those within range. <code>Yield</code> combines the base factor and the proximity bonus. <code>AverageFactor</code> returns the average multiplier across an array of buildings.</p>
+<h3 id="buildingtypesoldierfamily">BuildingTypeSoldierFamily</h3>
+<p>Archery range - binds the building to a unit family.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeSoldierFamily</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Unit</span><span class="p">.</span><span class="n">Family</span><span class="w"> </span><span class="n">soldierFamily</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Unit</span><span class="p">.</span><span class="n">Family</span><span class="w"> </span><span class="n">SoldierFamily</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> <code>soldierFamily</code> - the unit family produced by the building.</p>
+<h3 id="buildingtypetech">BuildingTypeTech</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeTech</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">unlocksTier</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="buildingtypeapplymodifierinrange">BuildingTypeApplyModifierInRange</h3>
+<p>Lighthouse - applies a modifier to buildings of a specific type within range.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeApplyModifierInRange</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingType</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingTypes</span><span class="w"> </span><span class="n">buildingTypes</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">range</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingModifier</span><span class="w"> </span><span class="n">modifier</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingTypeName</span><span class="w"> </span><span class="n">affectedBuildingType</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">Range</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingModifier</span><span class="w"> </span><span class="n">Modifier</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">AffectedBuildingType</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Affects</span><span class="p">(</span><span class="n">Building</span><span class="w"> </span><span class="n">source</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">target</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">HasModifier</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">BuildingModifier</span><span class="w"> </span><span class="n">modifier</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> <code>buildingTypes</code> - the type registry. <code>range</code> - the range of effect. <code>modifier</code> - the modifier applied (see <code>BuildingModifier</code>). <code>affectedBuildingType</code> - the building type the modifier acts on.</p>
+<p><strong>Methods.</strong> <code>Affects</code> checks whether a specific target is affected by the source. <code>HasModifier</code> - a static helper: whether a building on the island has the given modifier.</p>
+<h3 id="buildingtypelandextension">BuildingTypeLandExtension</h3>
+<p>Land camp - extends land on each harvest.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="na">[Serializable]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypeLandExtension</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">BuildingType</span><span class="p">,</span><span class="w"> </span><span class="n">IBuildingTypeUpdateOnHarvest</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">range</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">tilesPerTurn</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">ApplyHarvest</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="p">[]</span><span class="w"> </span><span class="nf">AffectedPositions</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> <code>range</code> - the extension radius. <code>tilesPerTurn</code> - how many tiles are added per harvest.</p>
+<p><strong>Methods.</strong> <code>ApplyHarvest</code> is called by the engine after the harvest phase. <code>AffectedPositions</code> returns the list of tiles that will be affected.</p>
+<h3 id="ibuildingtypeupdateonharvest">IBuildingTypeUpdateOnHarvest</h3>
+<p>Interface for types that react to harvest.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="k">public</span><span class="w"> </span><span class="k">interface</span><span class="w"> </span><span class="n">IBuildingTypeUpdateOnHarvest</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">void</span><span class="w"> </span><span class="nf">ApplyHarvest</span><span class="p">(</span><span class="n">Island</span><span class="w"> </span><span class="n">island</span><span class="p">,</span><span class="w"> </span><span class="n">Building</span><span class="w"> </span><span class="n">building</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Methods.</strong> <code>ApplyHarvest</code> is called for every building of that type after the harvest phase completes.</p>
+<h2 id="heightoverride">HeightOverride</h2>
+<p>Per-tile visual height override.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">HeightOverride</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">int2</span><span class="w"> </span><span class="n">position</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">height</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> <code>position</code> - the tile's local coordinate. <code>height</code> - the visual height at that tile.</p>
+<h2 id="buildingmodifier">BuildingModifier</h2>
+<p>Modifier applied by effect buildings. Currently only one exists.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="n">BuildingModifier</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">DOUBLE_FISH</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Values.</strong> <code>DOUBLE_FISH</code> - doubles fish production for buildings within range.</p>
 <h2 id="type-ids">Type ids</h2>
 <p>Ids <code>0-20</code> are alphabetical by display name; <code>21-23</code> were added later and sit at the end. There is no in-game build menu - buildings are panels at the bottom of the screen; picking one makes it follow the cursor until you left-click.</p>
 <div class="table-wrapper"><table>
@@ -846,32 +1122,16 @@
 </tr>
 </tbody>
 </table></div>
-<h3 id="footprint-data">Footprint data</h3>
-<p>Local offsets <code>(dx, dy)</code> per type, exactly as read from <code>localPositions</code>:</p>
-<div class="codehilite"><pre><span></span><code>0: Archery Range   [[0,0],[-1,0],[0,-1],[-1,-1],[-1,-2]]
-1: Barracks        [[-1,1],[0,1],[0,0],[0,-1],[1,0],[1,-1]]
-2: Castle          [[-1,-1],[-1,0],[-1,1],[-1,2],[0,-1],[0,0],[0,1],[0,2],[1,-1],[1,0],[1,1],[1,2],[2,-1],[2,0],[2,1],[2,2]]
-3: Cathedral       [[1,0],[0,0],[-1,0],[-2,0],[0,1],[0,-1]]
-4: Church          [[0,0],[-1,0],[-2,0]]
-5: Cottage         [[0,0],[0,1]]
-6: Dock            [[0,0],[1,0],[2,0],[2,1],[3,0],[3,1],[4,-1],[4,0],[4,1],[5,-1],[5,0],[5,1]]
-7: Farm            [[0,1],[0,0],[0,-1],[0,-2],[1,1],[1,0],[1,-1],[1,-2]]
-8: Guard Tower     [[0,0],[-1,0],[0,-1],[-1,-1]]
-9: Guard Tower Up  [[0,0],[-1,0],[0,-1],[-1,-1]]
-10: Hospital       [[0,0],[-1,0],[1,0],[0,-1],[0,1]]
-11: House          [[0,0],[-1,0],[0,-1]]
-12: Lumber Camp    [[0,0],[-1,0],[-1,1],[-2,1]]
-13: Market         [[0,0],[1,0],[1,1],[0,1]]
-14: Sorcerer Tower [[0,0],[1,0],[0,1]]
-15: Stone Quarry   [[0,0],[0,1],[1,0]]
-16: Storage        [[0,0],[1,0],[0,-1],[1,-1],[0,1],[1,1]]
-17: University     [[0,1],[0,0],[0,-1],[1,1],[1,-1],[2,1],[2,-1]]
-18: Wall           [[0,0]]
-19: Windmill       [[0,0],[-1,0],[-1,1],[0,1]]
-20: Wonder         [[3,-1],[3,0],[3,1],[2,-1],[2,0],[2,1],[1,-1],[1,0],[1,1],[0,-1],[0,0],[0,1],[-1,-1],[-1,0],[-1,1]]
-21: Fishing Ship   [[0,0],[0,1]]
-22: Lighthouse     [[0,0],[-1,0],[0,-1],[-1,-1]]
-23: Land Camp      [[0,0],[1,1],[0,1],[-1,1]]
+<h3 id="buildingtypename-enum"><code>BuildingTypeName</code> enum</h3>
+<p>The <code>BuildingTypeName</code> enum lists all types in the same order as the ids.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">public</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="n">BuildingTypeName</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">ARCHERY_RANGE</span><span class="p">,</span><span class="w"> </span><span class="n">BARRACKS</span><span class="p">,</span><span class="w"> </span><span class="n">CASTLE</span><span class="p">,</span><span class="w"> </span><span class="n">CATHEDRAL</span><span class="p">,</span><span class="w"> </span><span class="n">CHURCH</span><span class="p">,</span><span class="w"> </span><span class="n">COTTAGE</span><span class="p">,</span>
+<span class="w">    </span><span class="n">DOCK</span><span class="p">,</span><span class="w"> </span><span class="n">FARM</span><span class="p">,</span><span class="w"> </span><span class="n">GUARD_TOWER</span><span class="p">,</span><span class="w"> </span><span class="n">GUARD_TOWER_UP</span><span class="p">,</span><span class="w"> </span><span class="n">HOSPITAL</span><span class="p">,</span><span class="w"> </span><span class="n">HOUSE</span><span class="p">,</span>
+<span class="w">    </span><span class="n">LUMBER_CAMP</span><span class="p">,</span><span class="w"> </span><span class="n">MARKET</span><span class="p">,</span><span class="w"> </span><span class="n">SORCERER_TOWER</span><span class="p">,</span><span class="w"> </span><span class="n">STONE_QUARRY</span><span class="p">,</span><span class="w"> </span><span class="n">STORAGE</span><span class="p">,</span>
+<span class="w">    </span><span class="n">UNIVERSITY</span><span class="p">,</span><span class="w"> </span><span class="n">WALL</span><span class="p">,</span><span class="w"> </span><span class="n">WINDMILL</span><span class="p">,</span><span class="w"> </span><span class="n">WONDER</span><span class="p">,</span><span class="w"> </span><span class="n">FISHING_SHIP</span><span class="p">,</span><span class="w"> </span><span class="n">LIGHTHOUSE</span><span class="p">,</span>
+<span class="w">    </span><span class="n">LAND_CAMP</span>
+<span class="p">}</span>
 </code></pre></div>
 <h2 id="footprint-and-rotation">Footprint and rotation</h2>
 <p><code>GridTransform.TransformVector</code> rotates by <code>orient</code> (0-3) in 90 degree steps, then <code>mirror</code> flips X:</p>
@@ -909,39 +1169,137 @@
 
 <span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">nx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dx</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">dy</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">s</span><span class="p">;</span>
 <span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ny</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dx</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dy</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
-<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mirror</span><span class="p">)</span><span class="w"> </span><span class="n">nx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">nx</span><span class="p">;</span><span class="w">               </span><span class="c1">// scaleX = -1</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mirror</span><span class="p">)</span><span class="w"> </span><span class="n">nx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">-</span><span class="n">nx</span><span class="p">;</span><span class="w"> </span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">nx</span><span class="p">,</span><span class="w"> </span><span class="n">ny</span><span class="p">);</span>
 <span class="p">}</span>
 
-<span class="c1">// world tile = buildingPos + Transform(local offset)</span>
 <span class="n">IEnumerable</span><span class="o">&lt;</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Footprint</span><span class="p">(</span><span class="n">BuildingType</span><span class="w"> </span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">bx</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="k">by</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">orient</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">mirror</span><span class="p">)</span>
-<span class="w">    </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">localPositions</span><span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">o</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">var</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Transform</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">orient</span><span class="p">,</span><span class="w"> </span><span class="n">mirror</span><span class="p">);</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">bx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">y</span><span class="p">);</span><span class="w"> </span><span class="p">});</span>
+<span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">localPositions</span><span class="p">.</span><span class="n">Select</span><span class="p">(</span><span class="n">o</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kt">var</span><span class="w"> </span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Transform</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">y</span><span class="p">,</span><span class="w"> </span><span class="n">orient</span><span class="p">,</span><span class="w"> </span><span class="n">mirror</span><span class="p">);</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">bx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">y</span><span class="p">);</span><span class="w"> </span><span class="p">});</span>
 </code></pre></div>
-<h2 id="health">Health</h2>
-<p>A building's current health is stored per building in the island code (see <a href="../island-save-format/#stream-layout">Island Save Format</a>), and its maximum comes from the <code>BuildingType</code> (<code>maxHealth</code>, <code>+0x80</code>, table above). A building whose stored <code>health</code> is lower than the type's max is shown as e.g. <code>100/200</code>.</p>
-<p><code>maxHealth</code> values were read from the raw <code>BuildingType</code> memory: it is the 8th value counting back from the end of the 36-int block that starts at <code>+0x10</code>.</p>
-<div class="admonition tip">
-<p class="admonition-title">Editing island codes</p>
-<p>When adding a building to an island code, set <code>health</code> to the type's max HP. Island code editors should place new buildings at their type's max HP rather than a fixed default.</p>
-</div>
+<p><strong>Logic.</strong> The <code>Transform</code> function rotates the local offset by <code>orient * 90°</code> counter-clockwise, then, if <code>mirror = true</code>, reflects the result across X. <code>Footprint</code> applies this transformation to all <code>localPositions</code> and adds the world position of the building.</p>
+<p>Local offsets <code>(dx, dy)</code> per type, exactly as read from <code>localPositions</code>:</p>
+<ol>
+<li>Archery Range <code>[[0,0],[-1,0],[0,-1],[-1,-1],[-1,-2]]</code></li>
+<li>Barracks <code>[[-1,1],[0,1],[0,0],[0,-1],[1,0],[1,-1]]</code></li>
+<li>Castle <code>[[-1,-1],[-1,0],[-1,1],[-1,2],[0,-1],[0,0],[0,1],[0,2],[1,-1],[1,0],[1,1],[1,2],[2,-1],[2,0],[2,1],[2,2]]</code></li>
+<li>Cathedral <code>[[1,0],[0,0],[-1,0],[-2,0],[0,1],[0,-1]]</code></li>
+<li>Church <code>[[0,0],[-1,0],[-2,0]]</code></li>
+<li>Cottage <code>[[0,0],[0,1]]</code></li>
+<li>Dock <code>[[0,0],[1,0],[2,0],[2,1],[3,0],[3,1],[4,-1],[4,0],[4,1],[5,-1],[5,0],[5,1]]</code></li>
+<li>Farm <code>[[0,1],[0,0],[0,-1],[0,-2],[1,1],[1,0],[1,-1],[1,-2]]</code></li>
+<li>Guard Tower <code>[[0,0],[-1,0],[0,-1],[-1,-1]]</code></li>
+<li>Guard Tower Up <code>[[0,0],[-1,0],[0,-1],[-1,-1]]</code></li>
+<li>Hospital <code>[[0,0],[-1,0],[1,0],[0,-1],[0,1]]</code></li>
+<li>House <code>[[0,0],[-1,0],[0,-1]]</code></li>
+<li>Lumber Camp <code>[[0,0],[-1,0],[-1,1],[-2,1]]</code></li>
+<li>Market <code>[[0,0],[1,0],[1,1],[0,1]]</code></li>
+<li>Sorcerer Tower <code>[[0,0],[1,0],[0,1]]</code></li>
+<li>Stone Quarry <code>[[0,0],[0,1],[1,0]]</code></li>
+<li>Storage <code>[[0,0],[1,0],[0,-1],[1,-1],[0,1],[1,1]]</code></li>
+<li>University <code>[[0,1],[0,0],[0,-1],[1,1],[1,-1],[2,1],[2,-1]]</code></li>
+<li>Wall <code>[[0,0]]</code></li>
+<li>Windmill <code>[[0,0],[-1,0],[-1,1],[0,1]]</code></li>
+<li>Wonder <code>[[3,-1],[3,0],[3,1],[2,-1],[2,0],[2,1],[1,-1],[1,0],[1,1],[0,-1],[0,0],[0,1],[-1,-1],[-1,0],[-1,1]]</code></li>
+<li>Fishing Ship <code>[[0,0],[0,1]]</code></li>
+<li>Lighthouse <code>[[0,0],[-1,0],[0,-1],[-1,-1]]</code></li>
+<li>Land Camp <code>[[0,0],[1,1],[0,1],[-1,1]]</code></li>
+</ol>
+<h2 id="building">Building</h2>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="k">public</span><span class="w"> </span><span class="k">sealed</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">Building</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">Id</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="k">value</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="nf">Id</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="k">value</span><span class="p">);</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Equals</span><span class="p">(</span><span class="n">Id</span><span class="w"> </span><span class="n">other</span><span class="p">);</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Equals</span><span class="p">(</span><span class="kt">object</span><span class="w"> </span><span class="n">obj</span><span class="p">);</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">GetHashCode</span><span class="p">();</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="n">Id</span><span class="w"> </span><span class="nf">OfPosition</span><span class="p">(</span><span class="n">int2</span><span class="w"> </span><span class="n">position</span><span class="p">);</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">==</span><span class="p">(</span><span class="n">Id</span><span class="w"> </span><span class="n">lhs</span><span class="p">,</span><span class="w"> </span><span class="n">Id</span><span class="w"> </span><span class="n">rhs</span><span class="p">);</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">static</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="k">operator</span><span class="w"> </span><span class="o">!=</span><span class="p">(</span><span class="n">Id</span><span class="w"> </span><span class="n">lhs</span><span class="p">,</span><span class="w"> </span><span class="n">Id</span><span class="w"> </span><span class="n">rhs</span><span class="p">);</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="nf">ToString</span><span class="p">();</span>
+<span class="w">        </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">CompareTo</span><span class="p">(</span><span class="n">Id</span><span class="w"> </span><span class="n">other</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Nested <code>Id</code>.</strong> A wrapper over an <code>int</code> that identifies a specific building. <code>OfPosition</code> creates an id from a grid position - useful when you need to find a building by coordinate without scanning the island's full building list. <code>Equals</code>, <code>GetHashCode</code>, the <code>==</code> / <code>!=</code> operators and <code>CompareTo</code> make <code>Id</code> a full-fledged key for dictionaries and sorting.</p>
+<h2 id="buildingtypes-registry">BuildingTypes (registry)</h2>
+<p>A ScriptableObject-like registry holding every <code>BuildingType</code>.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
+
+<span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">BuildingTypes</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">castle</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">wall</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">farm</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">cottage</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">house</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">church</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">barracks</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">guardTower</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">guardTowerUp</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">storage</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">lumberCamp</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">stoneQuarry</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">windmill</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">market</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">cathedral</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">archeryRange</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">dock</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">hospital</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">sorcererTower</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">university</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">wonder</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">fishingShip</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">lighthouse</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="n">landCamp</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="p">[]</span><span class="w"> </span><span class="n">Types</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">Dictionary</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="n">BuildingType</span><span class="o">&gt;</span><span class="w"> </span><span class="n">typesByName</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">get</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="n">BuildingType</span><span class="w"> </span><span class="nf">Get</span><span class="p">(</span><span class="n">BuildingTypeName</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnEnable</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><strong>Fields.</strong> One strongly-typed field per building kind (<code>castle</code>, <code>wall</code>, <code>farm</code>, <code>cottage</code>, …). This is how prefabs and other assets reference a specific type directly, bypassing the array.</p>
+<p><strong>Properties.</strong> <code>Types</code> - an array of all types; <strong>index = id</strong>. <code>typesByName</code> - a name → type mapping.</p>
+<p><strong>Methods.</strong> <code>Get</code> resolves a type by enum value. <code>Init</code> builds the lookup structures. <code>OnEnable</code> - the standard Unity hook.</p>
 <h2 id="placement-rules">Placement rules</h2>
-<p><code>BuildData.CanBuildType</code> checks, in order: <code>IsBuildable</code> -&gt; <code>Unlocked</code> -&gt; <code>SteamDemo</code> -&gt; <code>HasResource</code>. The per-tile check is <code>IslandGrid.CanPlaceBuilding</code>.</p>
+<p><code>BuildData.CanBuildType</code> checks, in order: <code>IsBuildable</code> -&gt;<code>Unlocked</code> -&gt;<code>SteamDemo</code> -&gt;<code>HasResource</code>. The per-tile check is <code>IslandGrid.CanPlaceBuilding</code>.</p>
 <p>A building will be refused (silently, when loaded through an island code) if any footprint tile is:</p>
 <ul>
-<li>outside the grid / beyond the island's hard radius (see <a href="../island-grid/">Island Grid</a>),</li>
-<li>on water (only <code>Dock</code>, <code>Fishing Ship</code>, <code>Lighthouse</code> are water buildings),</li>
-<li>covered by a nature tile (tree, rock, ...),</li>
-<li>overlapping another building.</li>
+<li>
+<p>outside the grid / beyond the island's hard radius (see <a href="../island-grid/">Island Grid</a>),</p>
+</li>
+<li>
+<p>on water (only <code>Dock</code>, <code>Fishing Ship</code>, <code>Lighthouse</code> are water buildings),</p>
+</li>
+<li>
+<p>covered by a nature tile (tree, rock, ...),</p>
+</li>
+<li>
+<p>overlapping another building.</p>
+</li>
 </ul>
-<div class="admonition bug">
-<p class="admonition-title">Open issue: Castle added from an edited code</p>
-<p>A Castle (id 2, 16 tiles) added through an edited island code did not appear after <code>loadisland</code> in some tests, with no error, while castles from the game's own saves loaded fine. In another test it loaded but showed <code>100/200</code> health, because the editor used for that test wrote a fixed health of 100 (see <a href="#health">Health</a>). Whether the wrong health was related to the earlier failures is unconfirmed. Other suspects: <code>CanPlaceBuilding</code> refusing the 4x4 footprint because of nature or terrain under it. If you find the cause, please update this page.</p>
-</div>
 <h2 id="unlocking-and-removing">Unlocking and removing</h2>
 <ul>
-<li><code>BuildData.Unlocked(BuildingType)</code> gates availability. The unlock technology (<code>UnlockBuildingTechnology</code>) stores a <code>BuildingTypes*</code> at <code>+0x38</code> and an <code>int</code> id at <code>+0x40</code> and resolves it with <code>BuildingTypes.Get(types, id)</code>.</li>
-<li>Nature removal (<code>BuildData.CanRemoveNature</code>) has its own inline check that only allows <code>TREE</code>, <code>ROCK</code>, <code>SCORCHED_EARTH</code> and <code>LAVA</code>. It does <strong>not</strong> call <code>NatureTile.Cleanable</code>, so patching <code>Cleanable</code> does nothing.</li>
-<li>The pickaxe (<code>CleanTileTool</code>) only works on the <code>BuildData</code>'s own island; it cannot target another player's island or remove <code>WATER_ROCK</code> (a ground tile).</li>
+<li>
+<p><code>BuildData.Unlocked(BuildingType)</code> gates availability. The unlock technology (<code>UnlockBuildingTechnology</code>) stores a <code>BuildingTypes*</code> at <code>+0x38</code> and an <code>int</code> id at <code>+0x40</code> and resolves it with <code>BuildingTypes.Get(types, id)</code>.</p>
+</li>
+<li>
+<p><code>BuildingTypeTech.unlocksTier</code> controls which tier a University unlocks when built.</p>
+</li>
+<li>
+<p>Nature removal (<code>BuildData.CanRemoveNature</code>) has its own inline check that only allows <code>TREE</code>, <code>ROCK</code>, <code>SCORCHED_EARTH</code> and <code>LAVA</code>. It does <strong>not</strong> call <code>NatureTile.Cleanable</code>, so patching <code>Cleanable</code> does nothing.</p>
+</li>
+<li>
+<p>The pickaxe (<code>CleanTileTool</code>) only works on the <code>BuildData</code>'s own island; it cannot target another player's island or remove <code>WATER_ROCK</code> (a ground tile).</p>
+</li>
 </ul>
   </div>
   
@@ -1108,6 +1466,106 @@
             BuildingType
         </a>
         
+        
+        <a href="#class-hierarchy"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#class-hierarchy');">
+            Class hierarchy
+        </a>
+        
+        
+
+        
+        <a href="#specialized-types"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#specialized-types');">
+            Specialized types
+        </a>
+        
+        
+        <a href="#buildingtypehousing"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypehousing');">
+            BuildingTypeHousing
+        </a>
+        
+        <a href="#buildingtypecastle"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypecastle');">
+            BuildingTypeCastle
+        </a>
+        
+        <a href="#buildingtypeproducer"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypeproducer');">
+            BuildingTypeProducer
+        </a>
+        
+        <a href="#buildingtypeproducerfixed"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypeproducerfixed');">
+            BuildingTypeProducerFixed
+        </a>
+        
+        <a href="#buildingtypeproducernature"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypeproducernature');">
+            BuildingTypeProducerNature
+        </a>
+        
+        <a href="#buildingtypeproduceramplifier"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypeproduceramplifier');">
+            BuildingTypeProducerAmplifier
+        </a>
+        
+        <a href="#buildingtypesoldierfamily"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypesoldierfamily');">
+            BuildingTypeSoldierFamily
+        </a>
+        
+        <a href="#buildingtypetech"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypetech');">
+            BuildingTypeTech
+        </a>
+        
+        <a href="#buildingtypeapplymodifierinrange"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypeapplymodifierinrange');">
+            BuildingTypeApplyModifierInRange
+        </a>
+        
+        <a href="#buildingtypelandextension"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypelandextension');">
+            BuildingTypeLandExtension
+        </a>
+        
+        <a href="#ibuildingtypeupdateonharvest"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#ibuildingtypeupdateonharvest');">
+            IBuildingTypeUpdateOnHarvest
+        </a>
+        
+        
+
+        
+        <a href="#heightoverride"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#heightoverride');">
+            HeightOverride
+        </a>
+        
+
+        
+        <a href="#buildingmodifier"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#buildingmodifier');">
+            BuildingModifier
+        </a>
+        
 
         
         <a href="#type-ids"
@@ -1117,10 +1575,10 @@
         </a>
         
         
-        <a href="#footprint-data"
+        <a href="#buildingtypename-enum"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#footprint-data');">
-            Footprint data
+            data-active="false" data-depth="3" onClick="deferSetActiveTocLink('#buildingtypename-enum');">
+            BuildingTypeName enum
         </a>
         
         
@@ -1134,10 +1592,18 @@
         
 
         
-        <a href="#health"
+        <a href="#building"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#health');">
-            Health
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#building');">
+            Building
+        </a>
+        
+
+        
+        <a href="#buildingtypes-registry"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2" onClick="deferSetActiveTocLink('#buildingtypes-registry');">
+            BuildingTypes (registry)
         </a>
         
 
