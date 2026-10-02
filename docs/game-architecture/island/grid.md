@@ -23,7 +23,7 @@ GameState --Island(Player)--> Island of a given player
 | `snapshotIslandSize` | | `0x298` | not investigated |
 | `arraySize` | | `0x2AC` | not investigated |
 
-Methods of interest: `Awake`, `Generate`, `GenerateJob`, `CanPlaceBuilding`, `ExportIsland`, `ImportIsland` (private), `SaveIslandToClipboard`, `LoadIslandFromClipboard`. RVAs are in the [Internals Reference](../reference/internals.md).
+Methods of interest: `Awake`, `Generate`, `GenerateJob`, `CanPlaceBuilding`, `ExportIsland`, `ImportIsland` (private), `SaveIslandToClipboard`, `LoadIslandFromClipboard`. RVAs are in the [Internals Reference](../../reference/internals.md).
 
 ## Island radius (`HardLimit.radius`)
 
@@ -32,11 +32,11 @@ The playable land is limited by `Parameters.HardLimit.radius`, default **22**. S
 !!! warning "Do not resize the tile arrays or scale the grid"
     Multiplying `size` (an earlier "size scale" approach) caused frustum-error log spam, a disappearing mouse cursor and compounding corruption on import. Raising `HardLimit.radius` is the safe approach. Pushing land toward the edge of the allocated array (roughly radius 24-26) is the danger zone - test incrementally.
 
-See also: [Island Generation](island-generation.md).
+See also: [Island Generation](generation.md).
 
 ## Clipboard import / export
 
-`SaveIslandToClipboard` and `LoadIslandFromClipboard` go through `GUIUtility.systemCopyBuffer`, which was unreliable when called outside `OnGUI`. A mod should call `ExportIsland` / `ImportIsland` directly and do its own clipboard handling, then use the [format](island-save-format.md) page to process the string.
+`SaveIslandToClipboard` and `LoadIslandFromClipboard` go through `GUIUtility.systemCopyBuffer`, which was unreliable when called outside `OnGUI`. A mod should call `ExportIsland` / `ImportIsland` directly and do its own clipboard handling, then use the [format](save-format.md) page to process the string.
 
 ## Developer cheats
 
@@ -57,7 +57,7 @@ static class CheckAvailablePatch { static void Postfix(ref bool __result) => __r
 static class AvailablePatch { static void Postfix(ref bool __result) => __result = true; }
 ```
 
-The BepInEx guide covers [setting up the project](../guides/modding/project-setup.md).
+The BepInEx guide covers [setting up the project](../../guides/modding/project-setup.md).
 
 ## Multiplayer notes (theory, not verified)
 

@@ -48,7 +48,7 @@ public class BuildingType
 **Methods.** `IsWaterPosition` checks whether a local offset is a water tile for this type. `GetHeightOverride` returns the height override for a specific tile.
 
 !!! note "Offsets are build specific"  
-    Offsets and RVAs on this page come from one game build (see [Internals Reference](https://../reference/internals.md)). Field _names_ are stable; numbers may move after a game update.
+    Offsets and RVAs on this page come from one game build (see [Internals Reference](../reference/internals.md)). Field _names_ are stable; numbers may move after a game update.
 
 | Field | Type | Offset | Notes |
 | --- | --- | --- | --- |
@@ -531,7 +531,7 @@ public class BuildingTypes
 
 A building will be refused (silently, when loaded through an island code) if any footprint tile is:
 
-*   outside the grid / beyond the island's hard radius (see [Island Grid](./island-grid.md)),
+*   outside the grid / beyond the island's hard radius (see [Island Grid](./island/grid.md)),
 
 *   on water (only `Dock`, `Fishing Ship`, `Lighthouse` are water buildings),
 
