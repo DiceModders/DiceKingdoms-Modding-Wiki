@@ -32,6 +32,12 @@ nav:
     - Mods Installation: guides/mod-installation.md
     - Modding: 
       - Project Setup: guides/modding/project-setup.md
+      - IL2CPP Tips: guides/modding/il2cpp-tips.md
+      - Publishing a Mod: guides/modding/publishing.md
+      - UiKit:
+        - Overview: guides/modding/uikit.md
+        - Windows and Widgets: guides/modding/uikit-windows.md
+        - Game Screens: guides/modding/uikit-game-screens.md
   - Game architecture:
     - Island:
       - Grid: game-architecture/island/grid.md
@@ -39,5 +45,10 @@ nav:
       - Save Format: game-architecture/island/save-format.md
     - Resources: game-architecture/resources.md
     - Buildings: game-architecture/buildings.md
+    - Game UI: game-architecture/ui.md
+    - Rules and Civilizations: game-architecture/rules-and-civilizations.md
+    - Island Code: game-architecture/island-code.md
+    - Meteorites: game-architecture/meteorites.md
+    - Reverse-Engineering Notes: game-architecture/reverse-engineering.md
   - Reference:
     - Internals Reference: reference/internals.md
