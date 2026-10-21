@@ -13,7 +13,8 @@ so the library [ModCore](modcore.md) makes the game accept more. This page is th
     **Tested in a solo lobby and match:** own models through `civ.Skins` (castle, house, soldier and ship borrowed from the Maya civilization showed up for a civilization that otherwise
     looks like Viking) and the Rules screen with the civilization chosen.
     **Tested in a solo match:** `CloneTree` - a copy of the Viking tree with one slot moved was shown in the research window of the civilization (the provider ran once, the copy was reused).
-    **Written against the game code but not yet run:** the localized name (the game has no screen that shows a civilization's name in the lobby, so it is only a safety net).
+    **Registered but never seen on screen:** the localized name (the log confirms the text entry is added; the game has no screen that shows a civilization's name in the lobby, so it is only a safety net).
+    **Not yet tested with a second player:** a late join into a running lobby and a player without the mod joining a lobby that uses a mod civilization.
     If it misbehaves, the log line starting with `[modcore]` says which.
 
 ## What you get without any work
