@@ -38,6 +38,8 @@ nav:
         - Overview: guides/modding/uikit.md
         - Windows and Widgets: guides/modding/uikit-windows.md
         - Game Screens: guides/modding/uikit-game-screens.md
+      - ModCore: guides/modding/modcore.md
+      - ModBridge and Dependencies: guides/modding/modbridge.md
   - Game architecture:
     - Island:
       - Grid: game-architecture/island/grid.md

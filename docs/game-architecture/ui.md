@@ -44,3 +44,22 @@ In the main menu the same style is under `Top Right/Top Right Buttons`. The Rule
 
 The Rules screen, Settings screen, About, Store and Scoreboard are separate screens that exist in the hierarchy but may be inactive. Cloning a template from an
 inactive screen works, but the screen must have been loaded.
+
+## Settings rows and the lobby settings box
+
+The Settings window (`SettingSetsInterface`) has four tabs (`Video`, `Audio`, `Input`, `Game`), each a `SettingSetInterface` with a `Vertical Scroll` (`ScrollRect`) whose `Viewport` is a
+`RectMask2D` and whose `Content` is a `VerticalLayoutGroup` + `ContentSizeFitter`. The settings box of the match-start screen (the "Lobby" tab) is built the same way, 430x424 units.
+`SettingSetInterface.GenerateElements` fills `Content` with an entry per setting; rows are made from prefabs the set references (`settingEntryInterfacePrefab`, `settingInterfacePrefabs`).
+
+- **Entry:** `Setting Entry` is a `HorizontalLayoutGroup` + `SettingEntryInterface` with a `Label` (125 wide in the lobby box) and a `Content` holder (`contentHolder`).
+  In the lobby box the holder is **305 wide and a `VerticalLayoutGroup`**; in the other tabs it is 500 wide and has no layout group. Its width is `0` until the layout has run, so a row that needs the width
+  has to measure it again later. Controls put into a holder with a layout group are stretched or stacked by it.
+- **Controls:** `SettingInterfaceBool` (a checkbox, `Toggle`), `SettingInterfaceFloat` (the slider of the Frame Rate Limit setting), `SettingInterfaceDropdown<T>` / `SettingInterfaceEnum*`,
+  `SettingInterfaceInputPath`, `SettingInterfaceLobbyCode`. Each is bound to a `Setting<T>` of a `SettingSet`; a clone has no setting, so the binding component is destroyed **before** the clone wakes up
+  (`SettingInterfaceFloat.Awake` adds a slider listener that writes `setting.Value` and would throw on every drag otherwise).
+- **Slider row:** `Label` (the value text, 34 wide) + `Slider` > `Background` (4 high), `Fill Area` > `Fill`, `Handle Slide Area` > `Handle` (20 wide, the height of the slider). The handle is round only when the slider's
+  rectangle is as tall as the handle is wide (20), and it sticks out about 5-10 units past both ends of the track, so the track must stay clear of any clipping edge.
+- **Scroll view of the lobby box:** the `Viewport` mask is as big as the whole frame (430x424), so a row scrolled to the edge is drawn over the frame's yellow border (the game's own rows never reach it);
+  the clip can be pulled in with `RectMask2D.padding` (2 units is the border's width). The `Scroll Bar` is 6x418 and spans the frame; its `Handle` has a `Shadow`, which at the bottom of the track hangs out of the frame.
+- The lobby box shows only the game's own rows in the unmodded game (they fit, so it does not scroll); once a mod adds rows, the scrollbar, the clip and the row widths all matter.
+

@@ -17,10 +17,26 @@ The Technologies tab shows the tech tree of the civilization chosen in the civil
 
 ### Adding a civilization
 
-To make a new civilization selectable you have to: append an option to the `TMP_Dropdown`, append a boxed enum value (`Enum.ToObject`) to `values`, and answer
-`TechTree(civilization)` for that number. [UiKit](../guides/modding/uikit-game-screens.md#civilizations-on-the-rules-screen) does this with `UiKit.Rules.AddCivilization`.
-A player's biome is chosen with a switch over the built-in civilizations 0..4 and throws for any other value, so a new civilization has to map to one of them
-for its visuals. Anything else the game looks up per civilization (for example `PlayerSkins` / `SkinRegistry` entries) must come from your mod.
+To make a new civilization work you have to: answer `TechTree(civilization)` for that number, let `PlayerSkins` accept it, make it selectable (the Rules drop-down and the
+castle click, below) and provide the per-civilization data the game looks up (skins, colours, the tech tree asset). [ModCore](../guides/modding/modcore.md#civilizations)
+patches the first two and the castle click; [ModBridge](../guides/modding/modbridge.md) adds the drop-down entry through UiKit.
+
+- `Technologies.TechTree` throws for an unknown civilization (`First` over the game's list). ModCore returns the registered tree, or the tree of the built-in civilization the new one is "like".
+- `PlayerSkins.Civilization`'s setter derives the biome with a switch over 0..4 and throws `ArgumentOutOfRangeException` for anything else, and so does the `PlayerSkins` **constructor**
+  (the log reads `Parameter name: civilization`). A new civilization must therefore be built for a built-in one first and the real number stored afterwards (`PlayerSkins.civilization` field).
+
+### Choosing a civilization for play (the castle click)
+
+On the match-start screen, clicking a player's castle runs `Player.NextCivilization`. On the host it steps through `Player.Inventory.UnlockedCivilizations` (the civilizations the
+player's Steam inventory has unlocked), wraps around, and sets `Player.skins` to `new PlayerSkins(civilization, skinRegistry)`; a client sends `NextCivilizationRPC` to the host, which runs the same code.
+It does nothing once the player is ready (`StartGameReady`).
+
+!!! warning "Do not replace or patch the player's inventory"
+    `Player.NetworkStart` (host side, when a player is spawned) also picks the **random starting civilization** with `RandomExtensions.NextSample<Civilization>` from the same array, and a random
+    colour with `NextSample<PlayerColor>`. `NextSample` indexes `array[(state * length) >> 32]`, so an empty array throws `IndexOutOfRangeException`. A mod that rebuilt `PlayerInventory`
+    (a postfix on `PlayerInventory.FromSteamworks`, writing `PlayerInventory.FALLBACK`) made the spawn throw: no player existed and the lobby screen showed only the top bar.
+    Patching the `UnlockedCivilizations` getter instead crashed the game at start: it is a few bytes of native code that IL2CPP shares between identical getters.
+    ModCore adds its civilizations in a **prefix on `Player.NextCivilization`** (after the last unlocked civilization come the registered ones, then the game's own wrap-around).
 
 ## Scoreboard
 
