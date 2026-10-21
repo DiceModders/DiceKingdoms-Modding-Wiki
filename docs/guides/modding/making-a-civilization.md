@@ -120,9 +120,7 @@ need a game update; there is no hook for it.
 
 Set `[Debug] DumpGameData = true` in `BepInEx/config/DiceModders.ModCore.cfg`, start the game and wait in the main menu. ModCore writes two files next to `LogOutput.log`:
 
-- `BepInEx/ModCore-game-data.txt`: the 22 technologies with their classes and costs, every tech tree (slots, positions, links), every building type (tier, size, health, cost, default prefab), the **skin registry
-  entries** (which default prefab each built-in civilization replaces with which prefab), the default prefabs, every prefab of the visual types the game has loaded, and the civilization name keys.
+- `BepInEx/ModCore-game-data.txt`: the 22 technologies with their classes and costs, every tech tree (slots, positions, links), every building type (tier, size, health, cost, default prefab), the skin registry (its entries are listed when the game's registry can be read, otherwise its members), the default prefabs, every prefab of the visual types the game has loaded, and the civilization name keys.
 - `BepInEx/ModCore-sprites.txt`: every sprite with the texture (atlas) it is on and its size.
 
-Switch it off again afterwards; it is a developer tool. The skin registry listing is the model to follow: a civilization that wants its own Viking house has a prefab like the entry listed for
-`VIKING`, and yours stands in the same place.
+Switch it off again afterwards; it is a developer tool. The prefab names it lists are the models to follow (a Viking house is `House Viking`); the full lists of models and sprites are in [Civilization models and sprites](../../game-architecture/civilization-assets.md).
