@@ -12,8 +12,9 @@ so the library [ModCore](modcore.md) makes the game accept more. This page is th
     window with its tech tree, the look of the borrowed built-in civilization.
     **Tested in a solo lobby and match:** own models through `civ.Skins` (castle, house, soldier and ship borrowed from the Maya civilization showed up for a civilization that otherwise
     looks like Viking) and the Rules screen with the civilization chosen.
-    **Written against the game code but not yet run:** the localized name (the game has no screen that shows a civilization's name in the lobby, so it is only a safety net) and `CloneTree`.
-    They are marked "(new)" below; if one misbehaves, the log line starting with `[modcore]` says which.
+    **Tested in a solo match:** `CloneTree` - a copy of the Viking tree with one slot moved was shown in the research window of the civilization (the provider ran once, the copy was reused).
+    **Written against the game code but not yet run:** the localized name (the game has no screen that shows a civilization's name in the lobby, so it is only a safety net).
+    If it misbehaves, the log line starting with `[modcore]` says which.
 
 ## What you get without any work
 
@@ -41,10 +42,12 @@ The 22 technologies are shared; a tree picks some of them and arranges them (a s
 incoming link or one of the technologies linking to it is learnt). To make a tree, start from a copy of a built-in one:
 
 ```csharp
+TechTree cached = null;
 Func<TechTree> tree = () => {
-    var t = ModCore.Civilizations.CloneTree(fromCivilization: 2);   // copy of the Viking tree
-    // change t.Slots: remove slots, move them (position), change links, change which technology sits in a slot
-    return t;
+    if (cached != null) return cached;                                    // the game asks on every lookup
+    var t = ModCore.Civilizations.CloneTree(fromCivilization: 2);        // copy of the Viking tree
+    // change t.Slots: move a slot (copy it out, change position, write it back), change links, change which technology sits in a slot
+    return cached = t;
 };
 var civ = ModCore.Civilizations.Add("authorname.mycivilization", "My civilization", tree, skinsLike: 2);
 ```
