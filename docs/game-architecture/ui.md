@@ -63,3 +63,20 @@ The Settings window (`SettingSetsInterface`) has four tabs (`Video`, `Audio`, `I
   the clip can be pulled in with `RectMask2D.padding` (2 units is the border's width). The `Scroll Bar` is 6x418 and spans the frame; its `Handle` has a `Shadow`, which at the bottom of the track hangs out of the frame.
 - The lobby box shows only the game's own rows in the unmodded game (they fit, so it does not scroll); once a mod adds rows, the scrollbar, the clip and the row widths all matter.
 
+## Canvas size and aspect ratio
+
+The game's canvases use `CanvasScaler` in `ScaleWithScreenSize` mode with a 1920x1080 reference. The scene data (not the code) decides the match mode: the main `Canvas` matches **height**
+(always 1080 units tall, width = 1080 x ratio), `Canvas Over Dice` matches **width** (always 1920 wide, height = 1920 / ratio).
+
+| Ratio | Main canvas | Canvas Over Dice |
+|---|---|---|
+| 16:9 | 1920x1080 | 1920x1080 |
+| 16:10 | 1728x1080 | 1920x1200 |
+| 4:3 | 1440x1080 | 1920x1440 |
+| 5:4 | 1350x1080 | 1920x1536 |
+| 21:9 | 2520x1080 | 1920x823 |
+| 32:9 | 3840x1080 | 1920x540 |
+
+Everything that is sized in units (the lobby box, setting rows, windows) scales with the screen. Anything placed by its top-left corner must be kept inside the canvas when the size changes
+(UiKit does this for its windows). `Canvas.scaleFactor` (screen pixels per unit) is what a mouse delta has to be divided by when dragging.
+
