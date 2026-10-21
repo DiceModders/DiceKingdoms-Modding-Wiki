@@ -1,5 +1,5 @@
 ---
-summary: UiKit, a library that builds mod windows, buttons and settings rows from the game's own UI
+summary: UiKit, the library that builds mod windows, buttons and settings rows from the game's own UI (one of three: UiKit, ModCore, ModBridge)
 ---
 
 # UiKit: native UI for mods
@@ -10,17 +10,21 @@ sprites, fonts, tooltips, sounds and cursor changes. Mod windows therefore look 
 !!! info "Source code"
     [UIKit_Another_Version](https://github.com/DiceModders/UIKit_Another_Version) (library, demo and README).
 
+UiKit is only the **interface**. It is one of three libraries that do not depend on each other: [UiKit](uikit.md) (screens), [ModCore](modcore.md)
+(Steam lobby, lobby rules, desync warnings, civilizations) and [ModBridge](modbridge.md) (shows ModCore's data on UiKit's screens). A mod references only the
+libraries it uses, and never ModBridge.
+
 | You want | Use | Page |
 |---|---|---|
 | A window with buttons, labels, toggles, sliders, pictures | `UiKit.Window(...)` | [Windows and widgets](uikit-windows.md) |
 | A button in the top-right bar (next to Rules / Settings) | `UiKit.TopBar.Add(...)` | [Game screens](uikit-game-screens.md) |
 | Rows in the game's Settings screen | `UiKit.Settings.Add(...)` | [Game screens](uikit-game-screens.md) |
-| A new civilization in the Rules screen | `UiKit.Rules.AddCivilization(...)` | [Game screens](uikit-game-screens.md) |
+| An entry in the Rules screen's civilization drop-down | `UiKit.Rules.AddCivilizationEntry(...)` | [Game screens](uikit-game-screens.md) |
 | An extra column in the match scoreboard | `UiKit.Scoreboard.AddColumn(...)` | [Game screens](uikit-game-screens.md) |
 
 ## Using UiKit in your mod
 
-1. Build UiKit (or download `DiceModders.UiKit.dll` from a release) and put it into `BepInEx/plugins`. It is its own plugin, installed once for all mods.
+1. Build UiKit (or download `DiceModders.UiKit.dll` from a release) and put it into `BepInEx/plugins`. It is its own plugin, installed once for all mods. (A mod manager installs it as a dependency; with ModCore and ModBridge, players need all the DLLs the mods list.)
 2. In your project, reference `DiceModders.UiKit.dll` and make your plugin depend on it, so that UiKit loads first:
 
 ```csharp
@@ -29,7 +33,8 @@ sprites, fonts, tooltips, sounds and cursor changes. Mod windows therefore look 
 public class Plugin : BasePlugin { /* ... */ }
 ```
 
-3. Do not copy `DiceModders.UiKit.dll` into your own package: two copies would both patch the game. On Thunderstore, list UiKit in the `dependencies`
+3. The namespace `DiceModders.UiKit` contains a class `UiKit`: inside a namespace that starts with `DiceModders.` write `using Ui = DiceModders.UiKit.UiKit;` and call `Ui.Window(...)`.
+4. Do not copy `DiceModders.UiKit.dll` into your own package: two copies would both patch the game. On Thunderstore, list UiKit in the `dependencies`
    of your `manifest.json` instead (see [Publishing a mod](publishing.md)).
 
 ## A first window

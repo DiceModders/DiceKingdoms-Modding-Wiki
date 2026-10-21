@@ -38,6 +38,9 @@ nav:
         - Overview: guides/modding/uikit.md
         - Windows and Widgets: guides/modding/uikit-windows.md
         - Game Screens: guides/modding/uikit-game-screens.md
+      - ModCore: guides/modding/modcore.md
+      - Making a Civilization: guides/modding/making-a-civilization.md
+      - ModBridge and Dependencies: guides/modding/modbridge.md
   - Game architecture:
     - Island:
       - Grid: game-architecture/island/grid.md
@@ -47,6 +50,8 @@ nav:
     - Buildings: game-architecture/buildings.md
     - Game UI: game-architecture/ui.md
     - Rules and Civilizations: game-architecture/rules-and-civilizations.md
+    - Civilizations in the Game Code: game-architecture/civilizations.md
+    - Civilization Models and Sprites: game-architecture/civilization-assets.md
     - Island Code: game-architecture/island-code.md
     - Meteorites: game-architecture/meteorites.md
     - Reverse-Engineering Notes: game-architecture/reverse-engineering.md

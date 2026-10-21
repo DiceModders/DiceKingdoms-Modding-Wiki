@@ -27,9 +27,18 @@ UiKit.Settings.Add(SettingsTab.Game, "My Mod", s => {
 });
 ```
 
-The callback runs each time the game rebuilds that tab, so no polling is needed. Toggle and stepper rows refresh while the screen is open
+The callback runs each time the game rebuilds that tab, so no polling is needed. Toggle, stepper and slider rows refresh while the screen is open
 (four times a second), and both buttons of a stepper update the shown value at once. Tabs: `Video`, `Audio`, `Input`, `Game` and `Lobby`
 (the settings box of the match-start screen).
+
+A number between two limits is best shown with the game's own slider (the control of its Frame Rate Limit setting), which UiKit clones:
+
+```csharp
+s.Slider("Speed", min: 1, max: 5, get: () => speed, set: v => speed = (int)v, wholeNumbers: true, format: "0");
+```
+
+Rows can be disabled or hidden while the screen is open with a `SettingsRowOptions { Enabled = ..., Visible = ... }` (re-read four times a second).
+The layout of these rows, and why the library places the controls itself, is described in [Game UI](../../game-architecture/ui.md#settings-rows-and-the-lobby-settings-box).
 
 ```csharp
 UiKit.Settings.Opened += screen => Log.LogInfo("Settings screen shown");
@@ -43,19 +52,16 @@ the rows without a header. Rows stay clear of the Close button and the window ed
 
 ## Civilizations on the Rules screen
 
+UiKit only adds an **entry to the civilization drop-down** of the Rules screen; it knows nothing about how a civilization works in a match.
+
 ```csharp
-var civ = UiKit.Rules.AddCivilization("authorname.mycivilization", "My civilization", () => myTechTree, skinsLike: 2);
+UiKit.Rules.AddCivilizationEntry(civilizationId, "My civilization");
 UiKit.Rules.Opened += screen => { /* the Rules screen was shown */ };
 ```
 
-- **Key:** it becomes the civilization number. The same key gives the same id on every machine (1000 and up), so several mods never collide and
-  multiplayer and saves agree. Use `civ.Id` to tag your own data.
-- **Tech tree:** the function returns the `DiceKingdoms.Game.TechTree` of your civilization. UiKit returns it whenever the game asks for the tree of that
-  number, on the Rules screen and in a match. It may be `null` if your mod adds the tree to the game's list itself.
-- **`skinsLike`:** the game sets a player's biome with a switch over the built-in civilizations 0..4 and throws for anything else. The biome and visuals of the
-  chosen built-in civilization are used instead: 0 Europe, 1 Middle East, 2 Viking, 3 Ancient, 4 Maya.
-- **Your part:** a civilization also needs everything else the game looks up per civilization (skins, colours, the tech tree asset). That data belongs
-  to your mod. See [Rules and civilizations](../../game-architecture/rules-and-civilizations.md) for how the game handles it.
+Registering the civilization itself (its number, tech tree, skins) is [ModCore](modcore.md#civilizations); [ModBridge](modbridge.md) mirrors every
+registered civilization into the drop-down, so a mod does not call this itself. See [Rules and civilizations](../../game-architecture/rules-and-civilizations.md)
+for how the game handles civilizations.
 
 ## Scoreboard columns
 
