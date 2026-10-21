@@ -37,6 +37,10 @@ UiKit.Settings.Opened += screen => Log.LogInfo("Settings screen shown");
 UiKit.Settings.AddHotspot("mymod.unlock", SettingsCorner.BottomLeft, 5, () => Unlock());
 ```
 
+The spot is an invisible 44x44 button in the corner of the Settings panel, drawn above the game's own controls. An empty or `null` section title adds
+the rows without a header. Rows stay clear of the Close button and the window edge, and the mouse wheel scrolls the tab. To see invisible elements
+(the hotspot in red, the wheel catcher in green) while debugging, set `[Debug] ShowInvisible = true` in `BepInEx/config/DiceModders.UiKit.cfg`.
+
 ## Civilizations on the Rules screen
 
 ```csharp
