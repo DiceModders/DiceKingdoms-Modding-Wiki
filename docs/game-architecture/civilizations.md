@@ -22,6 +22,7 @@ which is what a mod civilization has to deal with. [ModCore](../guides/modding/m
 
 | Where | What it does | With an unknown number |
 |---|---|---|
+| `PlayerSkins.Clone()` | Calls the constructor with the real number (`Rules.OnEnable` clones the lobby's skins when the Rules screen opens). | Throws the same exception when the Rules screen opens, which breaks it. |
 | `PlayerSkins` constructor and `Civilization` setter | Stores the number and **derives the biome** with a switch over 0..4 (the table above). | Throws `ArgumentOutOfRangeException` (`Parameter name: civilization`). |
 | `PlayerSkins.Get{Building,Unit,Nature,InnerCliff}...Prefab`, `GetShipVisualPrefab` | Ask the skin registry for the replacement of a default prefab for this civilization (see below). | Finds nothing and silently returns the default (European) prefab. |
 | `PlayerSkinsSerialization` | Sends the civilization over the network as **one byte** (`WritePlayerSkins` writes a byte, `ReadPlayerSkins` and the network variable's stream reader read an `sbyte`) and builds `PlayerSkins` from it. | Throws in the constructor; the receiving game freezes. A number above 127 arrives as another number. |

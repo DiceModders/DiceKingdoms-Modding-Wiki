@@ -10,8 +10,10 @@ so the library [ModCore](modcore.md) makes the game accept more. This page is th
 !!! note "What is tested"
     **Tested in a two-player match:** registering, choosing it by clicking the castle (the host only offers it when everybody has the mod), the lobby and the match start, an AI playing it, the research
     window with its tech tree, the look of the borrowed built-in civilization.
-    **Written against the game code but not yet run:** the own models (`civ.Skins`), the localized name, `CloneTree`. They are marked "(new)" below; if one misbehaves, the log line starting
-    with `[modcore]` says which.
+    **Tested in a solo lobby and match:** own models through `civ.Skins` (castle, house, soldier and ship borrowed from the Maya civilization showed up for a civilization that otherwise
+    looks like Viking) and the Rules screen with the civilization chosen.
+    **Written against the game code but not yet run:** the localized name (the game has no screen that shows a civilization's name in the lobby, so it is only a safety net) and `CloneTree`.
+    They are marked "(new)" below; if one misbehaves, the log line starting with `[modcore]` says which.
 
 ## What you get without any work
 
@@ -120,7 +122,7 @@ need a game update; there is no hook for it.
 
 Set `[Debug] DumpGameData = true` in `BepInEx/config/DiceModders.ModCore.cfg`, start the game and wait in the main menu. ModCore writes two files next to `LogOutput.log`:
 
-- `BepInEx/ModCore-game-data.txt`: the 22 technologies with their classes and costs, every tech tree (slots, positions, links), every building type (tier, size, health, cost, default prefab), the skin registry (its entries are listed when the game's registry can be read, otherwise its members), the default prefabs, every prefab of the visual types the game has loaded, and the civilization name keys.
+- `BepInEx/ModCore-game-data.txt`: the 22 technologies with their classes and costs, every tech tree (slots, positions, links), every building type (tier, size, health, cost, default prefab), the number of skin registry entries (the entries themselves cannot be read safely), the default prefabs, every prefab of the visual types the game has loaded, and the civilization name keys.
 - `BepInEx/ModCore-sprites.txt`: every sprite with the texture (atlas) it is on and its size.
 
 Switch it off again afterwards; it is a developer tool. The prefab names it lists are the models to follow (a Viking house is `House Viking`); the full lists of models and sprites are in [Civilization models and sprites](../../game-architecture/civilization-assets.md).
