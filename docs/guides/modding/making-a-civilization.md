@@ -52,6 +52,8 @@ Func<TechTree> tree = () => {
 var civ = ModCore.Civilizations.Add("authorname.mycivilization", "My civilization", tree, skinsLike: 2);
 ```
 
+The grid of the built-in trees uses even x values 0, 2, 4, 6, 8 (the odd ones are the link ports) and y values 0 to 4. Two slots on the same cell are drawn on top of each other, so move a slot to a free cell. `Slots` is an array of structs: copy a slot out, change its `position`, write it back (`tree.Slots[i] = slot`). Moving one slot of a Viking copy to a free cell was tested and shows in the research window.
+
 The provider is called every time the game needs the tree (many times a second while the research window is open), so create the tree once and return the same object. The technologies and their
 costs are shared by every civilization and cannot differ per tree. Slot names, positions and links of every built-in tree are in the file the dump tool writes (below).
 
