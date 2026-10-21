@@ -52,7 +52,13 @@ for a settings screen. When the host changes a rule from its default and a membe
 var civ = Core.Civilizations.Add("authorname.mycivilization", "My civilization", () => myTechTree, skinsLike: 2);
 ```
 
-The key becomes the civilization number (the same key gives the same id on every machine, 1000 and up). ModCore makes the game accept it: the tech tree lookup returns your tree (or the tree of the
-`skinsLike` built-in civilization), `PlayerSkins` borrows that civilization's biome, and clicking a castle on the match-start screen reaches your civilization after the last unlocked one.
-Skins, colours and the tech tree asset are still yours. How and why the game behaves like this (and what must **not** be patched) is in
-[Rules and civilizations](../../game-architecture/rules-and-civilizations.md#choosing-a-civilization-for-play-the-castle-click).
+The key becomes the civilization number: the same key gives the same number on every machine, **5 to 127** (the game sends a civilization as one signed byte and the built-in ones are 0..4).
+ModCore makes the game accept it everywhere the number is used: the tech tree lookups (including the two inlined into `Statistics`) return your tree or the tree of the `skinsLike` built-in civilization,
+`PlayerSkins` borrows that civilization's biome and look, the network readers build skins from the number instead of throwing, AIs use the build orders of `skinsLike`, and clicking a castle on the
+match-start screen reaches your civilization after the last unlocked one, but only when every member of the lobby has the mod (their civilizations are published as `modcore.civs` in the Steam member
+data, and the host moves a player off a civilization somebody lacks).
+
+Your own parts are optional additions: `civ.Skins` (own building, unit, nature and ship models), `ModCore.Civilizations.CloneTree(from)` (a tech tree to start from), and the display name, which is
+written to the game's text table. The step by step guide, the list of every asset a civilization can have and the developer dump of the game's prefabs and sprites are in
+[Making a civilization](making-a-civilization.md); how the game itself behaves (and what must **not** be patched) is in
+[Civilizations in the game code](../../game-architecture/civilizations.md) and [Rules and civilizations](../../game-architecture/rules-and-civilizations.md#choosing-a-civilization-for-play-the-castle-click).

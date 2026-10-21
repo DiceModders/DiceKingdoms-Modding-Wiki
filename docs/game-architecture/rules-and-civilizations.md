@@ -17,9 +17,11 @@ The Technologies tab shows the tech tree of the civilization chosen in the civil
 
 ### Adding a civilization
 
-To make a new civilization work you have to: answer `TechTree(civilization)` for that number, let `PlayerSkins` accept it, make it selectable (the Rules drop-down and the
-castle click, below) and provide the per-civilization data the game looks up (skins, colours, the tech tree asset). [ModCore](../guides/modding/modcore.md#civilizations)
-patches the first two and the castle click; [ModBridge](../guides/modding/modbridge.md) adds the drop-down entry through UiKit.
+Every place the game uses a civilization number, and what it does with an unknown one, is listed in [Civilizations in the game code](civilizations.md); the practical guide is
+[Making a civilization](../guides/modding/making-a-civilization.md). In short: answer `TechTree(civilization)` for that number (also where the compiler inlined it), let `PlayerSkins` and the
+network readers accept it (the number is one signed byte, so 5..127), give AIs a build order, make it selectable (the Rules drop-down and the castle click, below) and provide the
+per-civilization data the game looks up (skins, tech tree asset, name). [ModCore](../guides/modding/modcore.md#civilizations) does all of that;
+[ModBridge](../guides/modding/modbridge.md) adds the drop-down entry through UiKit.
 
 - `Technologies.TechTree` throws for an unknown civilization (`First` over the game's list). ModCore returns the registered tree, or the tree of the built-in civilization the new one is "like".
 - `PlayerSkins.Civilization`'s setter derives the biome with a switch over 0..4 and throws `ArgumentOutOfRangeException` for anything else, and so does the `PlayerSkins` **constructor**
