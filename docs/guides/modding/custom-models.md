@@ -4,7 +4,7 @@ summary: Showing your own 3D models in the game - extracting the original models
 
 # Custom models
 
-This page shows how to replace the look of a building with your own model at runtime, based on a tested replacement of two castles. It only changes what the local player sees: footprint,
+This page shows how to replace the look of a building with your own model at runtime (tested in game with the Castle). It only changes what the local player sees: footprint,
 rules and networking stay the original, and other players still see the original model. To give a whole civilization its own models through the game's skin system, see
 [Making a civilization](making-a-civilization.md#3-models).
 
