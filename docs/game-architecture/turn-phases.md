@@ -9,9 +9,12 @@ summary: How a match runs - GameState, the phase loop, phase states, ready and s
 
 ## Main objects
 
+`GameState` is the match object: it holds the players, the lobby settings, the turn counter and the events other code subscribes to.
+
 <!-- code: GameState | random, players, playerIds, lobbySettings, turnCounter, onIslandSpawned, onStartGame, onEnterPhase, onSyncPhase, onEndGame, onExit, onReset, onRejoin, onDisasterLog, Players, TurnCounter, TurnPhase, IsTraining, Island -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class GameState : NetworkedBehaviour
 {
     private LobbySettings lobbySettings;                  // 0xD0
@@ -56,9 +59,12 @@ Useful `GameState` fields: `players` `0xE8`, `playerIds` `0xF8`, `lobbySettings`
 
 `GameState.Awake` (`0x5F26A0`) sets
 
+The phase objects are fields of `GameState`; every phase has its own time limits and time of day:
+
 <!-- code: GameState | phaseOrder, startPhase, harvestPhase, disastersPhase, buildPhase, combatPhase, winPhase -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class GameState : NetworkedBehaviour
 {
     private ITurnPhase[] phaseOrder;       // 0x170
@@ -74,7 +80,8 @@ public class GameState : NetworkedBehaviour
 
 <!-- code: TurnPhase | timeLimit, timeLimitSync, timeOfDay -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
 {
     public float timeLimit;
@@ -110,9 +117,12 @@ UNLIMITED (`GameState.StartGame`). The values are fields of the phase components
 Each phase is a `TurnPhase<TData, TIslandState>` with a `PhaseState`: `ACTIVE = 0`, `SYNC = 1`, `INACTIVE = 2`. For every island the phase holds one `PhaseData` object (for example `BuildData`);
 per-player state is in `islandStates` (keyed by client id).
 
+Each phase moves through these states; `GameState` switches them:
+
 <!-- code: PhaseState |  -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public enum PhaseState
 {
     ACTIVE = 0,
@@ -124,7 +134,8 @@ public enum PhaseState
 
 <!-- code: GameState | UpdateTurnPhase, ChangeTurnPhase -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class GameState : NetworkedBehaviour
 {
     private void ChangeTurnPhase(ITurnPhase turnPhase);  // RVA 0x5F2C20
@@ -147,9 +158,12 @@ public class GameState : NetworkedBehaviour
 
 `TurnPhase.IsReady` (`0xFDD8B0`):
 
+Readiness is read on the phase, the Ready button is `PhaseData.Skip`:
+
 <!-- code: TurnPhase | IsReady, BannerDuration, TimeSinceEnter, TimeRemaining -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
 {
     public float BannerDuration { get; }
@@ -164,7 +178,8 @@ public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurn
 
 <!-- code: PhaseData | HasSkipped, NothingToDo, Skip, SkipRPC -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
 {
     public bool HasSkipped { get; set; }
@@ -187,9 +202,12 @@ public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
 
 `TurnPhase.Sync` (`0xFDEB40`):
 
+The sync step and the per-phase rules live on `TurnPhase`:
+
 <!-- code: TurnPhase | Sync, IsSynced, ApplyChanges, ShouldSkip, Recompute, RecomputeIsDefeated -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
 {
     public void Sync();                                      // RVA 0xFDEB20 (shared generic body)
@@ -218,9 +236,12 @@ After every phase's `ApplyChanges`, `TurnPhase.Recompute` recomputes every islan
 the `Preview` flag, see [Build phase](build-phase.md#preview-instant-or-at-sync)), and on clients the phase's interface is enabled. It also sets the time of day: each phase has a
 `timeOfDay` field (all phases 0.125 = morning) that is written into the `DayNightCycle` target, see [Rendering](rendering.md#day-and-night).
 
+Entering and leaving a phase, and the per-island phase data:
+
 <!-- code: TurnPhase | Enter, Exit, Rejoin -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
 {
     public virtual void Enter(bool restore = False);                 // RVA 0xFDD3C0 (shared generic body)
@@ -233,7 +254,8 @@ public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurn
 
 <!-- code: PhaseData | turnPhase, Island, Preview, Enter -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
 {
     public TurnPhase<TData, TState> turnPhase;
@@ -250,9 +272,12 @@ public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
 
 `ITurnPhase.Time` (`0x56D8D0`) is the clock all phases use. It returns `Cheats.NetworkTime()`: the network time multiplied by the developer `speed` factor.
 
+The clock values every phase exposes:
+
 <!-- code: ITurnPhase | Time, TimeLimit, TimeRemaining, TimeRemainingSync -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public interface ITurnPhase
 {
     public abstract float TimeLimit { get; }
@@ -268,9 +293,12 @@ public interface ITurnPhase
 `StartData.Reset` (`0x572C40`) fills the island's `BuildingsToPlace` list: **Castle, Cottage ×3, Farm, Dock**. `StartData.PlaceBuilding` (`0x5728C0`) places one of them if the normal tile rules
 pass (`IslandGrid.CanPlaceBuilding`) and the type is still in the list; each listed type can be placed exactly as often as it appears.
 
+The buildings to place come from `StartData`, the start resources from `StartPhase`:
+
 <!-- code: StartData | BuildingsToPlace, PlacedBuildings, PlaceBuilding, Reset -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class StartData : PhaseData<StartData, StartIslandState>
 {
     public List<BuildingType> BuildingsToPlace { get; }
@@ -284,7 +312,8 @@ public class StartData : PhaseData<StartData, StartIslandState>
 
 <!-- code: StartPhase | startResourceAmount, ApplyChanges -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class StartPhase : TurnPhase<StartData, StartIslandState>
 {
     private ResourceAmount startResourceAmount;         // 0xE8
@@ -296,7 +325,8 @@ public class StartPhase : TurnPhase<StartData, StartIslandState>
 
 <!-- code: IslandGrid | PlaceableBuilding -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
 {
     public Nullable<Building> PlaceableBuilding(BuildingType buildingType);  // RVA 0x6179E0
@@ -323,9 +353,12 @@ At the end (`StartPhase.ApplyChanges` `0x573370`), for every island:
 
 `GameState.SpawnIslands` (`0x5F3F70`) runs on the server at game start with the match random generator, so the layout is the same for everybody.
 
+Islands are created by `GameState`:
+
 <!-- code: GameState | SpawnIslands, StartGame -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class GameState : NetworkedBehaviour
 {
     private void StartGame();     // RVA 0x5F50E0
@@ -353,9 +386,12 @@ A layout mod can postfix `SpawnIslands` to move islands or replace grids, but it
 `TurnPhase.TakeSnapshot` stores `(Island, IslandGrid.SyncData, Statistics.SyncData)` for every island when a phase is entered; `SnapshotStore` keeps them under `(player, turn, phase)`.
 `GameState.Restore()`, `RestoreTurnPhase` and `Rejoin(Player)` let a player who reconnects rebuild the state (`PhaseData.RejoinClientRPC`).
 
+Snapshot and restore:
+
 <!-- code: TurnPhase | TakeSnapshot -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
 {
     private void TakeSnapshot();  // RVA 0xFDF1D0 (shared generic body)
@@ -365,7 +401,8 @@ public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurn
 
 <!-- code: GameState | Restore -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class GameState : NetworkedBehaviour
 {
     public bool Restore();  // RVA 0x5F33E0

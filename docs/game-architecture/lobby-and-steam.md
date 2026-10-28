@@ -69,9 +69,12 @@ network down.
 `LobbySettings : SettingSet`: `lobbyCode`, `timerSpeed` (FAST / SLOW / UNLIMITED), `multiMeteor`, `teams`, `wonderVictory`. Defaults: FAST, multi-meteor off, teams off, wonder victory on.
 Synced to clients through `GameState.lobbySettingsNetworked`. The lobby code is 7 characters from `ABCDEFGHJKMPQRST23456789`.
 
+The settings object:
+
 <!-- code: LobbySettings | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class LobbySettings : SettingSet
 {
     public SettingSet.Setting<LobbySettings.LobbyCode> lobbyCode;    // 0x28
@@ -116,9 +119,12 @@ public enum LobbySettings.TimerSpeed
 
 Steam item definitions:
 
+The Steam inventory of a player:
+
 <!-- code: PlayerInventory | *fields, *props, *methods -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public struct PlayerInventory
 {
     public static readonly PlayerInventory FALLBACK;                      // static
@@ -132,7 +138,8 @@ public struct PlayerInventory
 
 <!-- code: Player | NextCivilization -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Player : NetworkedBehaviour
 {
     public void NextCivilization();  // RVA 0x570500

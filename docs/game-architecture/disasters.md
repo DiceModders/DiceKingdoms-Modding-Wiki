@@ -13,9 +13,12 @@ The `Disasters` asset holds one object of each disaster class, in this order (`V
 starvation, robbers, disease, lightning, fire, thunderstorm, revolt, tornado, plague, satanism, pirates, tsunami, meteorite.
 Base class `Disaster`: `name` `0x10`, `icon` `0x18`, `affectedOthers` `0x20`, `threshold` `0x24`.
 
+Every disaster is a `Disaster` object; `Disasters` holds them all:
+
 <!-- code: Disaster | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class Disaster
 {
     public string name;         // 0x10
@@ -28,7 +31,8 @@ public abstract class Disaster
 
 <!-- code: Disasters | *fields, Values -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Disasters : ScriptableObject
 {
     public Starvation starvation;      // 0x18
@@ -72,9 +76,12 @@ public class Disasters : ScriptableObject
 
 `DisastersPhase.RandomOccurrences` (`0x646940`), for every island:
 
+The choice is made in `DisastersPhase`; each result is a `DisasterOccurrence`:
+
 <!-- code: DisastersPhase | disasters, RandomOccurrences, Disaster, ApplyChanges -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class DisastersPhase : TurnPhase<DisastersData, DisastersIslandState>
 {
     private Disasters disasters;                             // 0xF0
@@ -88,7 +95,8 @@ public class DisastersPhase : TurnPhase<DisastersData, DisastersIslandState>
 
 <!-- code: DisasterOccurrence | *props -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class DisasterOccurrence
 {
     private NetRef<Player> SourceRef { get; }
@@ -126,9 +134,12 @@ Then:
 `Building.Active` is simply `affectedByDisaster == null` (`0x5F15A0`). An affected building (hungry, sick, …) **does not roll its die** and does not count as active population for that turn.
 The building tints (hungry / sick / burnt / died in combat) show the state.
 
+The building flags involved:
+
 <!-- code: Building | affectedByDisaster, Active -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public struct Building : IEquatable<Building>
 {
     public Disaster affectedByDisaster;  // 0x18
@@ -140,9 +151,12 @@ public struct Building : IEquatable<Building>
 
 ## Effects
 
+Each disaster's parameters are fields of its class, and the effect itself is an `IslandGrid` method:
+
 <!-- code: Robbers | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Robbers : Disaster
 {
     private Resource[] losableResources;                     // 0x28
@@ -154,7 +168,8 @@ public class Robbers : Disaster
 
 <!-- code: Disease | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Disease : Disaster
 {
     private Transform visualPrefab;  // 0x28
@@ -165,7 +180,8 @@ public class Disease : Disaster
 
 <!-- code: Lightning | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Lightning : Disaster
 {
     public int nbTile;                     // 0x28
@@ -177,7 +193,8 @@ public class Lightning : Disaster
 
 <!-- code: Thunderstorm | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Thunderstorm : Disaster
 {
     public int nbTile;                     // 0x28
@@ -189,7 +206,8 @@ public class Thunderstorm : Disaster
 
 <!-- code: Revolt | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Revolt : Disaster
 {
     public ResourceParticle resourceParticlePrefab;  // 0x28
@@ -200,7 +218,8 @@ public class Revolt : Disaster
 
 <!-- code: Plague | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Plague : Disaster
 {
     private Transform visualPrefab;  // 0x28
@@ -211,7 +230,8 @@ public class Plague : Disaster
 
 <!-- code: Pirates | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Pirates : Disaster
 {
     private Resource[] losableResources;             // 0x28
@@ -223,7 +243,8 @@ public class Pirates : Disaster
 
 <!-- code: IslandGrid | ActivePopulation, CanGetSick, StormDisaster, GetRandomBurnable, FireDisaster, SatanismDisaster -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
 {
     public int ActivePopulation { get; }
@@ -264,9 +285,12 @@ non-wall neighbour of it (the Hospital protects its neighbours and their neighbo
 
 ### Tsunami
 
+The tsunami's parameters and the grid methods it uses:
+
 <!-- code: Tsunami | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Tsunami : Disaster
 {
     private int radius;                             // 0x28
@@ -280,7 +304,8 @@ public class Tsunami : Disaster
 
 <!-- code: IslandGrid | GetTsunamiImpact, GetTsunamiTiles, TsunamiDisaster -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
 {
     public Nullable<int2> GetTsunamiImpact(ref Random random);          // RVA 0x615C00
@@ -300,9 +325,12 @@ public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
 
 `DisastersPhase.ExecuteOccurrences` (`0x645900`) runs on every client and builds one sequence:
 
+Playback runs in `DisastersPhase`; the camera lock is `CameraMovement.focus`:
+
 <!-- code: DisastersPhase | ExecuteOccurrences, ExecuteOccurrencesRPC -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class DisastersPhase : TurnPhase<DisastersData, DisastersIslandState>
 {
     private void ExecuteOccurrencesRPC(DisasterOccurrence[] occurrences);             // RVA 0x6457D0
@@ -313,7 +341,8 @@ public class DisastersPhase : TurnPhase<DisastersData, DisastersIslandState>
 
 <!-- code: CameraMovement | focus -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class CameraMovement : MonoBehaviour
 {
     public Nullable<CameraMovement.Focus> focus;  // 0xA0

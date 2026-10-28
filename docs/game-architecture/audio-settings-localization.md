@@ -9,9 +9,12 @@ summary: Audio (sound pool, music selection, mixer and volume curve), saved sett
 
 ## Audio
 
+Sounds and the player for them:
+
 <!-- code: Sound | *fields -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class Sound : ScriptableObject
 {
     public AudioClip[] clips;           // 0x18
@@ -27,7 +30,8 @@ public class Sound : ScriptableObject
 
 <!-- code: AudioSources | Play -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class AudioSources : MonoBehaviour
 {
     public AudioSources.AllocatedSource Play(Sound sound, Nullable<Vector3> positionOpt);  // RVA 0x580C20
@@ -52,9 +56,12 @@ public class AudioSources : MonoBehaviour
 `Music` (match scene): calm track per civilization (Europe 6 clips, Middle East 3, Viking 9, Ancient 9, Maya 6), combat, decisive combat, winning and losing tracks. `Music.get_Track`
 (`0x590F70`), every frame:
 
+The music component:
+
 <!-- code: Music | *fields, *methods -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class Music : MonoBehaviour
 {
     private Sound europeTrack;                                                     // 0x18
@@ -115,9 +122,12 @@ For mods: `AudioSources.instance.Play(sound, null)` plays any `Sound`; keep the 
 The game saves only **four settings files** (`video`, `audio`, `input`, `game`, JSON) and the flag file **`GameSettings/.did-tutorial`**. There are no save games, no PlayerPrefs and no Steam
 stats, achievements or leaderboards.
 
+The settings sets:
+
 <!-- code: SettingSets | *fields, *methods -->
 ```csharp
-// DiceKingdoms.Meta
+namespace DiceKingdoms.Meta;
+
 public class SettingSets : MonoBehaviour
 {
     private string localFolder;                                          // 0x18
@@ -180,9 +190,12 @@ At the start every building button and Ready are hidden and **combat phases are 
 Unity **Localization** with SmartFormat, string tables in Addressables bundles, 421 keys × 6 languages. Game code goes through `StructuredTextStaticReferences.instance`
 (`LocalizeString(key)`).
 
+The language selector:
+
 <!-- code: SteamLocaleSelector | *methods -->
 ```csharp
-// DiceKingdoms.Meta
+namespace DiceKingdoms.Meta;
+
 public class SteamLocaleSelector : IStartupLocaleSelector
 {
     public Locale GetStartupLocale(ILocalesProvider availableLocales);  // RVA 0x550170

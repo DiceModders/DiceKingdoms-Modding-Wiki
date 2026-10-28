@@ -13,9 +13,12 @@ The game ships **CommandTerminal** (`Terminal : MonoBehaviour`, commands registe
 
 `Cheats.get_Available` (`0x52A840`):
 
+The cheat state is on `Cheats.instance`:
+
 <!-- code: Cheats | instance, gameState, defLimit, enabledDisasters, forcedDisaster, rich, speedFactor, Available, CheckAvailable, DefLimit, ForcedDisaster, NetworkTime -->
 ```csharp
-// DiceKingdoms.Meta
+namespace DiceKingdoms.Meta;
+
 public class Cheats : MonoBehaviour
 {
     private static Cheats instance;           // static
@@ -50,9 +53,12 @@ Each command has a `Front…` handler (parses the arguments) and a `Command…` 
 
 ## Commands
 
+The command flags:
+
 <!-- code: MiscCommands | *props -->
 ```csharp
-// DiceKingdoms.Meta
+namespace DiceKingdoms.Meta;
+
 public static class MiscCommands
 {
     public static bool Cinematic { get; set; }

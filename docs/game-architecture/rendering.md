@@ -22,9 +22,12 @@ Lit windows use the emission palette (cells (5,0) orange and (5,1) yellow are th
 
 ### Player and team colours
 
+The colour helpers:
+
 <!-- code: ColoredPaperUtils | *props, *methods -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class ColoredPaperUtils : MonoBehaviour
 {
     public PlayerColor PlayerColor { set; }
@@ -60,9 +63,12 @@ In free-for-all `Team.Same` is true only for the same player. A new colour list 
 
 Prefab parts: `Visual`, `Damaged Visual` (a copy of the mesh), `Fires` (3 fire particle systems), `Damage Particles`, `Remains` particles, `onlyEnableWhenActive` objects.
 
+A building's visual object:
+
 <!-- code: BuildingVisual | visual, damagedVisual, firesHolder, onlyEnableWhenActive, buildingTints, icons, Apply, ApplyLater, OnPlace, OnHit, Icon -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildingVisual : MonoBehaviour
 {
     private BuildingTints buildingTints;                                                  // 0x18
@@ -104,9 +110,12 @@ public class BuildingVisual : MonoBehaviour
 
 `DayNightCycle` (`DiceKingdoms.Environment`), `ApplyTimeOfDay` (`0x57CC70`):
 
+The day / night component:
+
 <!-- code: DayNightCycle | *fields, TimeOfDay, Cloudiness, ApplyTimeOfDay, Update -->
 ```csharp
-// DiceKingdoms.Environment
+namespace DiceKingdoms.Environment;
+
 public class DayNightCycle : MonoBehaviour
 {
     private Light sun;                                          // 0x18
@@ -152,9 +161,12 @@ public class DayNightCycle : MonoBehaviour
 
 `GridTransform.Apply` (`0x60F050`): `GridTransform` = tile `position`, `orientation` 0..3, `mirroring`.
 
+Orientation is applied by `GridTransform`:
+
 <!-- code: GridTransform | *fields, Apply -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public struct GridTransform
 {
     public int2 position;                                      // 0x0

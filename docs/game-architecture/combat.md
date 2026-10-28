@@ -12,6 +12,8 @@ summary: The combat phase - planning attacks, ships and landing, defenders, unit
 `Unit.Type`: ARCHER 0, BOURGEOIS 1, GENERAL 2, KING 3, PEASANT 4, PRIEST 5, SOLDIER 6, SORCERER 7, TEMPLAR 8, WARLOCK 9.
 `Unit.Family`: INHABITANT 0, SOLDIER_MELEE 1, SOLDIER_RANGED 2.
 
+Unit types, families and the per-type stats:
+
 <!-- code: Unit.Type |  -->
 ```csharp
 public enum Unit.Type
@@ -43,7 +45,8 @@ public enum Unit.Family
 
 <!-- code: Unit | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public struct Unit
 {
     public readonly Player owner;              // 0x0
@@ -108,6 +111,8 @@ range 6 as "3 tiles".
 `CombatData.PlanAttack(AttackPlan)` (`0x62E8E0`) → `PlanAttackRPC`. `AttackPlan` = player, `shipPosition` (where the ship was dropped), `target` (building id), `unitCounts` per family,
 `sourceDock`. The plan is **silently ignored** if:
 
+An attack is a `CombatData.AttackPlan`, planned through `CombatData`:
+
 <!-- code: CombatData.AttackPlan | *fields -->
 ```csharp
 public struct CombatData.AttackPlan
@@ -123,7 +128,8 @@ public struct CombatData.AttackPlan
 
 <!-- code: CombatData | AvailableDocks, DeployedUnits, UnDeployedUnits, PlannedAttacks, PlanAttack, PlanAttackRPC, IsSoldierFamilyUnlocked, SoldierFamilyUnitType -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class CombatData : PhaseData<CombatData, CombatIslandState>
 {
     public List<Building.Id> AvailableDocks { get; }
@@ -158,9 +164,12 @@ public class CombatData : PhaseData<CombatData, CombatIslandState>
 `CombatPhase.ApplyChanges` (`0x63D870`) builds the deployments for every island (`CreateDeployments` `0x63E280`), then the server prepares a combat for each island. The phase ends
 when every island reported its fight finished.
 
+Deployments are created in `CombatPhase` and represented by `Deployment`:
+
 <!-- code: CombatPhase | familyDeployOrder, ApplyChanges, CreateDeployments, FamilyUnitCap, ComputeShore, ComputeConnectedComponents -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class CombatPhase : TurnPhase<CombatData, CombatIslandState>
 {
     public static Unit.Family[] familyDeployOrder;                                              // static
@@ -176,7 +185,8 @@ public class CombatPhase : TurnPhase<CombatData, CombatIslandState>
 
 <!-- code: Deployment | Owner, UnitTypes, Counts, SourceBuilding, Left, OnLeave, AttackDeployment, DefenseSoldierDeployment, DefenseHouseDeployment, Leave -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Deployment
 {
     public Player Owner { get; }
@@ -221,9 +231,12 @@ An island only gets a fight if somebody attacks it; its own defence deployments 
 `CombatGrid` runs a **deterministic, tick-based** fight **on every client**: the server sends the deployment list, every machine simulates it with software floats (`sfloat`), grid
 positions, a Burst pathfinding job and seeded randomness. `CombatGrid.Hash()` is logged every 100 ticks (`Turn {0} - Island {1} - Tick {2} - Hash {3:x8}`) to catch desyncs.
 
+The simulation is `CombatGrid`; its constants and main loop:
+
 <!-- code: CombatGrid | TICK_FREQUENCY, MAX_TICKS, MAX_IDLE_TICKS, BUILDING_PROTECT_UNIT_CHANCE_PERCENT, Init, SimulationStep, Hash, End, FromIsland, ToIsland -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class CombatGrid : MonoBehaviour
 {
     private const int TICK_FREQUENCY = 10;
@@ -256,9 +269,12 @@ public class CombatGrid : MonoBehaviour
 
 ### Units
 
+Hits and conversions:
+
 <!-- code: CombatGrid | UnitHit, ConvertUnit, BuildingHit, MeleeBuildingDamage -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class CombatGrid : MonoBehaviour
 {
     private void UnitHit(Player source, Unit.Id target, float3 hitDirection);     // RVA 0x63C6F0
@@ -282,6 +298,8 @@ public class CombatGrid : MonoBehaviour
 
 ### Projectiles and towers
 
+Projectile types, their values and the shot itself:
+
 <!-- code: Projectile.Type |  -->
 ```csharp
 public enum Projectile.Type
@@ -295,7 +313,8 @@ public enum Projectile.Type
 
 <!-- code: ProjectileTypeExtensions | *methods -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public static class ProjectileTypeExtensions
 {
     public static int Duration(Projectile.Type type, int2 source, int2 target);  // RVA 0x64C2B0
@@ -307,7 +326,8 @@ public static class ProjectileTypeExtensions
 
 <!-- code: CombatGrid | ShootProjectile -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class CombatGrid : MonoBehaviour
 {
     private void ShootProjectile(Player owner, int2 source, int2 target, Projectile.Type type, ref PseudoRandom miss, float visualStartHeight);  // RVA 0x636BF0
@@ -342,9 +362,12 @@ public class CombatGrid : MonoBehaviour
 Parry, arrow block, ranged miss and tower miss use `PseudoRandom` (`Sample` `0x64C790`), like Dota's pseudo-random distribution: the chance drops after a success and rises after a failure,
 always pulled back toward the base value, so long streaks are rarer than with a plain random roll.
 
+The pseudo-random roll:
+
 <!-- code: PseudoRandom | *fields, *methods -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public struct PseudoRandom
 {
     public sfloat probability;                 // 0x0
@@ -372,9 +395,12 @@ Example: Decrease(0.5) = 0.317, Increase(0.5) = 0.683.
 
 ## End of a fight
 
+Leaving and the end of the simulation:
+
 <!-- code: Deployment | Leave, OnLeave -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Deployment
 {
     public Action<Unit.Id[]> OnLeave { get; set; }
@@ -386,7 +412,8 @@ public class Deployment
 
 <!-- code: CombatGrid | End -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class CombatGrid : MonoBehaviour
 {
     private void End();  // RVA 0x631C40
@@ -403,9 +430,12 @@ public class CombatGrid : MonoBehaviour
 `PowerConstants` gives each unit type and the Castle, Guard Tower, Guard Tower Up and Wall a power value (Warlock 3, Templar 2, Sorcerer 2, Guard Tower Up 16, Guard Tower 8, Castle 4, …).
 `AttackPower(island)` / `DefensePower(island)` are shown in the player list and used by the [AI](ai.md).
 
+The power formulas:
+
 <!-- code: PowerConstants | *methods -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class PowerConstants : ScriptableObject
 {
     public float UnitPower(Unit.Type unitType);                     // RVA 0x621490

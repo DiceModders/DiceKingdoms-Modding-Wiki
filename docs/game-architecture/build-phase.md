@@ -15,6 +15,8 @@ During the build phase the client **plans** actions. Each one goes to the server
 
 `BuildData.Action.Type`:
 
+Every build action is a `BuildData.Action` with one of these types; each type has its own public method on `BuildData`:
+
 <!-- code: BuildData.Action.Type |  -->
 ```csharp
 public enum BuildData.Action.Type
@@ -51,7 +53,8 @@ public struct BuildData.Action
 
 <!-- code: BuildData | RepairBuilding, BurnBuilding, CleanTile, PlaceBuilding, PlaceBuildingBulk, BuyResource, LearnTechnology, SendResources -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildData : PhaseData<BuildData, BuildIslandState>
 {
     public bool CleanTile(int2 position);                                          // RVA 0x628AB0
@@ -86,9 +89,12 @@ public class BuildData : PhaseData<BuildData, BuildIslandState>
 
 The public methods only fill an `Action` and call `PlanAction` (`0x62AB20`):
 
+Planning goes through these `BuildData` members:
+
 <!-- code: BuildData | Actions, PlanAction, PlanActionRPC, PlanActionClientRPC, ReceiveResources -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildData : PhaseData<BuildData, BuildIslandState>
 {
     public List<BuildData.Action> Actions { get; }
@@ -114,9 +120,12 @@ public class BuildData : PhaseData<BuildData, BuildIslandState>
 `BuildPhase.ApplyChanges` (`0x62C6C0`), at sync: for every island, every stored action whose island is not `Preview` goes through `DoAction`; **failed actions are skipped silently**.
 Successful placements and technologies are counted for the game log (hammer icon followed by `NxBuilding`, culture icon followed by the technologies).
 
+Committing happens in `BuildPhase`:
+
 <!-- code: BuildPhase | *fields, ApplyChanges -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildPhase : TurnPhase<BuildData, BuildIslandState>
 {
     private readonly Dictionary<BuildingType, int> buildingTypeCount;          // 0xE8
@@ -134,9 +143,12 @@ So the server checks every action, but for islands it does not preview it checks
 `PhaseData.Preview` decides whether this machine applies an island's actions **the moment they arrive** (true) or **only at the end of the phase** (false). It has nothing to do with the
 camera. `PhaseData.Enter` (`0xE60440`) sets it for every island, on every machine, at the start of every phase (and on rejoin):
 
+The flag lives on the per-island phase data:
+
 <!-- code: PhaseData | Preview, Island, Enter -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
 {
     public Island Island { get; set; }
@@ -168,9 +180,12 @@ either; the host checks and applies it at sync like everybody else. (Confirmed i
 `FixAction` (inlined at the start of `DoAction` `0x628BA0`): a single placed building's type goes through `UpgradedBuildingType` (Guard Tower → Guard Tower Up once the upgrade is
 learnt), and every placed building gets `SetNewlyBuilt(turnCounter)`.
 
+Checks, effects and prices are on `BuildData`:
+
 <!-- code: BuildData | toolCost, repairToolAmount, marketOffers, FixAction, DoAction, JustPlacedBuilding, Offer, AvailableMarket, AvailableUniversity, UnavailableUniversity -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildData : PhaseData<BuildData, BuildIslandState>
 {
     public ResourceAmount toolCost;                                   // 0xB8
@@ -212,9 +227,12 @@ public class BuildData : PhaseData<BuildData, BuildIslandState>
 
 ### Check functions
 
+The checks, on `BuildData` and on the island grid:
+
 <!-- code: BuildData | CanBuildType, Unlocked, DemoLocked, UpgradedBuildingType, CanAfford, CanAffordBulk, CanAffordMarket, CanAffordTechnology, CanAffordTool, BulkCount, CanRepair, CanBurn, CanRemoveNature, CanRemoveRemains -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildData : PhaseData<BuildData, BuildIslandState>
 {
     public bool CanAffordTool { get; }
@@ -238,7 +256,8 @@ public class BuildData : PhaseData<BuildData, BuildIslandState>
 
 <!-- code: IslandGrid | CanPlaceBuilding, AddBuilding, RemoveBuilding, RepairBuilding, BuildingAt -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
 {
     public Nullable<Building.Id> BuildingAt(int2 position);                // RVA 0x613A20
@@ -273,9 +292,12 @@ public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
 
 `DoCleanTile`:
 
+Clean rewards and the event, and the grid methods that remove the tile content:
+
 <!-- code: BuildData | NatureYields, onCleanTile -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildData : PhaseData<BuildData, BuildIslandState>
 {
     public Action<int2, Nullable<NatureTile>, ResourceAmount> onCleanTile;              // 0xF8
@@ -288,7 +310,8 @@ public class BuildData : PhaseData<BuildData, BuildIslandState>
 
 <!-- code: IslandGrid | RemoveNature, RemoveBuildingRemains -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
 {
     public void RemoveNature(int2 position);                             // RVA 0x619DB0
@@ -318,9 +341,12 @@ Classes: `UnlockBuildingTechnology`, `AddRollTechnology` (+1 re-roll), `DoubleCl
 Warlocks replace Archers), `RitualsTechnology`, `ShipCapacityTechnology` (`Statistics.ShipCapacity`), `TradeEfficiencyTechnology` (`Statistics.TradeFactor`). Costs: [Game data](game-data.md#technologies);
 trees: [Civilizations in the game code](civilizations.md#tech-trees).
 
+Technologies that replace buildings, and the learning checks:
+
 <!-- code: ReplaceBuildings | *fields, *methods -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class ReplaceBuildings : Technology
 {
     private BuildingTypes buildingTypes;                                // 0x38
@@ -336,7 +362,8 @@ public class ReplaceBuildings : Technology
 
 <!-- code: Statistics | LearnTechnology, IsTechnologyLearnable -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Statistics : IslandSyncedBehaviour<Statistics.SyncData>
 {
     public void LearnTechnology(Technology technology);        // RVA 0x623A90

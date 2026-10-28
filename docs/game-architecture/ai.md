@@ -18,9 +18,12 @@ summary: How the AI plays - difficulties, the rubber band, build orders and the 
 
 A MonoBehaviour asset inside `sharedassets1.assets` (not a loose file). Changing it needs a plugin (edit the object at runtime).
 
+The AI tuning values and the per-player AI state:
+
 <!-- code: AIConfiguration | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class AIConfiguration : ScriptableObject
 {
     public int hammerToKeep;                                        // 0x18
@@ -116,9 +119,12 @@ Scoring weights: soldier 4, archer 8, templar 9, sorcerer 18, requireShip 0.3, g
 `custom-build-orders.txt` exists in the game folder (next to `Dice-Kingdoms.exe`), it is read instead** (confirmed in game; the log still says "Loaded 15 build orders."). So the AI's build
 orders can be changed with a text file alone, no plugin needed. Keep the same format:
 
+Build orders are loaded and picked in `AIPlay`:
+
 <!-- code: AIPlay | customBuildOrdersPath, InitBuildOrders, SampleBuildOrder -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class AIPlay : MonoBehaviour
 {
     private string customBuildOrdersPath;                                                       // 0x40
@@ -145,9 +151,12 @@ market, lumber, quarry, archery, wonder, sorcerer. `SampleBuildOrder` (`0x568710
 `PlayStart` (`0x567FE0`) places the start buildings with a spiral from the centre, 4 orientations from a random start, **Farms only at Manhattan distance ≥ 15 from the centre**,
 no extra disease risk. Then it picks its strategy and build order.
 
+Every phase starts in `AIPlay.PlayPhase`:
+
 <!-- code: AIPlay | PlayPhase, PlayStart -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class AIPlay : MonoBehaviour
 {
     public Player.AIState PlayPhase(IPhaseData data, Player.AIState state);  // RVA 0x567640
@@ -162,9 +171,12 @@ public class AIPlay : MonoBehaviour
 
 `PlayHarvest` (`0x566620`), after the AI's dice were rolled, for each re-roll:
 
+The harvest decision:
+
 <!-- code: AIPlay | PlayHarvest -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class AIPlay : MonoBehaviour
 {
     public Player.AIState PlayHarvest(HarvestData data, Player.AIState state);  // RVA 0x566620
@@ -183,9 +195,12 @@ public class AIPlay : MonoBehaviour
 
 `PlayBuild` (`0x565500`):
 
+Building, cleaning and market use:
+
 <!-- code: AIPlay | PlayBuild, BuildAndClean, WhereToPlaceBuilding, PlaceBuildingSomewhere, PlaceBuildingAt, CleanRemains, CleanNature, UseMarket -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class AIPlay : MonoBehaviour
 {
     public Player.AIState PlayBuild(BuildData data, Player.AIState state);                      // RVA 0x565500
@@ -229,9 +244,12 @@ Never used by the AI: repairing buildings.
 
 At the end of the combat phase (inside `PlayPhase`):
 
+Target choice:
+
 <!-- code: AIPlay | GetWarTarget, DefenseScore, SoldierFactor -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class AIPlay : MonoBehaviour
 {
     private Nullable<ValueTuple<Island, Building[]>> GetWarTarget(CombatData data, Player.AIState state, int targetMaxCount);  // RVA 0x562FA0

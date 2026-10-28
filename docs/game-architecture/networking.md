@@ -22,9 +22,12 @@ summary: Host-authoritative MLAPI over Steam P2P - what runs where, every client
 
 ## Client → server RPCs
 
+The `Player` RPCs and their public wrappers:
+
 <!-- code: Player | NextColorRPC, NextCivilizationRPC, JoinStartGameSlotRPC, AcknowledgeRPC, ChatRPC, Chat, Acknowledge -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Player : NetworkedBehaviour
 {
     private void NextColorRPC();                                   // RVA 0x5706E0
@@ -61,9 +64,12 @@ There are 17 ClientRPCs in `DiceKingdoms.Game` (results, echoes, enter / sync / 
 
 ## Player ids
 
+The id field and the members that use it:
+
 <!-- code: Player | initialOwnerId, InitialOwnerId, IsInitialOwner, LocalPlayer, IsAI, UserName, UpdateUserName, NetworkStart -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Player : NetworkedBehaviour
 {
     private readonly NetworkedVar<ulong> initialOwnerId;  // 0xC8

@@ -25,9 +25,12 @@ It is recomputed for every island after every phase's `ApplyChanges`, so it is *
 `IslandGrid.RemoveBuilding` (`0x619360`) runs for every removed building (burn, combat, disasters). It clears the tiles and leaves **remains** (walls do not leave remains). If the building
 is a Castle:
 
+The grid methods that remove a Castle:
+
 <!-- code: IslandGrid | RemoveBuilding, BurnAllBuildings -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
 {
     public void RemoveBuilding(Building.Id id, float delay = 0);  // RVA 0x619360
@@ -47,9 +50,12 @@ public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
 
 `WinPhase.CheckWin` (`0x57AB10`): a game with only one island never ends by itself. Otherwise it calls `CheckWinTeam` when the lobby option **Teams** is on, else `CheckWinFFA` (`0x579EA0`):
 
+The checks are in `WinPhase`; the result is a `WinState`:
+
 <!-- code: WinPhase | *fields, CheckWin, CheckWinFFA, CheckWinTeam, WinNow, ShouldSkip -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class WinPhase : TurnPhase<WinData, WinIslandState>
 {
     public const int WONDER_TURN_DELAY = 1;

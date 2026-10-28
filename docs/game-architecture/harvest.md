@@ -12,9 +12,12 @@ summary: The harvest phase - which buildings roll dice, die faces, re-rolls, pas
 `HarvestData.Roll` (`0x649BC0`): only buildings whose type is **`BuildingTypeHousing`** (or its subclass `BuildingTypeCastle`) roll, and only while `Building.Active`
 (a hungry or sick building is inactive).
 
+Dice come from housing buildings; a building hit by a disaster does not roll:
+
 <!-- code: BuildingTypeHousing | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildingTypeHousing : BuildingType
 {
     public ResourceAmount[] possibleYields;  // 0xE8
@@ -27,7 +30,8 @@ public class BuildingTypeHousing : BuildingType
 
 <!-- code: Building | affectedByDisaster, Active -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public struct Building : IEquatable<Building>
 {
     public Disaster affectedByDisaster;  // 0x18
@@ -66,9 +70,12 @@ Every die except the Sorcerer Tower's has exactly one face with 1 disaster point
 
 `HarvestData.Reset` (`0x649520`):
 
+Rolls and re-rolls are handled by `HarvestData`:
+
 <!-- code: HarvestData | BASE_RE_ROLLS, ReRollsRemaining, TotalReRolls, Reset, ReRoll, ReRollRPC, Roll, RollResultsRPC, FirstRoll -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class HarvestData : PhaseData<HarvestData, HarvestIslandState>
 {
     private const int BASE_RE_ROLLS = 2;
@@ -96,9 +103,12 @@ public class HarvestData : PhaseData<HarvestData, HarvestIslandState>
 
 `HarvestData.ComputeTotalYields` (`0x648530`) builds `TotalYields` from scratch:
 
+The total is computed and paid out in `HarvestData`:
+
 <!-- code: HarvestData | TotalYields, Yield, ComputeTotalYields, SetAIYields, AddResources -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class HarvestData : PhaseData<HarvestData, HarvestIslandState>
 {
     public ResourceAmount TotalYields { get; set; }
@@ -124,9 +134,12 @@ public class HarvestData : PhaseData<HarvestData, HarvestIslandState>
 
 Subclasses of `BuildingTypeProducer` implement `Yield(Island, Building)`:
 
+Passive income comes from the producer building types:
+
 <!-- code: BuildingTypeProducer | *methods -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public abstract class BuildingTypeProducer : BuildingType
 {
     public abstract ResourceAmount Yield(Island island, Building building);
@@ -136,7 +149,8 @@ public abstract class BuildingTypeProducer : BuildingType
 
 <!-- code: BuildingTypeProducerFixed | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildingTypeProducerFixed : BuildingTypeProducer
 {
     public ResourceAmount yield;  // 0xE8
@@ -146,7 +160,8 @@ public class BuildingTypeProducerFixed : BuildingTypeProducer
 
 <!-- code: BuildingTypeProducerNature | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildingTypeProducerNature : BuildingTypeProducer
 {
     private Resource yieldResource;  // 0xE8
@@ -158,7 +173,8 @@ public class BuildingTypeProducerNature : BuildingTypeProducer
 
 <!-- code: BuildingTypeProducerAmplifier | *fields -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class BuildingTypeProducerAmplifier : BuildingTypeProducer
 {
     private BuildingTypes buildingTypes;                 // 0xE8
@@ -185,9 +201,12 @@ public class BuildingTypeProducerAmplifier : BuildingTypeProducer
 
 `Island.RecomputeStorageCapacities` (`0x61F270`): the capacity is the **sum of `BuildingType.storageCapacity` over all buildings** on the island. Nothing else adds to it.
 
+Capacities are recomputed on the island and stored in its `Statistics`:
+
 <!-- code: Island | statistics, Recompute, RecomputeStorageCapacities -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Island : NetworkedBehaviour
 {
     public Statistics statistics;               // 0xA0
@@ -200,7 +219,8 @@ public class Island : NetworkedBehaviour
 
 <!-- code: Statistics | Storage, SetCapacity -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Statistics : IslandSyncedBehaviour<Statistics.SyncData>
 {
     public ResourceStorage Storage { get; set; }
@@ -229,9 +249,12 @@ The resources are kept in `Utility.AntiCheat.EncryptedStorage<ResourceStorage>` 
 A memory scanner will not find plain values. **Mods do not need to decrypt anything:** read `Statistics.get_Storage` (plain `ResourceStorage`) and change resources with
 `Statistics.AddResource` / `RemoveResource` / `SetCapacity`.
 
+Read and change resources through `Statistics`, never the raw memory:
+
 <!-- code: Statistics | Storage, AddResource, RemoveResource, HasResource, ShipCapacity, TradeFactor -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Statistics : IslandSyncedBehaviour<Statistics.SyncData>
 {
     public ResourceStorage Storage { get; set; }

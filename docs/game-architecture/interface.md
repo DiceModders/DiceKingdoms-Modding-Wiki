@@ -11,9 +11,12 @@ How the in-match interface behaves. The visual building blocks (canvases, button
 
 ## Who owns what
 
+The `Interface` object and its events:
+
 <!-- code: Interface | cameraMovement, hideInterface, Island, Hidden, OnBuild, OnLearn, OnPillage, OnStarvation -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class Interface : MonoBehaviour
 {
     private CameraMovement cameraMovement;                   // 0x28
@@ -41,9 +44,12 @@ or the HUD is hidden, otherwise visible and **confined to the window**.
 
 ## Input
 
+The input maps:
+
 <!-- code: InputActionMaps | Camera, Building, Interface, StartDisable -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class InputActionMaps : ScriptableObject
 {
     public InputActionMap Camera { get; set; }
@@ -79,9 +85,12 @@ while at least one token is active. The game uses it only for chat.
 `CameraMovement`: min height 4, max height 100, move speed 5, zoom speed 0.2, zoom smoothing 10, mouse move speed 0.002; pitch by height (0 → 0°, 4 → −30°, 25 → −55°,
 100 → −90° straight down). The yaw is fixed at 45° (see [Rendering](rendering.md#building-orientation-and-the-camera)).
 
+The camera and its focus:
+
 <!-- code: CameraMovement | focus, Grabbed, FocusedIsland, Update, UpdatePositionFocus -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class CameraMovement : MonoBehaviour
 {
     public Nullable<CameraMovement.Focus> focus;                   // 0xA0
@@ -139,9 +148,12 @@ For your own UI: add `HooverCursor`, or call `StartOverride` with priority above
 
 `StructuredText` is a list of `ITextElement` built from a C# interpolated string (`$"..."`); `Render()` gives the TextMeshPro string, `+` joins two. Each `{hole}` is converted by type:
 
+The renderer:
+
 <!-- code: StructuredText | Render -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class StructuredText
 {
     public string Render();  // RVA 0x595700
@@ -170,9 +182,12 @@ Other elements: `Localized(key, args)`, `OtherIcon` (AI, CLEAN_TILE, DISCONNECTE
 
 ## Tooltips, dialogs, game log, chat
 
+The entry points:
+
 <!-- code: HasToolTip | text -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class HasToolTip : MonoBehaviour, IPointerEnterHandler, IEventSystemHandler, IPointerExitHandler
 {
     public StructuredText text;  // 0x28
@@ -182,7 +197,8 @@ public class HasToolTip : MonoBehaviour, IPointerEnterHandler, IEventSystemHandl
 
 <!-- code: ConfirmModal | OpenConfirm, OpenInformation -->
 ```csharp
-// DiceKingdoms.Interface
+namespace DiceKingdoms.Interface;
+
 public class ConfirmModal : MonoBehaviour
 {
     public void OpenInformation(StructuredText icon, StructuredText description, Action onUnderstood, string dontShowAgainId);  // RVA 0x58A880
@@ -193,7 +209,8 @@ public class ConfirmModal : MonoBehaviour
 
 <!-- code: Log | AddMessage -->
 ```csharp
-// DiceKingdoms.Game
+namespace DiceKingdoms.Game;
+
 public class Log : NetworkedBehaviour
 {
     public void AddMessage(FormattableString message);  // RVA 0x6402C0
