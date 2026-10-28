@@ -4,6 +4,8 @@ summary: Host-authoritative MLAPI over Steam P2P - what runs where, every client
 
 # Networking
 
+*Code: [where to patch and the declarations](#code-reference).*
+
 ## Model
 
 - **Host-authoritative MLAPI over Steam P2P.** The host (lobby owner) is the MLAPI server and also a client; the other players are clients.
@@ -78,3 +80,63 @@ Steam-only places above (inventory, name, avatar, lobby data).
 
 `TurnPhase.TakeSnapshot` stores every island's state when a phase starts. A reconnecting player is matched by `InitialOwnerId` and rebuilt from the snapshots
 (`GameState.Restore`, `RestoreTurnPhase`, `TurnPhase.Rejoin`, `PhaseData.Rejoin`, `CombatData.Rejoin`, `DisastersPhase.Rejoin`, `IslandSyncedBehaviour.RestoreSnapshot`).
+
+## Code reference
+
+Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
+
+### Where to patch
+
+| To | Patch / use |
+|---|---|
+| Find the local player | `Player.LocalPlayer` |
+| Know who is an AI / the host | `Player.IsAI`; host = `InitialOwnerId == gameState.OwnerClientId` |
+| Send chat from code | `Player.LocalPlayer.Chat(text)` |
+
+### Declarations
+
+```csharp
+// DiceKingdoms.Game
+public class Player : NetworkedBehaviour
+{
+    private readonly NetworkedVar<ulong> initialOwnerId;           // 0xC8
+    private readonly NetworkedVar<bool> isDefeated;                // 0xD8
+    private readonly NetworkedVar<bool> isAwaited;                 // 0xE0
+    private readonly NetworkedVar<PlayerSkins> skins;              // 0x100
+
+    public Island Island { get; set; }
+    public ulong InitialOwnerId { get; }
+    public bool IsInitialOwner { get; }
+    public bool IsAI { get; }
+    public bool IsDefeated { get; set; }
+    public static Player LocalPlayer { get; set; }
+    public string UserName { get; set; }
+
+    public override void NetworkStart();                           // RVA 0x56FBA0
+    public void UpdateUserName();                                  // RVA 0x570DC0
+    private void NextColorRPC();                                   // RVA 0x5706E0
+    private void NextCivilizationRPC();                            // RVA 0x5704F0
+    public void NextCivilization();                                // RVA 0x570500
+    private void JoinStartGameSlotRPC(int slot);                   // RVA 0x56F9F0
+    public void Acknowledge(Acknowledgeable acknowledgeable);      // RVA 0x56F270
+    private void AcknowledgeRPC(Acknowledgeable acknowledgeable);  // RVA 0x56F240
+    public void Chat(string message);                              // RVA 0x56F550
+    private void ChatRPC(string message);                          // RVA 0x56F390
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Acknowledgeable : NetworkedBehaviour
+{
+    public bool IsAcknowledged();                  // RVA 0x5EF750
+    public void Reset();                           // RVA 0x5EFAC0
+    public void Clear();                           // RVA 0x5EF5F0
+    private void OnAcknowledged();                 // RVA 0x5EF920
+    protected virtual void Update();               // RVA 0x5EFC80
+    public void Rejoin(ulong observerId);          // RVA 0x5EFA40
+    public void Acknowledge(ulong observerId);     // RVA 0x5EF550
+    protected void OnDisable();                    // RVA 0x5EF9C0
+    public static bool IsAwaited(ulong playerId);  // RVA 0x5EF7A0
+}
+```

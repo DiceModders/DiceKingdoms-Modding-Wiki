@@ -4,6 +4,8 @@ summary: The disasters phase - which disaster happens, who it hits, what each on
 
 # Disasters
 
+*Code: [where to patch and the declarations](#code-reference).*
+
 ## Data
 
 The `Disasters` asset holds one object of each disaster class, in this order (`Values`, index 0..12):
@@ -99,3 +101,215 @@ While `CameraMovement.focus` has a value, `CameraMovement.Update` zeroes all cam
 free camera (`MiscCommands.FreeCam`) skips the focus. A mod that wants free camera control can clear `cameraMovement.focus` (set it to `null`) every frame during this phase; it is display only and does not affect sync.
 
 The visual effects of each disaster are listed in [Rendering](rendering.md#visual-effects).
+
+## Code reference
+
+Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
+
+### Where to patch
+
+| To | Patch / use |
+|---|---|
+| Change which disaster happens | `DisastersPhase.Disaster(int, out int)` (picks by disaster points) or `DisastersPhase.RandomOccurrences` |
+| Change a disaster's numbers | fields of the disaster objects in `gameState.disastersPhase.disasters` (`Robbers.losableResources`, `Disease.percentageAffected`, ...) |
+| Change what a disaster does | the disaster's `Execute` coroutine, or the `IslandGrid` method it calls (`StormDisaster`, `TsunamiDisaster`, `SatanismDisaster`, ...) |
+| Change food upkeep | `Starvation.Execute` / `IslandGrid.ActivePopulation` |
+| Free camera during disasters | clear `CameraMovement.focus` every frame while `DisastersPhase` is active |
+
+### Declarations
+
+```csharp
+// DiceKingdoms.Game
+public abstract class Disaster
+{
+    public string name;                                                                         // 0x10
+    public Sprite icon;                                                                         // 0x18
+    public int affectedOthers;                                                                  // 0x20
+    public int threshold;                                                                       // 0x24
+
+    public abstract IEnumerable<int> Execute(GameState gameState, DisasterOccurrence occurrence, Random random);
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Disasters : ScriptableObject
+{
+    public Starvation starvation;      // 0x18
+    public Robbers robbers;            // 0x20
+    public Disease disease;            // 0x28
+    public Lightning lightning;        // 0x30
+    public Fire fire;                  // 0x38
+    public Thunderstorm thunderstorm;  // 0x40
+    public Revolt revolt;              // 0x48
+    public Tornado tornado;            // 0x50
+    public Plague plague;              // 0x58
+    public Satanism satanism;          // 0x60
+    public Pirates pirates;            // 0x68
+    public Tsunami tsunami;            // 0x70
+    public Meteorite meteorite;        // 0x78
+
+    public Disaster[] Values { get; set; }
+
+    private void Init();               // RVA 0x6476D0
+    private void OnEnable();           // RVA 0x647C10
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class DisasterOccurrence
+{
+    private NetRef<Player> SourceRef { get; }
+    private NetRef<Player> TargetRef { get; }
+    public Disaster Disaster { get; }
+    public Player Source { get; }
+    public Player Target { get; }
+    public uint Seed { get; }
+
+    public IEnumerable<int> Execute(GameState gameState);  // RVA 0x645370
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class DisastersPhase : TurnPhase<DisastersData, DisastersIslandState>
+{
+    private Acknowledgeable disastersEnd;                                             // 0xE8
+    private Disasters disasters;                                                      // 0xF0
+    private DisasterOccurrence[] occurrencesSnapshot;                                 // 0xF8
+
+    private void ExecuteOccurrencesRPC(DisasterOccurrence[] occurrences);             // RVA 0x6457D0
+    private void ExecuteOccurrences(DisasterOccurrence[] occurrences, Action onEnd);  // RVA 0x645900
+    public Disaster Disaster(int disasters, out int count);                           // RVA 0x645630
+    private DisasterOccurrence[] RandomOccurrences();                                 // RVA 0x646940
+    public override void Reset();                                                     // RVA 0x647650
+    protected override void ApplyChanges(Action done);                                // RVA 0x645530
+    public override void Rejoin(Player player);                                       // RVA 0x647520
+    public override void Exit();                                                      // RVA 0x6468F0
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Robbers : Disaster
+{
+    private Resource[] losableResources;                     // 0x28
+    public ResourceParticle resourceParticlePrefab;          // 0x30
+    private readonly List<Resource> storedLosableResources;  // 0x38
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Disease : Disaster
+{
+    private Transform visualPrefab;                                                             // 0x28
+    private int percentageAffected;                                                             // 0x30
+
+    public override IEnumerable<int> Execute(GameState gameState, DisasterOccurrence occurrence, Random random);  // RVA 0x6481A0
+    public static bool CanContaminate(Building building, Island island);                        // RVA 0x647DB0
+    public static bool CanAffect(Building building, Island island);                             // RVA 0x647C30
+    public static bool DoesRiskMoreDisease(Building building, Island island);                   // RVA 0x648000
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Lightning : Disaster
+{
+    public int nbTile;                     // 0x28
+    private LightningVisual visualPrefab;  // 0x30
+    private DayNightCycle dayNightCycle;   // 0x38
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Thunderstorm : Disaster
+{
+    public int nbTile;                     // 0x28
+    private LightningVisual visualPrefab;  // 0x30
+    private DayNightCycle dayNightCycle;   // 0x38
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Revolt : Disaster
+{
+    public ResourceParticle resourceParticlePrefab;  // 0x28
+    private int percentageLost;                      // 0x30
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Plague : Disaster
+{
+    private Transform visualPrefab;  // 0x28
+    private int percentageAffected;  // 0x30
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Pirates : Disaster
+{
+    private Resource[] losableResources;             // 0x28
+    private int percentageLost;                      // 0x30
+    public ResourceParticle resourceParticlePrefab;  // 0x38
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Tsunami : Disaster
+{
+    private int radius;                             // 0x28
+    private int startDistance;                      // 0x2C
+    private int startToImpactDurationMilliseconds;  // 0x30
+    private TsunamiTileVisual tileVisualPrefab;     // 0x38
+    private TsunamiVisual visualPrefab;             // 0x40
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Meteorite : Disaster
+{
+    private MeteoriteVisual visual;                   // 0x28
+    private int radius;                               // 0x30
+    private int minimumCastleTiles;                   // 0x34
+    private int meteoriteTilesToFullyAllowHitCastle;  // 0x38
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
+{
+    public int ActivePopulation { get; }
+
+    public void MeteoriteDisaster(int2 impact, int radius);             // RVA 0x616890
+    public bool CanGetSick(BuildingType buildingType);                  // RVA 0x614280
+    public bool CanGetSick(Building building);                          // RVA 0x613D70
+    public void SatanismDisaster(Building house);                       // RVA 0x61A1F0
+    public void StormDisaster(int2 position, bool4 connected);          // RVA 0x61AD40
+    public Nullable<Building> GetRandomBurnable(ref Random random);     // RVA 0x615710
+    public void FireDisaster(Building.Id buildingId);                   // RVA 0x614AF0
+    public Nullable<int2> GetTsunamiImpact(ref Random random);          // RVA 0x615C00
+    public IEnumerable<int2> GetTsunamiTiles(int2 center, int radius);  // RVA 0x615EB0
+    public void TsunamiDisaster(int2 position);                         // RVA 0x61C970
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public struct Building : IEquatable<Building>
+{
+    public Disaster affectedByDisaster;  // 0x18
+
+    public bool Active { get; }
+}
+```

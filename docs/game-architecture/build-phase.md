@@ -4,6 +4,8 @@ summary: The build phase - action types, planning and committing, the Preview fl
 
 # Build phase
 
+*Code: [where to patch and the declarations](#code-reference).*
+
 During the build phase the client **plans** actions. Each one goes to the server (`[ServerRPC] PlanActionRPC(BuildData.Action)`), the server stores it and echoes it to the other clients
 (`PlanActionClientRPC`). The checks and resource changes happen in `BuildData.DoAction`, either right away (on a [Preview](#preview-instant-or-at-sync) island) or at sync in
 `BuildPhase.ApplyChanges`.
@@ -137,3 +139,154 @@ is not healed). New Guard Towers are placed as the upgraded type from then on.
 
 Nothing stops it: `CanBurn` only checks that the building exists and is not even called by the UI; the burn button (`BuildInterface`) and the building selector have no type filter.
 So a player can burn their own Castle in the build phase for 1 hammer. What happens then: [Win conditions](win-conditions.md#losing-a-castle).
+
+## Code reference
+
+Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
+
+### Where to patch
+
+| To | Patch / use |
+|---|---|
+| Block or allow any build action | prefix `BuildData.PlanAction` (private) for the planning side; `BuildData.DoAction` is where it is checked and applied |
+| Block one action type | prefix the public method (`BurnBuilding`, `CleanTile`, `PlaceBuilding`, ...) |
+| Change placement rules | `IslandGrid.CanPlaceBuilding` (tiles) and `BuildData.CanBuildType` / `Unlocked` (type) |
+| Change tool cost, repair amount, market prices | `BuildData.toolCost`, `repairToolAmount`, `marketOffers` |
+| Change clean-tile rewards | `BuildData.NatureYields` |
+| React to a clean | `BuildData.onCleanTile` |
+
+### Declarations
+
+```csharp
+// DiceKingdoms.Game
+public class BuildData : PhaseData<BuildData, BuildIslandState>
+{
+    public ResourceAmount toolCost;                                                     // 0xB8
+    public int repairToolAmount;                                                        // 0xD8
+    public BuildData.MarketOffer[] marketOffers;                                        // 0xE0
+    private BuildingTypes buildingTypes;                                                // 0xE8
+    private Technologies technologies;                                                  // 0xF0
+    public Action<int2, Nullable<NatureTile>, ResourceAmount> onCleanTile;              // 0xF8
+    private HashSet<BuildingType> upgradables;                                          // 0x100
+    private HashSet<BuildingType> upgraded;                                             // 0x108
+    private HashSet<BuildingType> unlockable;                                           // 0x110
+
+    public List<BuildData.Action> Actions { get; }
+    public override bool NothingToDo { get; }
+    public Nullable<Building.Id> AvailableUniversity { get; set; }
+    public Nullable<Building.Id> UnavailableUniversity { get; set; }
+    public Nullable<Building.Id> AvailableMarket { get; set; }
+    public bool CanAffordTool { get; }
+    public bool ToolsUnlocked { get; }
+
+    protected void Awake();                                                             // RVA 0x628130
+    private bool CanBuildType(BuildingType buildingType);                               // RVA 0x628760
+    private void PlanActionRPC(BuildData.Action action);                                // RVA 0x62AA90
+    private void PlanActionClientRPC(BuildData.Action action);                          // RVA 0x62AA00
+    private bool PlanAction(BuildData.Action action);                                   // RVA 0x62AB20
+    private void ReceiveResourcesRPC(Player source, ResourceAmount amount);             // RVA 0x62AFA0
+    private void ReceiveResources(Player source, ResourceAmount amount);                // RVA 0x62AFD0
+    private void FixAction(ref BuildData.Action action);                                // RVA 0x629F70
+    public bool DoAction(ref BuildData.Action action);                                  // RVA 0x628BA0
+    public bool CleanTile(int2 position);                                               // RVA 0x628AB0
+    public bool RepairBuilding(Building.Id buildingId);                                 // RVA 0x62B1E0
+    public bool BurnBuilding(Building.Id buildingId);                                   // RVA 0x6282C0
+    public static CleanTileTool.YieldAmount NatureYields(Nullable<NatureTile> nature);  // RVA 0x62A270
+    private CleanTileTool.YieldAmount NatureYields(int2 position);                      // RVA 0x62A3D0
+    public bool PlaceBuilding(Building building);                                       // RVA 0x62A920
+    public bool PlaceBuildingBulk(Building[] buildings);                                // RVA 0x62A860
+    public bool BuyResource(Building.Id marketId, Resource resource);                   // RVA 0x628340
+    public bool LearnTechnology(Building.Id universityId, Technology technology);       // RVA 0x62A1A0
+    public bool SendResources(Player target, ResourceAmount resourceAmount);            // RVA 0x62B300
+    public static int BulkCount(BuildingType buildingType, int count);                  // RVA 0x628290
+    private bool CanRepair(Building.Id buildingId);                                     // RVA 0x6289E0
+    private bool CanBurn(Building.Id buildingId);                                       // RVA 0x628830
+    public bool CanRemoveNature(int2 position);                                         // RVA 0x6288B0
+    public bool CanRemoveRemains(int2 position);                                        // RVA 0x628960
+    public bool CanAfford(BuildingType buildingType);                                   // RVA 0x6286E0
+    public bool CanAffordBulk(BuildingType buildingType, int count);                    // RVA 0x6283D0
+    public bool CanAffordMarket(BuildData.MarketOffer offer);                           // RVA 0x6284E0
+    public bool CanAffordTechnology(Technology technology);                             // RVA 0x628660
+    public bool JustPlacedBuilding(Building.Id buildingId);                             // RVA 0x62A090
+    public Nullable<BuildData.MarketOffer> Offer(Resource resource);                    // RVA 0x62A470
+    public bool Unlocked(BuildingType buildingType);                                    // RVA 0x62BAA0
+    public bool DemoLocked(BuildingType buildingType);                                  // RVA 0x628B60
+    public BuildingType UpgradedBuildingType(BuildingType buildingType);                // RVA 0x62BE70
+    private void FindAvailableUniversity();                                             // RVA 0x629CB0
+    protected override void Reset();                                                    // RVA 0x62B260
+    protected override void OnRejoinClient();                                           // RVA 0x62A5C0
+}
+```
+
+```csharp
+public struct BuildData.Action
+{
+    public BuildData.Action.Type type;     // 0x0
+    public int2 position;                  // 0x4
+    public Building.Id buildingId;         // 0xC
+    public Building building;              // 0x10
+    public Building[] buildings;           // 0x38
+    public Resource resource;              // 0x40
+    public Technology technology;          // 0x48
+    public ResourceAmount resourceAmount;  // 0x50
+    public Player player;                  // 0x70
+}
+```
+
+```csharp
+public enum BuildData.Action.Type
+{
+    REPAIR_BUILDING = 0,
+    BURN_BUILDING = 1,
+    CLEAN_TILE = 2,
+    PLACE_BUILDING = 3,
+    PLACE_BUILDING_BULK = 4,
+    BUY_RESOURCE = 5,
+    LEARN_TECHNOLOGY = 6,
+    SEND_RESOURCES = 7,
+    RECEIVE_RESOURCES = 8,
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class BuildPhase : TurnPhase<BuildData, BuildIslandState>
+{
+    private readonly Dictionary<BuildingType, int> buildingTypeCount;          // 0xE8
+    private readonly List<ValueTuple<Island, Technology>> learntTechnologies;  // 0xF0
+
+    public override void Reset();                                              // RVA 0x62D890
+    protected override void ApplyChanges(Action done);                         // RVA 0x62C6C0
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
+{
+    public SortedDictionary.ValueCollection<Building.Id, Building> Buildings { get; }
+
+    public Nullable<Building.Id> BuildingAt(int2 position);                  // RVA 0x613A20
+    public void RepairBuilding(Building.Id buildingId, int repairAmount);    // RVA 0x619E70
+    public void RemoveNature(int2 position);                                 // RVA 0x619DB0
+    public bool CanPlaceBuilding(Building building);                         // RVA 0x6143A0
+    public Nullable<Building> PlaceableBuilding(BuildingType buildingType);  // RVA 0x6179E0
+    public void AddBuilding(Building building);                              // RVA 0x611500
+    public void RemoveBuilding(Building.Id id, float delay = 0);             // RVA 0x619360
+    public void RemoveBuildingRemains(Building.Id id, float delay = 0);      // RVA 0x618F40
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class ReplaceBuildings : Technology
+{
+    private BuildingTypes buildingTypes;                                // 0x38
+    private BuildingTypeName baseBuildingType;                          // 0x40
+    private BuildingTypeName upgradedBuildingType;                      // 0x44
+
+    public override Sprite Icon(PlayerSkins skins, PlayerColor color);  // RVA 0x6215D0
+    public override void OnLearn(Island island);                        // RVA 0x621650
+    private bool <OnLearn>b__8_0(Building b);                           // RVA 0x621900
+}
+```

@@ -4,6 +4,8 @@ summary: The combat phase - planning attacks, ships and landing, defenders, unit
 
 # Combat
 
+*Code: [where to patch and the declarations](#code-reference).*
+
 ## Units
 
 `Unit.Type`: ARCHER 0, BOURGEOIS 1, GENERAL 2, KING 3, PEASANT 4, PRIEST 5, SOLDIER 6, SORCERER 7, TEMPLAR 8, WARLOCK 9.
@@ -151,3 +153,282 @@ Example: Decrease(0.5) = 0.317, Increase(0.5) = 0.683.
 ## Developer helpers
 
 `deflimit` limits the number of defenders; `MiscCommands.DebugAttack` shows attack debug info. See [Developer console](dev-console.md).
+
+## Code reference
+
+Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
+
+### Where to patch
+
+| To | Patch / use |
+|---|---|
+| Change unit stats | `UnitStats.Stats` objects (attackPeriod, parryChance, ...) |
+| Change building damage of projectiles | postfix `ProjectileTypeExtensions.BuildingDamage` |
+| Change melee damage to buildings | postfix `CombatGrid.MeleeBuildingDamage` |
+| Change unit caps per family | postfix `CombatPhase.FamilyUnitCap` |
+| Change who defends | `CombatPhase.CreateDeployments` (private) |
+| Read or block attack plans | prefix `CombatData.PlanAttack` |
+| React to the end of a fight | `Deployment.OnLeave` / `CombatGrid.End` |
+
+### Declarations
+
+```csharp
+// DiceKingdoms.Game
+public struct Unit
+{
+    public readonly Player owner;              // 0x0
+    public readonly Unit.Type type;            // 0x8
+    public readonly Deployment deployment;     // 0x10
+    public readonly UnitStats.Stats stats;     // 0x18
+    public int2 position;                      // 0x20
+    public Unit.State state;                   // 0x28
+    public int2 statePosition;                 // 0x2C
+    public Nullable<Unit.Id> stateUnitTarget;  // 0x34
+    public int stateEnterTick;                 // 0x3C
+    public int stateExitTick;                  // 0x40
+    public PseudoRandom parry;                 // 0x44
+    public PseudoRandom block;                 // 0x50
+    public PseudoRandom rangedMiss;            // 0x5C
+}
+```
+
+```csharp
+public enum Unit.Type
+{
+    ARCHER = 0,
+    BOURGEOIS = 1,
+    GENERAL = 2,
+    KING = 3,
+    PEASANT = 4,
+    PRIEST = 5,
+    SOLDIER = 6,
+    SORCERER = 7,
+    TEMPLAR = 8,
+    WARLOCK = 9,
+}
+```
+
+```csharp
+public enum Unit.Family
+{
+    INHABITANT = 0,
+    SOLDIER_MELEE = 1,
+    SOLDIER_RANGED = 2,
+}
+```
+
+```csharp
+public class UnitStats.Stats
+{
+    public int attackPeriod;                     // 0x10
+    public int attackDelay;                      // 0x14
+    public int agroDistance;                     // 0x18
+    public UnitStats.Rational parryChance;       // 0x1C
+    public UnitStats.Rational blockArrowChance;  // 0x24
+    public Opt<UnitStats.Ranged> rangedOpt;      // 0x2C
+    public Resource[] killRewardPool;            // 0x40
+    public string lore;                          // 0x48
+}
+```
+
+```csharp
+public struct CombatData.AttackPlan
+{
+    private readonly NetRef<Player> playerRef;                  // 0x0
+    public readonly int2 shipPosition;                          // 0x8
+    public readonly Building.Id target;                         // 0x10
+    public readonly ValueTuple<Unit.Family, int>[] unitCounts;  // 0x18
+    public readonly Building.Id sourceDock;                     // 0x20
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class CombatData : PhaseData<CombatData, CombatIslandState>
+{
+    public List<Building.Id> AvailableDocks { get; }
+    public int DeployedUnits { get; set; }
+    public int UnDeployedUnits { get; }
+    public List<CombatData.AttackPlan> PlannedAttacks { get; }
+    public List<Deployment> Deployments { get; }
+    public override bool NothingToDo { get; }
+    public CombatGrid CombatGrid { get; set; }
+
+    private void DoPrepareCombatRPC(Deployment[] deployments);                                // RVA 0x62E160
+    private void DoPrepareCombat(Deployment[] deployments);                                   // RVA 0x62E1A0
+    public void PrepareCombat(Deployment[] deployments, Action done);                         // RVA 0x62ED30
+    public override void Rejoin(Player player);                                               // RVA 0x62EF10
+    protected override void OnRejoinClient();                                                 // RVA 0x62E680
+    public bool IsSoldierFamilyUnlocked(Unit.Family soldierFamily);                           // RVA 0x62E620
+    public Unit.Type SoldierFamilyUnitType(Unit.Family soldierFamily);                        // RVA 0x62F690
+    public static Unit.Type SoldierFamilyUnitType(Island island, Unit.Family soldierFamily);  // RVA 0x62F450
+    private void PlanAttackRPC(CombatData.AttackPlan plan);                                   // RVA 0x62E880
+    private void PlanAttackClientRPC(CombatData.AttackPlan plan);                             // RVA 0x62E820
+    public void PlanAttack(CombatData.AttackPlan plan);                                       // RVA 0x62E8E0
+    protected override void Reset();                                                          // RVA 0x62F0A0
+    public override void Exit();                                                              // RVA 0x62E530
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class CombatPhase : TurnPhase<CombatData, CombatIslandState>
+{
+    public static Unit.Family[] familyDeployOrder;                                              // static
+
+    public static void ComputeShore(Island island, List<int2> shores);                          // RVA 0x63DF70
+    public static void ComputeConnectedComponents(Island island, IslandGrid.Layer<int2> connectedComponents);  // RVA 0x63DD90
+    private void CreateDeployments(List<Deployment>[] deployments);                             // RVA 0x63E280
+    public static int FamilyUnitCap(Island island, Unit.Family family);                         // RVA 0x63FA80
+    public override void Enter(bool restore = False);                                           // RVA 0x63F960
+    public override void Reset();                                                               // RVA 0x475740
+    protected override void ApplyChanges(Action done);                                          // RVA 0x63D870
+    private bool <Enter>b__5_0(Island island);                                                  // RVA 0x63FFC0
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Deployment
+{
+    private NetRef<Player> OwnerRef { get; }
+    public Player Owner { get; }
+    public Unit.Type[] UnitTypes { get; }
+    public int[] Counts { get; }
+    public int2[] Deploy { get; }
+    public int2[] Target { get; }
+    public int2[] Walkable { get; }
+    public int2[] Exit { get; }
+    public Building.Id SourceBuilding { get; }
+    public int[] UnDeployedCounts { get; }
+    public bool Left { get; set; }
+    public Action<Unit.Id[]> OnLeave { get; set; }
+    public ShipVisual ShipVisual { get; set; }
+    public Nullable<Unit.Type> NextUnDeployedType { get; }
+
+    public void Reset();                                                                        // RVA 0x644E30
+    public void IncrementDeployed(Unit.Type unitType);                                          // RVA 0x644D80
+    public void Leave(Unit.Id[] survivors);                                                     // RVA 0x644E00
+    public static Deployment DefenseSoldierDeployment(Island island, Building.Id garrison, int count, Unit.Type soldierType);  // RVA 0x644950
+    public static Deployment DefenseHouseDeployment(Island island, Building.Id house);          // RVA 0x6444B0
+    public static Deployment AttackDeployment(Player owner, Building.Id sourceDock, Island island, IslandGrid.Layer<bool> shipOccupied, IslandGrid.Layer<int2> connectedComponents, Building.Id target, int2 shipPosition, ValueTuple<Unit.Type, int>[] counts, Random random);  // RVA 0x643680
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class CombatGrid : MonoBehaviour
+{
+    private UnitStats unitStats;                                                                // 0x18
+    private Transform unitVisualHolder;                                                         // 0x20
+    private TileCursor targetCursorPrefab;                                                      // 0x28
+    private List<ProjectileVisual> projectileVisualPrefabs;                                     // 0x30
+    private ResourceParticle resourceParticlePrefab;                                            // 0x38
+    private BuildingTypes buildingTypes;                                                        // 0x40
+    private Opt<int> tickLimit;                                                                 // 0x48
+    public IslandGrid islandGrid;                                                               // 0x50
+    private Interface interface;                                                                // 0x60
+    private bool ended;                                                                         // 0x68
+    private IslandGrid.Layer<GroundTile> groundLayer;                                           // 0x70
+    private IslandGrid.Layer<Nullable<NatureTile>> natureLayer;                                 // 0x78
+    private IslandGrid.Layer<Nullable<Building.Id>> remainsLayer;                               // 0x80
+    private IslandGrid.Layer<Nullable<Building.Id>> buildingsLayer;                             // 0x88
+    private IslandGrid.Layer<Nullable<Unit.Id>> unitsLayer;                                     // 0x90
+    private Dictionary<Player, CombatGrid.MovementLayer> movementLayers;                        // 0x98
+    private List<bool> unitExists;                                                              // 0xA0
+    private List<Unit> units;                                                                   // 0xA8
+    private List<UnitVisual> unitVisuals;                                                       // 0xB0
+    private List<Projectile> projectiles;                                                       // 0xB8
+    private List<ProjectileVisual> projectileVisuals;                                           // 0xC0
+    private List<Tower> towers;                                                                 // 0xC8
+    private Dictionary<Player, Dictionary<Unit.Type, int>> soldiersInitial;                     // 0xD0
+    private Dictionary<Player, Dictionary<Unit.Type, int>> soldiersDelta;                       // 0xD8
+    private Dictionary<Player, List<BuildingType>> pillagedBuildings;                           // 0xE0
+    private Dictionary<Player, List<Unit.Type>> pillagedInhabitants;                            // 0xE8
+    private Dictionary<Player, ResourceAmount> pillagedResources;                               // 0xF0
+    private List<TileCursor> tileCursors;                                                       // 0xF8
+    private Deployment[] deployments;                                                           // 0x100
+    private IslandGrid.Layer<Deployment> deploymentWalkableLayer;                               // 0x108
+    private Func<float> time;                                                                   // 0x110
+    private Action done;                                                                        // 0x118
+    private Random random;                                                                      // 0x124
+    private Nullable<int> idleSinceTick;                                                        // 0x128
+    private const int TICK_FREQUENCY = 10;
+    public const float TICK_PERIOD = 0.1;
+    public static readonly sfloat TOWER_MISS_CHANCE;                                            // static
+    private const int MAX_TICKS = 3000;
+    private const int MAX_IDLE_TICKS = 10;
+    private Nullable<JobHandle> currentPathfindingJobHandle;                                    // 0x138
+    private Nullable<CombatGrid.PathfindingJob> currentPathfindingJob;                          // 0x150
+    private static readonly int2[] buffer;                                                      // 0x8
+    private readonly List<CombatGrid.UnitHitOccurrence> unitHits;                               // 0x198
+    private readonly List<CombatGrid.UnitDieOccurrence> unitDies;                               // 0x1A0
+    private readonly List<CombatGrid.UnitDieOccurrence> unitConverted;                          // 0x1A8
+    private readonly List<CombatGrid.BuildingHitOccurrence> buildingHits;                       // 0x1B0
+    private readonly List<CombatGrid.BuildingHitOccurrence> buildingDies;                       // 0x1B8
+    private readonly HashSet<int2> movementLayerUpdates;                                        // 0x1C0
+    private int debugPlayer;                                                                    // 0x1C8
+    private string debugPlayerName;                                                             // 0x1D0
+    private CombatGrid.DebugType debugType;                                                     // 0x1D8
+    private const int BUILDING_PROTECT_UNIT_CHANCE_PERCENT = 25;
+
+    public void Init(IslandGrid islandGrid, Deployment[] deployments, Func<float> time, Action done);  // RVA 0x633060
+    public static int2 ToIsland(int2 combatPosition);                                           // RVA 0x63C4B0
+    public static int2[] FromIsland(int2 islandPosition);                                       // RVA 0x632510
+    private void End();                                                                         // RVA 0x631C40
+    private void UnitHit(Player source, Unit.Id target, float3 hitDirection);                   // RVA 0x63C6F0
+    private void ConvertUnit(Player source, Unit.Id target);                                    // RVA 0x631AC0
+    private void BuildingHit(Player source, Building.Id target, int damage = 1);                // RVA 0x631720
+    private bool SimulationStep(CombatGrid.PathfindingJob completedJob);                        // RVA 0x636E10
+    public int Hash();                                                                          // RVA 0x632720
+    private void ShootProjectile(Player owner, int2 source, int2 target, Projectile.Type type, ref PseudoRandom miss, float visualStartHeight);  // RVA 0x636BF0
+    private int MeleeBuildingDamage(in Unit unit, in Building.Id buildingId);                   // RVA 0x634C20
+}
+```
+
+```csharp
+public enum Projectile.Type
+{
+    ARROW_TOWER = 0,
+    ARROW_ARCHER = 1,
+    FIREBALL = 2,
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public static class ProjectileTypeExtensions
+{
+    public static int Duration(Projectile.Type type, int2 source, int2 target);  // RVA 0x64C2B0
+    public static int BuildingDamage(Projectile.Type type);                      // RVA 0x64C1F0
+    public static float HeightEndOffset(Projectile.Type type);                   // RVA 0x64C3C0
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public struct PseudoRandom
+{
+    public sfloat probability;                 // 0x0
+    private readonly bool init;                // 0x4
+    private sfloat nextProbability;            // 0x8
+    private static readonly sfloat factor;     // static
+    private static readonly sfloat adjusted;   // 0x4
+
+    private static sfloat Decrease(sfloat x);  // RVA 0x64C4C0
+    private static sfloat Increase(sfloat x);  // RVA 0x64C600
+    public bool Sample(ref Random rand);       // RVA 0x64C790
+    public sfloat P(int i);                    // RVA 0x64C6A0
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class PowerConstants : ScriptableObject
+{
+    public float UnitPower(Unit.Type unitType);                     // RVA 0x621490
+    public float BuildingPower(BuildingTypeName buildingTypeName);  // RVA 0x620EC0
+    public float AttackPower(Island island);                        // RVA 0x620BE0
+    public float DefensePower(Island island);                       // RVA 0x620F00
+}
+```

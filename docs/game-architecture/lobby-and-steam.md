@@ -4,6 +4,8 @@ summary: Main menu, custom games, matchmaking, the in-game lobby, match start, l
 
 # Lobby, menus and Steam
 
+*Code: [where to patch and the declarations](#code-reference).*
+
 ## Main menu
 
 `MainMenu.Awake` (`0x532D60`):
@@ -112,3 +114,53 @@ Item properties set on Steam's side: `dice_kingdoms_unlocks_civilization` (a civ
 - `Store.CanBeBought(item)`: the item has a price (bought in the Steam overlay) or a Steam exchange recipe (bought with gold). Purchases are done by Steam.
 
 Drops and gold come from Steam's servers; a mod cannot create them. For local testing a postfix on `PlayerInventory.FromSteamworks` can add civilizations in solo games and when you host.
+
+## Code reference
+
+Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
+
+### Where to patch
+
+| To | Patch / use |
+|---|---|
+| Read the lobby options | `gameState` lobby settings (`LobbySettings.timerSpeed`, `multiMeteor`, `teams`, `wonderVictory`) |
+| Unlock civilizations locally (solo / own host) | postfix `PlayerInventory.FromSteamworks` |
+
+### Declarations
+
+```csharp
+// DiceKingdoms.Game
+public class LobbySettings : SettingSet
+{
+    public SettingSet.Setting<LobbySettings.LobbyCode> lobbyCode;    // 0x28
+    public SettingSet.Setting<LobbySettings.TimerSpeed> timerSpeed;  // 0x30
+    public SettingSet.Setting<bool> multiMeteor;                     // 0x38
+    public SettingSet.Setting<bool> teams;                           // 0x40
+    public SettingSet.Setting<bool> wonderVictory;                   // 0x48
+
+    public bool MultiMeteor { get; }
+    public bool Teams { get; }
+    public bool WonderVictory { get; }
+}
+```
+
+```csharp
+public enum LobbySettings.TimerSpeed
+{
+    FAST = 0,
+    SLOW = 1,
+    UNLIMITED = 2,
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public struct PlayerInventory
+{
+    public static readonly PlayerInventory FALLBACK;                      // static
+
+    public Civilization[] UnlockedCivilizations { get; }
+
+    public static PlayerInventory FromSteamworks(InventoryItem[] items);  // RVA 0x56E170
+}
+```

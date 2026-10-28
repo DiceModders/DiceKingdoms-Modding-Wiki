@@ -4,6 +4,8 @@ summary: The harvest phase - which buildings roll dice, die faces, re-rolls, pas
 
 # Harvest and dice
 
+*Code: [where to patch and the declarations](#code-reference).*
+
 ## Who rolls dice
 
 `HarvestData.Roll` (`0x649BC0`): only buildings whose type is **`BuildingTypeHousing`** (or its subclass `BuildingTypeCastle`) roll, and only while `Building.Active`
@@ -90,3 +92,130 @@ A memory scanner will not find plain values. **Mods do not need to decrypt anyth
 ## Food upkeep
 
 Each turn the [Disasters](disasters.md#effects) phase charges **1 food per active housing building**. Missing food makes random buildings hungry (inactive, so no dice next harvest).
+
+## Code reference
+
+Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
+
+### Where to patch
+
+| To | Patch / use |
+|---|---|
+| Change what a player gets from the harvest | prefix `HarvestData.AddResources`, edit `TotalYields` |
+| Change what the dice show | `HarvestData.Roll` / `RollResultsRPC` (the faces are decided there) |
+| Change the number of re-rolls | postfix `HarvestData.Reset` and set `TotalReRolls` / `ReRollsRemaining` |
+| Change a producer's income | postfix `BuildingTypeProducer.Yield` (or the concrete subclass) |
+| Change storage capacity | postfix `Island.RecomputeStorageCapacities`, then `Statistics.SetCapacity` |
+| Read or change resources | `island.statistics.Storage`, `Statistics.AddResource` / `RemoveResource` |
+
+### Declarations
+
+```csharp
+// DiceKingdoms.Game
+public class HarvestData : PhaseData<HarvestData, HarvestIslandState>
+{
+    public Action<ValueTuple<Building.Id, ResourceAmount>[]> onRollResults;                     // 0xB8
+    public Action<ValueTuple<Building.Id, ResourceAmount>[]> onRestore;                         // 0xC0
+    private const int BASE_RE_ROLLS = 2;
+
+    public int ReRollsRemaining { get; set; }
+    public int TotalReRolls { get; set; }
+    private Dictionary<Building.Id, ResourceAmount> Yields { get; }
+    public override bool NothingToDo { get; }
+    public ResourceAmount TotalYields { get; set; }
+
+    private void ReRollRPC(Building.Id[] buildings);                                            // RVA 0x6491D0
+    public void ReRoll(Building.Id[] buildingIds);                                              // RVA 0x649380
+    private IEnumerator FirstRoll();                                                            // RVA 0x648FB0
+    private void Roll(Building.Id[] buildingIds);                                               // RVA 0x649BC0
+    private void RollResultsRPC(ValueTuple<Building.Id, ResourceAmount>[] results, int reRollsRemaining);  // RVA 0x6498E0
+    private void RollResults(ValueTuple<Building.Id, ResourceAmount>[] results);                // RVA 0x649960
+    public ResourceAmount Yield(Building.Id buildingId);                                        // RVA 0x649F60
+    private void ComputeTotalYields();                                                          // RVA 0x648530
+    public void SetAIYields(ResourceAmount yields);                                             // RVA 0x649EE0
+    public void AddResources();                                                                 // RVA 0x648470
+    protected override void Reset();                                                            // RVA 0x649520
+    protected override void OnRejoinClient();                                                   // RVA 0x649020
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class BuildingTypeHousing : BuildingType
+{
+    public ResourceAmount[] possibleYields;  // 0xE8
+    public Color diceColor;                  // 0xF0
+    public Unit.Type unitType;               // 0x100
+    public Dice dicePrefab;                  // 0x108
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public abstract class BuildingTypeProducer : BuildingType
+{
+    public abstract ResourceAmount Yield(Island island, Building building);
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class BuildingTypeProducerFixed : BuildingTypeProducer
+{
+    public ResourceAmount yield;  // 0xE8
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class BuildingTypeProducerNature : BuildingTypeProducer
+{
+    private Resource yieldResource;  // 0xE8
+    private NatureTile natureTile;   // 0xEC
+    private int tilesNeeded;         // 0xF0
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class BuildingTypeProducerAmplifier : BuildingTypeProducer
+{
+    private BuildingTypes buildingTypes;                 // 0xE8
+    private Resource yieldResource;                      // 0xF0
+    private BuildingTypeName amplifiedBuildingTypeName;  // 0xF4
+    private int amplifyFactor;                           // 0xF8
+    private int amplifyFactorProximityBonus;             // 0xFC
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Statistics : IslandSyncedBehaviour<Statistics.SyncData>
+{
+    public ResourceStorage Storage { get; set; }
+    public int ShipCapacity { get; }
+    public int TradeFactor { get; }
+
+    public void SetCapacity(ResourceAmount capacity);           // RVA 0x624010
+    public void AddResource(ResourceAmount resourceAmount);     // RVA 0x622C90
+    public bool HasResource(ResourceAmount resourceAmount);     // RVA 0x623650
+    public void RemoveResource(ResourceAmount resourceAmount);  // RVA 0x623B20
+    public void LearnTechnology(Technology technology);         // RVA 0x623A90
+    public bool IsTechnologyLearnable(Technology technology);   // RVA 0x6237C0
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class Island : NetworkedBehaviour
+{
+    private readonly NetworkedVar<Player> owner;  // 0x90
+    public IslandGrid grid;                       // 0x98
+    public Statistics statistics;                 // 0xA0
+
+    public Player Owner { get; set; }
+
+    public void Recompute();                      // RVA 0x61F590
+    private void RecomputeStorageCapacities();    // RVA 0x61F270
+}
+```

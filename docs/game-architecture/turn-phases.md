@@ -4,6 +4,8 @@ summary: How a match runs - GameState, the phase loop, phase states, ready and s
 
 # Turn loop and phases
 
+*Code: [where to patch and the declarations](#code-reference).*
+
 ## Main objects
 
 - `GameState : NetworkedBehaviour` is the match controller, one per match. It holds the players, islands, phase objects, `Log`, `Chat`, `SnapshotStore`, `AIPlay`, `LobbySettings`
@@ -125,3 +127,178 @@ A layout mod can postfix `SpawnIslands` to move islands or replace grids, but it
 ## Training
 
 `GameState.IsTraining` is the tutorial game (strings `training.information.*`).
+
+## Code reference
+
+Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
+
+### Where to patch
+
+| To | Patch / use |
+|---|---|
+| Do something when a phase starts | postfix `GameState.ChangeTurnPhase` (private), or add to `GameState.onEnterPhase` |
+| Do something after a phase's rules were applied | postfix `<Phase>.ApplyChanges` (for example `BuildPhase.ApplyChanges`) or `GameState.onSyncPhase` |
+| Change phase time limits | `TurnPhase.timeLimit` / `timeLimitSync` on each phase object (`gameState.buildPhase` etc.) |
+| Change the start buildings | postfix `StartData.Reset` and edit `BuildingsToPlace` |
+| Change the start resources | `StartPhase.startResourceAmount` (private field, public in the interop) |
+| Change where auto-placed buildings go | `IslandGrid.PlaceableBuilding` |
+| Move or replace islands at match start (host) | postfix `GameState.SpawnIslands` |
+| Press Ready from code | `gameState.TurnPhase.PhaseData(island).Skip()` |
+
+### Declarations
+
+```csharp
+// DiceKingdoms.Game
+public class GameState : NetworkedBehaviour
+{
+    public const int MAX_PLAYERS = 12;
+    private LobbySettings lobbySettings;                                         // 0xD0
+    public Random random;                                                        // 0xD8
+    private List<Player> players;                                                // 0xE8
+    private NetworkedList<ulong> playerIds;                                      // 0xF8
+    public Action onIslandSpawned;                                               // 0x128
+    public Action onStartGame;                                                   // 0x130
+    public Action onEnterPhase;                                                  // 0x138
+    public Action onSyncPhase;                                                   // 0x140
+    public Action onEndGame;                                                     // 0x148
+    public Action<string> onExit;                                                // 0x150
+    public Action onReset;                                                       // 0x158
+    public Action onRejoin;                                                      // 0x160
+    public Action<Player, StructuredText> onDisasterLog;                         // 0x168
+    private ITurnPhase[] phaseOrder;                                             // 0x170
+    public StartPhase startPhase;                                                // 0x178
+    public HarvestPhase harvestPhase;                                            // 0x180
+    public DisastersPhase disastersPhase;                                        // 0x188
+    public BuildPhase buildPhase;                                                // 0x190
+    public CombatPhase combatPhase;                                              // 0x198
+    public WinPhase winPhase;                                                    // 0x1A0
+    private NetworkedVar<int> turnCounter;                                       // 0x1B8
+
+    public List<Player> Players { get; }
+    public int TurnCounter { get; set; }
+    public ITurnPhase TurnPhase { get; set; }
+    public bool IsTraining { get; set; }
+
+    public Island Island(Player owner);                                          // RVA 0x5F2F60
+    public void AddAI(Nullable<Player.AIState> aiState, Nullable<int> slotOpt);  // RVA 0x5F2000
+    private void ChangeTurnPhase(ITurnPhase turnPhase);                          // RVA 0x5F2C20
+    private void StartGame();                                                    // RVA 0x5F50E0
+    private void UpdateTurnPhase();                                              // RVA 0x5F6E20
+    public bool Restore();                                                       // RVA 0x5F33E0
+    private void SpawnIslands();                                                 // RVA 0x5F3F70
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public enum PhaseState
+{
+    ACTIVE = 0,
+    SYNC = 1,
+    INACTIVE = 2,
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public interface ITurnPhase
+{
+    public abstract string Name { get; }
+    public abstract float BannerDuration { get; }
+    public abstract float TimeLimit { get; }
+    public abstract PhaseState State { get; }
+    public abstract float TimeSinceEnter { get; }
+    public abstract float TimeRemaining { get; }
+    public abstract float TimeSinceSync { get; }
+    public abstract float TimeRemainingSync { get; }
+    public abstract IPhaseInterface Interface { get; }
+    public static float Time { get; }
+
+    public abstract void Enter(bool restore);
+    public abstract void Sync();
+    public abstract void Exit();
+    public abstract void Rejoin(Player player);
+    public abstract IPhaseData PhaseData(Island island);
+    public abstract bool IsReady(Island island);
+    public abstract bool IsReady();
+    public abstract bool IsSynced();
+    public abstract bool ShouldSkip();
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
+{
+    public float timeLimit;
+    public float timeLimitSync;
+    public float timeOfDay;
+
+    public GameState GameState { get; set; }
+    public float BannerDuration { get; }
+    public PhaseState State { get; set; }
+    public float TimeSinceEnter { get; }
+    public float TimeRemaining { get; }
+
+    public IPhaseData PhaseData(Island island);                      // RVA 0xFDE010 (shared generic body)
+    public virtual void Enter(bool restore = False);                 // RVA 0xFDD3C0 (shared generic body)
+    private void Enter(bool restore, Nullable<float> enterTimeOpt);  // RVA 0xFDCD00 (shared generic body)
+    public void Sync();                                              // RVA 0xFDEB20 (shared generic body)
+    private void Sync(Nullable<float> syncTimeOpt);                  // RVA 0xFDEB40 (shared generic body)
+    public virtual void Exit();                                      // RVA 0xFDD420 (shared generic body)
+    public virtual void Rejoin(Player player);                       // RVA 0xFDE3C0 (shared generic body)
+    public bool IsReady();                                           // RVA 0xFDD8B0 (shared generic body)
+    public bool IsSynced();                                          // RVA 0xFDDBA0 (shared generic body)
+    public virtual bool ShouldSkip();                                // RVA 0x4A1F20 (shared generic body)
+    public bool IsReady(Island island);                              // RVA 0xFDD780 (shared generic body)
+    private void TakeSnapshot();                                     // RVA 0xFDF1D0 (shared generic body)
+    private static void Recompute(Island island);                    // RVA 0xFDE2E0 (shared generic body)
+    private static void RecomputeIsDefeated(Island island);          // RVA 0xFDE040 (shared generic body)
+    protected abstract void ApplyChanges(Action done);
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
+{
+    public TurnPhase<TData, TState> turnPhase;
+
+    public bool HasSkipped { get; set; }
+    public Island Island { get; set; }
+    public bool Preview { get; set; }
+    public abstract bool NothingToDo { get; }
+
+    private void SkipRPC();                     // RVA 0xE60860 (shared generic body)
+    public void Skip();                         // RVA 0xE608B0 (shared generic body)
+    public void Enter(bool restore);            // RVA 0xE60440 (shared generic body)
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class StartData : PhaseData<StartData, StartIslandState>
+{
+    public List<BuildingType> BuildingsToPlace { get; }
+    public List<Building> PlacedBuildings { get; }
+    public BuildingType NextBuildingType { get; }
+    public override bool NothingToDo { get; }
+
+    private void PlaceBuildingRPC(Building building);             // RVA 0x572860
+    private void PlaceBuildingOtherClientRPC(Building building);  // RVA 0x572800
+    public void PlaceBuilding(Building building);                 // RVA 0x5728C0
+    protected override void Reset();                              // RVA 0x572C40
+    protected override void OnRejoinClient();                     // RVA 0x572630
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class StartPhase : TurnPhase<StartData, StartIslandState>
+{
+    private ResourceAmount startResourceAmount;         // 0xE8
+
+    public override void Reset();                       // RVA 0x475740
+    protected override void ApplyChanges(Action done);  // RVA 0x573370
+}
+```

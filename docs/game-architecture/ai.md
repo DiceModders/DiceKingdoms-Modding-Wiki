@@ -4,6 +4,8 @@ summary: How the AI plays - difficulties, the rubber band, build orders and the 
 
 # AI
 
+*Code: [where to patch and the declarations](#code-reference).*
+
 - `AIPlay` (a component on the `GameState` object) runs **on the server only**. `AIPlay.PlayPhase(phaseData, AIState) → AIState` (`0x567640`) is called **once per phase, when the phase ends
   (at sync)**, for every AI island; it dispatches to `PlayStart`, `PlayHarvest`, `PlayBuild` and the combat code. So the AI never acts during a phase, only at its end.
 - `Player.AIState` (networked): `Difficulty`, `Strategy`, `TechnologiesToResearch`, `BuildingToPlace` (its plan, kept between phases).
@@ -113,3 +115,114 @@ At the end of the combat phase (inside `PlayPhase`):
       exp((development − defense) / 200).
     - Target buildings: after the berserk turn its Castle(s); before, the richest-loot buildings (not Farm, Wall, Castle, towers, Wonder, Sorcerer Tower).
 3. It sends ranged units if unlocked (melee Templars if it has Templars but not Warlocks), full ships, spread over the targets; the drop point is the target building.
+
+## Code reference
+
+Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
+
+### Where to patch
+
+| To | Patch / use |
+|---|---|
+| Change build orders without code | `custom-build-orders.txt` next to `Dice-Kingdoms.exe` |
+| Change difficulty numbers | fields of `AIPlay.configuration` (`AIConfiguration`) at runtime |
+| Change what the AI does in a phase | prefix / postfix `AIPlay.PlayPhase`, or `PlayBuild` / `PlayHarvest` / `PlayStart` |
+| Change where the AI builds | `AIPlay.WhereToPlaceBuilding` |
+| Change whom the AI attacks | `AIPlay.GetWarTarget` |
+
+### Declarations
+
+```csharp
+// DiceKingdoms.Game
+public class AIPlay : MonoBehaviour
+{
+    private static HashSet<int2> emptyPositionSet;                                              // static
+    private AIPlay.BuildOrder[] buildOrders;                                                    // 0x18
+    private static readonly string STANDARD_BUILD_ORDERS;                                       // 0x8
+    private static readonly string TRAINING_BUILD_ORDERS;                                       // 0x10
+    private BuildingTypes buildingTypes;                                                        // 0x20
+    private Technologies technologies;                                                          // 0x28
+    private Disasters disasters;                                                                // 0x30
+    private AIConfiguration configuration;                                                      // 0x38
+    private string customBuildOrdersPath;                                                       // 0x40
+
+    public Player.AIState PlayBuild(BuildData data, Player.AIState state);                      // RVA 0x565500
+    private void BuildAndClean(BuildData data, Player.AIState state, List<BuildingType> buildingToPlace);  // RVA 0x560AD0
+    private Nullable<ValueTuple<Building, ResourceAmount>> WhereToPlaceBuilding(BuildData data, BuildingType buildingType, HashSet<int2> wonderReserved);  // RVA 0x56AAF0
+    private bool PlaceBuildingSomewhere(BuildData data, BuildingType buildingType, HashSet<int2> wonderReserved, List<BuildingType> buildingToPlace);  // RVA 0x565300
+    private void UseMarket(BuildData data, Player.AIState state);                               // RVA 0x56A620
+    private void CleanRemains(BuildData data, Player.AIState state, List<BuildingType> buildingToPlace);  // RVA 0x561D90
+    private bool CleanNature(BuildData data);                                                   // RVA 0x5616A0
+    private void PlaceBuildingAt(BuildData data, Building building, int wallsThickness, List<BuildingType> buildingToPlace);  // RVA 0x564C10
+    private void InitBuildOrders();                                                             // RVA 0x564260
+    private AIPlay.BuildOrder SampleBuildOrder(ref Random random, Civilization civilization, Player.AIState.AIStrategy[] validStrategies);  // RVA 0x568710
+    private Nullable<ValueTuple<Island, Building[]>> GetWarTarget(CombatData data, Player.AIState state, int targetMaxCount);  // RVA 0x562FA0
+    private float SoldierFactor(Island x);                                                      // RVA 0x568FB0
+    private float DefenseScore(Island x);                                                       // RVA 0x5623F0
+    public Player.AIState PlayPhase(IPhaseData data, Player.AIState state);                     // RVA 0x567640
+    public Player.AIState PlayHarvest(HarvestData data, Player.AIState state);                  // RVA 0x566620
+    public Player.AIState PlayStart(StartData data, Player.AIState state);                      // RVA 0x567FE0
+}
+```
+
+```csharp
+public struct Player.AIState
+{
+    public Player.AIState.DifficultyLevel Difficulty { get; }
+    public Player.AIState.AIStrategy Strategy { get; }
+    public Technology[] TechnologiesToResearch { get; }
+    public BuildingType[] BuildingToPlace { get; }
+}
+```
+
+```csharp
+public enum Player.AIState.DifficultyLevel
+{
+    PASSIVE = 0,
+    PEASANT = 1,
+    BOURGEOIS = 2,
+    GENERAL = 3,
+    KING = 4,
+    SORCERER = 5,
+}
+```
+
+```csharp
+public enum Player.AIState.AIStrategy
+{
+    MILITARY = 0,
+    WONDER = 1,
+}
+```
+
+```csharp
+// DiceKingdoms.Game
+public class AIConfiguration : ScriptableObject
+{
+    public int hammerToKeep;                                        // 0x18
+    public int shipPerBuilding;                                     // 0x1C
+    public int sorcererTowerLimit;                                  // 0x20
+    public int turnCountLimit;                                      // 0x24
+    public int topBuildingCountToPlace;                             // 0x28
+    public float attackScoreRandomness;                             // 0x2C
+    public AIConfiguration.DifficultyLevelConfiguration passive;    // 0x30
+    public AIConfiguration.DifficultyLevelConfiguration peasant;    // 0x60
+    public AIConfiguration.DifficultyLevelConfiguration bourgeois;  // 0x90
+    public AIConfiguration.DifficultyLevelConfiguration general;    // 0xC0
+    public AIConfiguration.DifficultyLevelConfiguration king;       // 0xF0
+    public AIConfiguration.DifficultyLevelConfiguration sorcerer;   // 0x120
+    public int turnCountBerserk;                                    // 0x150
+    public float soldierFactor;                                     // 0x154
+    public float archerFactor;                                      // 0x158
+    public float templarFactor;                                     // 0x15C
+    public float sorcererFactor;                                    // 0x160
+    public float requireShipFactor;                                 // 0x164
+    public float guardTowerFactor;                                  // 0x168
+    public float towerUpgradeFactor;                                // 0x16C
+    public float wallFactor;                                        // 0x170
+    public float inhabitantFactor;                                  // 0x174
+    public float builtResourcesFactor;                              // 0x178
+    public float storedResourcesFactor;                             // 0x17C
+    public float castleFactor;                                      // 0x180
+}
+```
