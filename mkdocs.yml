@@ -52,7 +52,6 @@ nav:
     - Rules and Civilizations: game-architecture/rules-and-civilizations.md
     - Civilizations in the Game Code: game-architecture/civilizations.md
     - Civilization Models and Sprites: game-architecture/civilization-assets.md
-    - Island Code: game-architecture/island-code.md
     - Meteorites: game-architecture/meteorites.md
     - Reverse-Engineering Notes: game-architecture/reverse-engineering.md
   - Reference:

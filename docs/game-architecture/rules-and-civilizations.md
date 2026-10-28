@@ -20,10 +20,9 @@ The Technologies tab shows the tech tree of the civilization chosen in the civil
 Every place the game uses a civilization number, and what it does with an unknown one, is listed in [Civilizations in the game code](civilizations.md); the practical guide is
 [Making a civilization](../guides/modding/making-a-civilization.md). In short: answer `TechTree(civilization)` for that number (also where the compiler inlined it), let `PlayerSkins` and the
 network readers accept it (the number is one signed byte, so 5..127), give AIs a build order, make it selectable (the Rules drop-down and the castle click, below) and provide the
-per-civilization data the game looks up (skins, tech tree asset, name). [ModCore](../guides/modding/modcore.md#civilizations) does all of that;
-[ModBridge](../guides/modding/modbridge.md) adds the drop-down entry through UiKit.
+per-civilization data the game looks up (skins, tech tree asset, name).
 
-- `Technologies.TechTree` throws for an unknown civilization (`First` over the game's list). ModCore returns the registered tree, or the tree of the built-in civilization the new one is "like".
+- `Technologies.TechTree` throws for an unknown civilization (`First` over the game's list). A mod has to answer it for its own number, for example with the tree of the built-in civilization the new one is based on.
 - `PlayerSkins.Civilization`'s setter derives the biome with a switch over 0..4 and throws `ArgumentOutOfRangeException` for anything else, and so does the `PlayerSkins` **constructor**
   (the log reads `Parameter name: civilization`). A new civilization must therefore be built for a built-in one first and the real number stored afterwards (`PlayerSkins.civilization` field).
 
@@ -38,7 +37,7 @@ It does nothing once the player is ready (`StartGameReady`).
     colour with `NextSample<PlayerColor>`. `NextSample` indexes `array[(state * length) >> 32]`, so an empty array throws `IndexOutOfRangeException`. A mod that rebuilt `PlayerInventory`
     (a postfix on `PlayerInventory.FromSteamworks`, writing `PlayerInventory.FALLBACK`) made the spawn throw: no player existed and the lobby screen showed only the top bar.
     Patching the `UnlockedCivilizations` getter instead crashed the game at start: it is a few bytes of native code that IL2CPP shares between identical getters.
-    ModCore adds its civilizations in a **prefix on `Player.NextCivilization`** (after the last unlocked civilization come the registered ones, then the game's own wrap-around).
+    A safe place to add civilizations to the castle click is a **prefix on `Player.NextCivilization`**: after the last unlocked civilization, step through your own ones, then let the game wrap around.
 
 ## Scoreboard
 
@@ -47,5 +46,4 @@ The row is `Scoreboard Row(Clone)` with a `Name` child (about 200 wide), the sta
 `Button Send` child. That button appears on the resource cells after a market is built, to send resources to other players.
 
 The board's frame grows by about 112 units for every cell that is added. The vanilla frame spans roughly x 269..1651 on a 1920 screen, so a mod column
-should take the place of the empty trailing cell instead of widening the board. UiKit does this: it clones a stat cell, destroys the clone's `ScoreboardStat`
-(so the game stops driving it) and writes the text from your function.
+should take the place of the empty trailing cell instead of widening the board.
