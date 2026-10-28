@@ -4,7 +4,8 @@ summary: How a match is won or lost - defeat (no Castle left), losing a Castle, 
 
 # Win conditions
 
-*Code: [where to patch and the declarations](#code-reference).*
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
 
 There are only two ways to win: **military** (everybody else is out) and **wonder victory** (lobby option, on by default). `WinState { winnerRef, reason (MILITARY 0 / WONDER 1), turn }`.
 
@@ -24,6 +25,17 @@ It is recomputed for every island after every phase's `ApplyChanges`, so it is *
 `IslandGrid.RemoveBuilding` (`0x619360`) runs for every removed building (burn, combat, disasters). It clears the tiles and leaves **remains** (walls do not leave remains). If the building
 is a Castle:
 
+<!-- code: IslandGrid | RemoveBuilding, BurnAllBuildings -->
+```csharp
+// DiceKingdoms.Game
+public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
+{
+    public void RemoveBuilding(Building.Id id, float delay = 0);  // RVA 0x619360
+    private void BurnAllBuildings(int2 center);                   // RVA 0x613A80
+}
+```
+<!-- /code -->
+
 - `IslandGrid.BurnAllBuildings` (`0x613A80`) removes **every building that is not a Castle**, in order of distance from the Castle with a growing delay (the spreading fire).
 - `Statistics.SetCapacity(ZERO)`: all storage capacity becomes 0, which also **empties everything stored**, hammers included. The capacity comes back at the end of the phase
   (from the remaining buildings), but the stored amounts stay at 0.
@@ -34,6 +46,45 @@ is a Castle:
 ## Free-for-all
 
 `WinPhase.CheckWin` (`0x57AB10`): a game with only one island never ends by itself. Otherwise it calls `CheckWinTeam` when the lobby option **Teams** is on, else `CheckWinFFA` (`0x579EA0`):
+
+<!-- code: WinPhase | *fields, CheckWin, CheckWinFFA, CheckWinTeam, WinNow, ShouldSkip -->
+```csharp
+// DiceKingdoms.Game
+public class WinPhase : TurnPhase<WinData, WinIslandState>
+{
+    public const int WONDER_TURN_DELAY = 1;
+
+    private Nullable<WinPhase.WinState> WinNow();        // RVA 0x57B340
+    public Nullable<WinPhase.WinState> CheckWin();       // RVA 0x57AB10
+    private Nullable<WinPhase.WinState> CheckWinFFA();   // RVA 0x579EA0
+    private Nullable<WinPhase.WinState> CheckWinTeam();  // RVA 0x57A410
+    public override bool ShouldSkip();                   // RVA 0x57B2D0
+}
+```
+<!-- /code -->
+
+<!-- code: WinPhase.WinState | *fields -->
+```csharp
+public struct WinPhase.WinState : IEquatable<WinPhase.WinState>
+{
+    private NetRef<Player> winnerRef;        // 0x0
+    public WinPhase.WinState.Reason reason;  // 0x8
+    public int turn;                         // 0xC
+}
+```
+<!-- /code -->
+
+<!-- code: WinPhase.WinState.Reason |  -->
+```csharp
+public enum WinPhase.WinState.Reason
+{
+    MILITARY = 0,
+    WONDER = 1,
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `WinPhase.CheckWin` to change the win rules (host).
 
 1. `alive` = islands whose owner is not defeated.
 2. `alive == 0` → **draw** (it happens when the last players lose their last Castle in the same combat phase).
@@ -66,70 +117,3 @@ So in free-for-all **the match ends only when one player is left**: a human losi
   actions are shown instantly ([Preview](build-phase.md#preview-instant-or-at-sync)).
 
 The "imminent victory" warning (a Wonder win coming next turn) shows for 6 s and fades out in 1 s (`ImminentVictoryWarning`).
-
-## Code reference
-
-Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
-
-### Where to patch
-
-| To | Patch / use |
-|---|---|
-| Change win rules | `WinPhase.CheckWin` (calls `CheckWinFFA` / `CheckWinTeam`) |
-| Change when a win is applied | `WinPhase.WinNow` / `ShouldSkip` |
-| Change defeat | `TurnPhase.RecomputeIsDefeated` (shared generic body, so patch with care) |
-| Change what losing a Castle burns | `IslandGrid.BurnAllBuildings` |
-
-### Declarations
-
-```csharp
-// DiceKingdoms.Game
-public class WinPhase : TurnPhase<WinData, WinIslandState>
-{
-    public const int WONDER_TURN_DELAY = 1;
-
-    private Nullable<WinPhase.WinState> WinNow();           // RVA 0x57B340
-    public Nullable<WinPhase.WinState> CheckWin();          // RVA 0x57AB10
-    private Nullable<WinPhase.WinState> CheckWinFFA();      // RVA 0x579EA0
-    private Nullable<WinPhase.WinState> CheckWinTeam();     // RVA 0x57A410
-    private void WinRPC(WinPhase.WinState winState);        // RVA 0x57B450
-    private void Win(WinPhase.WinState winState);           // RVA 0x57B490
-    private int MaxWonderCount(Team team);                  // RVA 0x57AD40
-    private Player MaxWonderPlayer(Team team);              // RVA 0x57AF10
-    private int WonderCount(Island island);                 // RVA 0x57B940
-    private int WonderBuildTurn(Island island, int count);  // RVA 0x57B5F0
-    private int MinWonderBuildTurn(Team team, int count);   // RVA 0x57B0D0
-    public override bool ShouldSkip();                      // RVA 0x57B2D0
-    public override void Enter(bool restore = False);       // RVA 0x57AC90
-    public override void Reset();                           // RVA 0x475740
-    protected override void ApplyChanges(Action done);      // RVA 0x4EA360
-}
-```
-
-```csharp
-public struct WinPhase.WinState : IEquatable<WinPhase.WinState>
-{
-    private NetRef<Player> winnerRef;        // 0x0
-    public WinPhase.WinState.Reason reason;  // 0x8
-    public int turn;                         // 0xC
-
-    public Player winner { get; set; }
-    public bool IsDraw { get; }
-}
-```
-
-```csharp
-public enum WinPhase.WinState.Reason
-{
-    MILITARY = 0,
-    WONDER = 1,
-}
-```
-
-```csharp
-// DiceKingdoms.Game
-public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
-{
-    private void BurnAllBuildings(int2 center);  // RVA 0x613A80
-}
-```

@@ -4,9 +4,42 @@ summary: How a match runs - GameState, the phase loop, phase states, ready and s
 
 # Turn loop and phases
 
-*Code: [where to patch and the declarations](#code-reference).*
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
 
 ## Main objects
+
+<!-- code: GameState | random, players, playerIds, lobbySettings, turnCounter, onIslandSpawned, onStartGame, onEnterPhase, onSyncPhase, onEndGame, onExit, onReset, onRejoin, onDisasterLog, Players, TurnCounter, TurnPhase, IsTraining, Island -->
+```csharp
+// DiceKingdoms.Game
+public class GameState : NetworkedBehaviour
+{
+    private LobbySettings lobbySettings;                  // 0xD0
+    public Random random;                                 // 0xD8
+    private List<Player> players;                         // 0xE8
+    private NetworkedList<ulong> playerIds;               // 0xF8
+    public Action onIslandSpawned;                        // 0x128
+    public Action onStartGame;                            // 0x130
+    public Action onEnterPhase;                           // 0x138
+    public Action onSyncPhase;                            // 0x140
+    public Action onEndGame;                              // 0x148
+    public Action<string> onExit;                         // 0x150
+    public Action onReset;                                // 0x158
+    public Action onRejoin;                               // 0x160
+    public Action<Player, StructuredText> onDisasterLog;  // 0x168
+    private NetworkedVar<int> turnCounter;                // 0x1B8
+
+    public List<Player> Players { get; }
+    public int TurnCounter { get; set; }
+    public ITurnPhase TurnPhase { get; set; }
+    public bool IsTraining { get; set; }
+
+    public Island Island(Player owner);                   // RVA 0x5F2F60
+}
+```
+<!-- /code -->
+
+**Patch:** subscribe to the `GameState` events (`onEnterPhase`, `onSyncPhase`, …) or postfix the methods below; `gameState.Island(player)` gives a player's island.
 
 - `GameState : NetworkedBehaviour` is the match controller, one per match. It holds the players, islands, phase objects, `Log`, `Chat`, `SnapshotStore`, `AIPlay`, `LobbySettings`
   and a match-wide `Unity.Mathematics.Random random`.
@@ -22,6 +55,36 @@ Useful `GameState` fields: `players` `0xE8`, `playerIds` `0xF8`, `lobbySettings`
 ## Phase order
 
 `GameState.Awake` (`0x5F26A0`) sets
+
+<!-- code: GameState | phaseOrder, startPhase, harvestPhase, disastersPhase, buildPhase, combatPhase, winPhase -->
+```csharp
+// DiceKingdoms.Game
+public class GameState : NetworkedBehaviour
+{
+    private ITurnPhase[] phaseOrder;       // 0x170
+    public StartPhase startPhase;          // 0x178
+    public HarvestPhase harvestPhase;      // 0x180
+    public DisastersPhase disastersPhase;  // 0x188
+    public BuildPhase buildPhase;          // 0x190
+    public CombatPhase combatPhase;        // 0x198
+    public WinPhase winPhase;              // 0x1A0
+}
+```
+<!-- /code -->
+
+<!-- code: TurnPhase | timeLimit, timeLimitSync, timeOfDay -->
+```csharp
+// DiceKingdoms.Game
+public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
+{
+    public float timeLimit;
+    public float timeLimitSync;
+    public float timeOfDay;
+}
+```
+<!-- /code -->
+
+**Patch:** change `timeLimit` / `timeLimitSync` on a phase object (`gameState.buildPhase.timeLimit = 90`) to change its time.
 
 ```
 phaseOrder = [ HarvestPhase, DisastersPhase, BuildPhase, CombatPhase, WinPhase ]
@@ -47,6 +110,31 @@ UNLIMITED (`GameState.StartGame`). The values are fields of the phase components
 Each phase is a `TurnPhase<TData, TIslandState>` with a `PhaseState`: `ACTIVE = 0`, `SYNC = 1`, `INACTIVE = 2`. For every island the phase holds one `PhaseData` object (for example `BuildData`);
 per-player state is in `islandStates` (keyed by client id).
 
+<!-- code: PhaseState |  -->
+```csharp
+// DiceKingdoms.Game
+public enum PhaseState
+{
+    ACTIVE = 0,
+    SYNC = 1,
+    INACTIVE = 2,
+}
+```
+<!-- /code -->
+
+<!-- code: GameState | UpdateTurnPhase, ChangeTurnPhase -->
+```csharp
+// DiceKingdoms.Game
+public class GameState : NetworkedBehaviour
+{
+    private void ChangeTurnPhase(ITurnPhase turnPhase);  // RVA 0x5F2C20
+    private void UpdateTurnPhase();                      // RVA 0x5F6E20
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `GameState.ChangeTurnPhase` (private) to run code when a phase starts; its argument is the new `ITurnPhase`.
+
 `GameState.UpdateTurnPhase` (`0x5F6E20`) runs every frame:
 
 - **ACTIVE**: when `TurnPhase.IsReady()` is true, call `TurnPhase.Sync()`.
@@ -59,6 +147,37 @@ per-player state is in `islandStates` (keyed by client id).
 
 `TurnPhase.IsReady` (`0xFDD8B0`):
 
+<!-- code: TurnPhase | IsReady, BannerDuration, TimeSinceEnter, TimeRemaining -->
+```csharp
+// DiceKingdoms.Game
+public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
+{
+    public float BannerDuration { get; }
+    public float TimeSinceEnter { get; }
+    public float TimeRemaining { get; }
+
+    public bool IsReady();               // RVA 0xFDD8B0 (shared generic body)
+    public bool IsReady(Island island);  // RVA 0xFDD780 (shared generic body)
+}
+```
+<!-- /code -->
+
+<!-- code: PhaseData | HasSkipped, NothingToDo, Skip, SkipRPC -->
+```csharp
+// DiceKingdoms.Game
+public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
+{
+    public bool HasSkipped { get; set; }
+    public abstract bool NothingToDo { get; }
+
+    private void SkipRPC();  // RVA 0xE60860 (shared generic body)
+    public void Skip();      // RVA 0xE608B0 (shared generic body)
+}
+```
+<!-- /code -->
+
+**Patch:** `gameState.TurnPhase.PhaseData(island).Skip()` presses Ready from code.
+
 - For every island: `ready = IsReady(island)`, and `Player.IsAwaited = !ready` (the "waiting for player" marker).
 - False while the phase banner is still showing (`TimeSinceEnter < BannerDuration`, 2 s).
 - Otherwise true when **all islands are ready**, or when the timer ran out (`TimeRemaining < 0`).
@@ -67,6 +186,24 @@ per-player state is in `islandStates` (keyed by client id).
 ### Sync
 
 `TurnPhase.Sync` (`0xFDEB40`):
+
+<!-- code: TurnPhase | Sync, IsSynced, ApplyChanges, ShouldSkip, Recompute, RecomputeIsDefeated -->
+```csharp
+// DiceKingdoms.Game
+public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
+{
+    public void Sync();                                      // RVA 0xFDEB20 (shared generic body)
+    private void Sync(Nullable<float> syncTimeOpt);          // RVA 0xFDEB40 (shared generic body)
+    public bool IsSynced();                                  // RVA 0xFDDBA0 (shared generic body)
+    public virtual bool ShouldSkip();                        // RVA 0x4A1F20 (shared generic body)
+    private static void Recompute(Island island);            // RVA 0xFDE2E0 (shared generic body)
+    private static void RecomputeIsDefeated(Island island);  // RVA 0xFDE040 (shared generic body)
+    protected abstract void ApplyChanges(Action done);
+}
+```
+<!-- /code -->
+
+**Patch:** postfix a phase's `ApplyChanges` (for example `BuildPhase.ApplyChanges`) to run after its rules were applied. `TurnPhase` is generic: its methods share one compiled body, so patch the concrete override (`ApplyChanges`) rather than the shared ones.
 
 1. Store `syncTime`; the server sends `SyncRPC(syncTime)` to all clients.
 2. Server: for every island owned by an **AI**, call `AIPlay.PlayPhase(phaseData, aiState)`. **The AI makes its moves when the phase ends, not during it.**
@@ -81,14 +218,93 @@ After every phase's `ApplyChanges`, `TurnPhase.Recompute` recomputes every islan
 the `Preview` flag, see [Build phase](build-phase.md#preview-instant-or-at-sync)), and on clients the phase's interface is enabled. It also sets the time of day: each phase has a
 `timeOfDay` field (all phases 0.125 = morning) that is written into the `DayNightCycle` target, see [Rendering](rendering.md#day-and-night).
 
+<!-- code: TurnPhase | Enter, Exit, Rejoin -->
+```csharp
+// DiceKingdoms.Game
+public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
+{
+    public virtual void Enter(bool restore = False);                 // RVA 0xFDD3C0 (shared generic body)
+    private void Enter(bool restore, Nullable<float> enterTimeOpt);  // RVA 0xFDCD00 (shared generic body)
+    public virtual void Exit();                                      // RVA 0xFDD420 (shared generic body)
+    public virtual void Rejoin(Player player);                       // RVA 0xFDE3C0 (shared generic body)
+}
+```
+<!-- /code -->
+
+<!-- code: PhaseData | turnPhase, Island, Preview, Enter -->
+```csharp
+// DiceKingdoms.Game
+public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
+{
+    public TurnPhase<TData, TState> turnPhase;
+
+    public Island Island { get; set; }
+    public bool Preview { get; set; }
+
+    public void Enter(bool restore);            // RVA 0xE60440 (shared generic body)
+}
+```
+<!-- /code -->
+
 ## Clock
 
 `ITurnPhase.Time` (`0x56D8D0`) is the clock all phases use. It returns `Cheats.NetworkTime()`: the network time multiplied by the developer `speed` factor.
+
+<!-- code: ITurnPhase | Time, TimeLimit, TimeRemaining, TimeRemainingSync -->
+```csharp
+// DiceKingdoms.Game
+public interface ITurnPhase
+{
+    public abstract float TimeLimit { get; }
+    public abstract float TimeRemaining { get; }
+    public abstract float TimeRemainingSync { get; }
+    public static float Time { get; }
+}
+```
+<!-- /code -->
 
 ## Start phase ("Settle")
 
 `StartData.Reset` (`0x572C40`) fills the island's `BuildingsToPlace` list: **Castle, Cottage ×3, Farm, Dock**. `StartData.PlaceBuilding` (`0x5728C0`) places one of them if the normal tile rules
 pass (`IslandGrid.CanPlaceBuilding`) and the type is still in the list; each listed type can be placed exactly as often as it appears.
+
+<!-- code: StartData | BuildingsToPlace, PlacedBuildings, PlaceBuilding, Reset -->
+```csharp
+// DiceKingdoms.Game
+public class StartData : PhaseData<StartData, StartIslandState>
+{
+    public List<BuildingType> BuildingsToPlace { get; }
+    public List<Building> PlacedBuildings { get; }
+
+    public void PlaceBuilding(Building building);  // RVA 0x5728C0
+    protected override void Reset();               // RVA 0x572C40
+}
+```
+<!-- /code -->
+
+<!-- code: StartPhase | startResourceAmount, ApplyChanges -->
+```csharp
+// DiceKingdoms.Game
+public class StartPhase : TurnPhase<StartData, StartIslandState>
+{
+    private ResourceAmount startResourceAmount;         // 0xE8
+
+    protected override void ApplyChanges(Action done);  // RVA 0x573370
+}
+```
+<!-- /code -->
+
+<!-- code: IslandGrid | PlaceableBuilding -->
+```csharp
+// DiceKingdoms.Game
+public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
+{
+    public Nullable<Building> PlaceableBuilding(BuildingType buildingType);  // RVA 0x6179E0
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `StartData.Reset` to change `BuildingsToPlace`; change `StartPhase.startResourceAmount` for other start resources.
 
 There is no check for buildings that already exist on the island: an island loaded from an [island code](island/save-format.md) that already has a Castle still gets the start Castle, so the player
 has two.
@@ -107,6 +323,19 @@ At the end (`StartPhase.ApplyChanges` `0x573370`), for every island:
 
 `GameState.SpawnIslands` (`0x5F3F70`) runs on the server at game start with the match random generator, so the layout is the same for everybody.
 
+<!-- code: GameState | SpawnIslands, StartGame -->
+```csharp
+// DiceKingdoms.Game
+public class GameState : NetworkedBehaviour
+{
+    private void StartGame();     // RVA 0x5F50E0
+    private void SpawnIslands();  // RVA 0x5F3F70
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `GameState.SpawnIslands` on the host to move islands or replace their grids.
+
 **Island positions** (one per player):
 
 - `g` = island grid size (49 × 49 by default), `halfDiag` = √((g.x/2)² + (g.y/2)²) ≈ 34.6, `step` = halfDiag × 0.001.
@@ -124,181 +353,26 @@ A layout mod can postfix `SpawnIslands` to move islands or replace grids, but it
 `TurnPhase.TakeSnapshot` stores `(Island, IslandGrid.SyncData, Statistics.SyncData)` for every island when a phase is entered; `SnapshotStore` keeps them under `(player, turn, phase)`.
 `GameState.Restore()`, `RestoreTurnPhase` and `Rejoin(Player)` let a player who reconnects rebuild the state (`PhaseData.RejoinClientRPC`).
 
-## Training
-
-`GameState.IsTraining` is the tutorial game (strings `training.information.*`).
-
-## Code reference
-
-Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
-
-### Where to patch
-
-| To | Patch / use |
-|---|---|
-| Do something when a phase starts | postfix `GameState.ChangeTurnPhase` (private), or add to `GameState.onEnterPhase` |
-| Do something after a phase's rules were applied | postfix `<Phase>.ApplyChanges` (for example `BuildPhase.ApplyChanges`) or `GameState.onSyncPhase` |
-| Change phase time limits | `TurnPhase.timeLimit` / `timeLimitSync` on each phase object (`gameState.buildPhase` etc.) |
-| Change the start buildings | postfix `StartData.Reset` and edit `BuildingsToPlace` |
-| Change the start resources | `StartPhase.startResourceAmount` (private field, public in the interop) |
-| Change where auto-placed buildings go | `IslandGrid.PlaceableBuilding` |
-| Move or replace islands at match start (host) | postfix `GameState.SpawnIslands` |
-| Press Ready from code | `gameState.TurnPhase.PhaseData(island).Skip()` |
-
-### Declarations
-
-```csharp
-// DiceKingdoms.Game
-public class GameState : NetworkedBehaviour
-{
-    public const int MAX_PLAYERS = 12;
-    private LobbySettings lobbySettings;                                         // 0xD0
-    public Random random;                                                        // 0xD8
-    private List<Player> players;                                                // 0xE8
-    private NetworkedList<ulong> playerIds;                                      // 0xF8
-    public Action onIslandSpawned;                                               // 0x128
-    public Action onStartGame;                                                   // 0x130
-    public Action onEnterPhase;                                                  // 0x138
-    public Action onSyncPhase;                                                   // 0x140
-    public Action onEndGame;                                                     // 0x148
-    public Action<string> onExit;                                                // 0x150
-    public Action onReset;                                                       // 0x158
-    public Action onRejoin;                                                      // 0x160
-    public Action<Player, StructuredText> onDisasterLog;                         // 0x168
-    private ITurnPhase[] phaseOrder;                                             // 0x170
-    public StartPhase startPhase;                                                // 0x178
-    public HarvestPhase harvestPhase;                                            // 0x180
-    public DisastersPhase disastersPhase;                                        // 0x188
-    public BuildPhase buildPhase;                                                // 0x190
-    public CombatPhase combatPhase;                                              // 0x198
-    public WinPhase winPhase;                                                    // 0x1A0
-    private NetworkedVar<int> turnCounter;                                       // 0x1B8
-
-    public List<Player> Players { get; }
-    public int TurnCounter { get; set; }
-    public ITurnPhase TurnPhase { get; set; }
-    public bool IsTraining { get; set; }
-
-    public Island Island(Player owner);                                          // RVA 0x5F2F60
-    public void AddAI(Nullable<Player.AIState> aiState, Nullable<int> slotOpt);  // RVA 0x5F2000
-    private void ChangeTurnPhase(ITurnPhase turnPhase);                          // RVA 0x5F2C20
-    private void StartGame();                                                    // RVA 0x5F50E0
-    private void UpdateTurnPhase();                                              // RVA 0x5F6E20
-    public bool Restore();                                                       // RVA 0x5F33E0
-    private void SpawnIslands();                                                 // RVA 0x5F3F70
-}
-```
-
-```csharp
-// DiceKingdoms.Game
-public enum PhaseState
-{
-    ACTIVE = 0,
-    SYNC = 1,
-    INACTIVE = 2,
-}
-```
-
-```csharp
-// DiceKingdoms.Game
-public interface ITurnPhase
-{
-    public abstract string Name { get; }
-    public abstract float BannerDuration { get; }
-    public abstract float TimeLimit { get; }
-    public abstract PhaseState State { get; }
-    public abstract float TimeSinceEnter { get; }
-    public abstract float TimeRemaining { get; }
-    public abstract float TimeSinceSync { get; }
-    public abstract float TimeRemainingSync { get; }
-    public abstract IPhaseInterface Interface { get; }
-    public static float Time { get; }
-
-    public abstract void Enter(bool restore);
-    public abstract void Sync();
-    public abstract void Exit();
-    public abstract void Rejoin(Player player);
-    public abstract IPhaseData PhaseData(Island island);
-    public abstract bool IsReady(Island island);
-    public abstract bool IsReady();
-    public abstract bool IsSynced();
-    public abstract bool ShouldSkip();
-}
-```
-
+<!-- code: TurnPhase | TakeSnapshot -->
 ```csharp
 // DiceKingdoms.Game
 public abstract class TurnPhase<TData, TIslandState> : NetworkedBehaviour, ITurnPhase
 {
-    public float timeLimit;
-    public float timeLimitSync;
-    public float timeOfDay;
-
-    public GameState GameState { get; set; }
-    public float BannerDuration { get; }
-    public PhaseState State { get; set; }
-    public float TimeSinceEnter { get; }
-    public float TimeRemaining { get; }
-
-    public IPhaseData PhaseData(Island island);                      // RVA 0xFDE010 (shared generic body)
-    public virtual void Enter(bool restore = False);                 // RVA 0xFDD3C0 (shared generic body)
-    private void Enter(bool restore, Nullable<float> enterTimeOpt);  // RVA 0xFDCD00 (shared generic body)
-    public void Sync();                                              // RVA 0xFDEB20 (shared generic body)
-    private void Sync(Nullable<float> syncTimeOpt);                  // RVA 0xFDEB40 (shared generic body)
-    public virtual void Exit();                                      // RVA 0xFDD420 (shared generic body)
-    public virtual void Rejoin(Player player);                       // RVA 0xFDE3C0 (shared generic body)
-    public bool IsReady();                                           // RVA 0xFDD8B0 (shared generic body)
-    public bool IsSynced();                                          // RVA 0xFDDBA0 (shared generic body)
-    public virtual bool ShouldSkip();                                // RVA 0x4A1F20 (shared generic body)
-    public bool IsReady(Island island);                              // RVA 0xFDD780 (shared generic body)
-    private void TakeSnapshot();                                     // RVA 0xFDF1D0 (shared generic body)
-    private static void Recompute(Island island);                    // RVA 0xFDE2E0 (shared generic body)
-    private static void RecomputeIsDefeated(Island island);          // RVA 0xFDE040 (shared generic body)
-    protected abstract void ApplyChanges(Action done);
+    private void TakeSnapshot();  // RVA 0xFDF1D0 (shared generic body)
 }
 ```
+<!-- /code -->
 
+<!-- code: GameState | Restore -->
 ```csharp
 // DiceKingdoms.Game
-public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
+public class GameState : NetworkedBehaviour
 {
-    public TurnPhase<TData, TState> turnPhase;
-
-    public bool HasSkipped { get; set; }
-    public Island Island { get; set; }
-    public bool Preview { get; set; }
-    public abstract bool NothingToDo { get; }
-
-    private void SkipRPC();                     // RVA 0xE60860 (shared generic body)
-    public void Skip();                         // RVA 0xE608B0 (shared generic body)
-    public void Enter(bool restore);            // RVA 0xE60440 (shared generic body)
+    public bool Restore();  // RVA 0x5F33E0
 }
 ```
+<!-- /code -->
 
-```csharp
-// DiceKingdoms.Game
-public class StartData : PhaseData<StartData, StartIslandState>
-{
-    public List<BuildingType> BuildingsToPlace { get; }
-    public List<Building> PlacedBuildings { get; }
-    public BuildingType NextBuildingType { get; }
-    public override bool NothingToDo { get; }
+## Training
 
-    private void PlaceBuildingRPC(Building building);             // RVA 0x572860
-    private void PlaceBuildingOtherClientRPC(Building building);  // RVA 0x572800
-    public void PlaceBuilding(Building building);                 // RVA 0x5728C0
-    protected override void Reset();                              // RVA 0x572C40
-    protected override void OnRejoinClient();                     // RVA 0x572630
-}
-```
-
-```csharp
-// DiceKingdoms.Game
-public class StartPhase : TurnPhase<StartData, StartIslandState>
-{
-    private ResourceAmount startResourceAmount;         // 0xE8
-
-    public override void Reset();                       // RVA 0x475740
-    protected override void ApplyChanges(Action done);  // RVA 0x573370
-}
-```
+`GameState.IsTraining` is the tutorial game (strings `training.information.*`).

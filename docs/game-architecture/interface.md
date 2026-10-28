@@ -4,11 +4,30 @@ summary: How the in-match interface works - phase screens, input maps, camera, b
 
 # Interface behaviour
 
-*Code: [where to patch and the declarations](#code-reference).*
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
 
 How the in-match interface behaves. The visual building blocks (canvases, buttons, window art, settings rows, aspect ratios) are on [Game UI](ui.md).
 
 ## Who owns what
+
+<!-- code: Interface | cameraMovement, hideInterface, Island, Hidden, OnBuild, OnLearn, OnPillage, OnStarvation -->
+```csharp
+// DiceKingdoms.Interface
+public class Interface : MonoBehaviour
+{
+    private CameraMovement cameraMovement;                   // 0x28
+    private GameObject[] hideInterface;                      // 0x30
+    private Action<BuildingType> OnBuild;                    // 0x58
+    private Action<Technology> OnLearn;                      // 0x60
+    private Action OnPillage;                                // 0x68
+    private Action<ValueTuple<int, int, int>> OnStarvation;  // 0x70
+
+    public Island Island { get; set; }
+    public bool Hidden { get; set; }
+}
+```
+<!-- /code -->
 
 - `Interface` (one per match, `GameState.@interface`) references the `CameraMovement`, `Training`, `StartGame` and the arrays `requireStartGame` / `hideInterface`. It holds `GameState`,
   `Island` (the local player's island; null for spectators) and `Hidden`, and has events used by the tutorial: `OnBuild(BuildingType)`, `OnLearn(Technology)`, `OnPillage()`, `OnStarvation(...)`.
@@ -21,6 +40,20 @@ How the in-match interface behaves. The visual building blocks (canvases, button
 or the HUD is hidden, otherwise visible and **confined to the window**.
 
 ## Input
+
+<!-- code: InputActionMaps | Camera, Building, Interface, StartDisable -->
+```csharp
+// DiceKingdoms.Interface
+public class InputActionMaps : ScriptableObject
+{
+    public InputActionMap Camera { get; set; }
+    public InputActionMap Building { get; set; }
+    public InputActionMap Interface { get; set; }
+
+    public InputActionMaps.DisableToken StartDisable(InputActionMap inputMap);  // RVA 0x5A5C60
+}
+```
+<!-- /code -->
 
 | Map | Action | Binding |
 |---|---|---|
@@ -45,6 +78,34 @@ while at least one token is active. The game uses it only for chat.
 
 `CameraMovement`: min height 4, max height 100, move speed 5, zoom speed 0.2, zoom smoothing 10, mouse move speed 0.002; pitch by height (0 → 0°, 4 → −30°, 25 → −55°,
 100 → −90° straight down). The yaw is fixed at 45° (see [Rendering](rendering.md#building-orientation-and-the-camera)).
+
+<!-- code: CameraMovement | focus, Grabbed, FocusedIsland, Update, UpdatePositionFocus -->
+```csharp
+// DiceKingdoms.Interface
+public class CameraMovement : MonoBehaviour
+{
+    public Nullable<CameraMovement.Focus> focus;                   // 0xA0
+
+    public bool Grabbed { get; }
+    public Island FocusedIsland { get; set; }
+
+    protected void Update();                                       // RVA 0x59D7E0
+    private void UpdatePositionFocus(CameraMovement.Focus focus);  // RVA 0x59C870
+}
+```
+<!-- /code -->
+
+<!-- code: CameraMovement.Focus | *props -->
+```csharp
+public struct CameraMovement.Focus
+{
+    public float2 Position { get; }
+    public float Radius { get; }
+    public float EndTime { get; }
+    public bool StopAfterEnd { get; }
+}
+```
+<!-- /code -->
 
 - `focus` (`Nullable<Focus>`): `new Focus(IslandGrid grid, float duration = 0.5, bool stopAfterEnd = true)` or `Focus(float2 position, float radius, float endTime, bool stopAfterEnd)`.
   **To fly the camera to an island:** `cameraMovement.focus = new Il2CppSystem.Nullable<CameraMovement.Focus>(new CameraMovement.Focus(island.grid, 1f, true))` (confirmed in game).
@@ -78,6 +139,16 @@ For your own UI: add `HooverCursor`, or call `StartOverride` with priority above
 
 `StructuredText` is a list of `ITextElement` built from a C# interpolated string (`$"..."`); `Render()` gives the TextMeshPro string, `+` joins two. Each `{hole}` is converted by type:
 
+<!-- code: StructuredText | Render -->
+```csharp
+// DiceKingdoms.Interface
+public class StructuredText
+{
+    public string Render();  // RVA 0x595700
+}
+```
+<!-- /code -->
+
 | Value type | Becomes |
 |---|---|
 | `ITextElement` / `StructuredText` | itself / its elements |
@@ -98,6 +169,38 @@ must be doubled: `$"{player} got 5 {{r.gold}}"`.
 Other elements: `Localized(key, args)`, `OtherIcon` (AI, CLEAN_TILE, DISCONNECTED, HOST, HUNGRY, POPULATION, QUESTION_MARK, RESEARCH, SHIP, ATTACK_POWER, SHIELD, SCOREBOARD).
 
 ## Tooltips, dialogs, game log, chat
+
+<!-- code: HasToolTip | text -->
+```csharp
+// DiceKingdoms.Interface
+public class HasToolTip : MonoBehaviour, IPointerEnterHandler, IEventSystemHandler, IPointerExitHandler
+{
+    public StructuredText text;  // 0x28
+}
+```
+<!-- /code -->
+
+<!-- code: ConfirmModal | OpenConfirm, OpenInformation -->
+```csharp
+// DiceKingdoms.Interface
+public class ConfirmModal : MonoBehaviour
+{
+    public void OpenInformation(StructuredText icon, StructuredText description, Action onUnderstood, string dontShowAgainId);  // RVA 0x58A880
+    public void OpenConfirm(StructuredText icon, StructuredText description, Action onCancel, Action onConfirm, string dontShowAgainId);  // RVA 0x58A840
+}
+```
+<!-- /code -->
+
+<!-- code: Log | AddMessage -->
+```csharp
+// DiceKingdoms.Game
+public class Log : NetworkedBehaviour
+{
+    public void AddMessage(FormattableString message);  // RVA 0x6402C0
+    public void AddMessage(StructuredText message);     // RVA 0x6401D0
+}
+```
+<!-- /code -->
 
 - **Tooltips:** add `HasToolTip` to a UI object and set `.text` (a `StructuredText`); shown after 0.4 s.
 - **Dialogs:** `ConfirmModal.OpenConfirm(icon, description, onCancel, onConfirm, dontShowAgainId)` and `OpenInformation(icon, description, onUnderstood, dontShowAgainId)`: the game's own dialog, reusable.
@@ -165,116 +268,3 @@ The UI shares one perspective camera (`Viewport`, FOV 45) with the 3D world: `Ca
 4. Text with icons, colours and localization: `StructuredText`; tooltips: `HasToolTip`; dialogs: `ConfirmModal`.
 5. Messages to all players: `Log.AddMessage` on the host.
 6. If your panel should hide with F3, add its root object to `Interface.hideInterface`.
-
-## Code reference
-
-Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
-
-### Where to patch
-
-| To | Patch / use |
-|---|---|
-| Fly the camera | `CameraMovement.focus = new Nullable<Focus>(new Focus(island.grid, 1f, true))` |
-| Stop typing from moving the camera | `InputActionMaps.StartDisable(Camera)` / `(Building)`, then `token.Stop()` |
-| Post a message everybody sees (host) | `Log.AddMessage(StructuredText)` |
-| Show a dialog | `ConfirmModal.OpenConfirm` / `OpenInformation` |
-| Tooltip on your UI | add `HasToolTip`, set `.text` |
-| Hide your UI with F3 | add your root to `Interface.hideInterface` |
-
-### Declarations
-
-```csharp
-// DiceKingdoms.Interface
-public class Interface : MonoBehaviour
-{
-    private CameraMovement cameraMovement;                   // 0x28
-    private GameObject[] hideInterface;                      // 0x30
-    private Action<BuildingType> OnBuild;                    // 0x58
-    private Action<Technology> OnLearn;                      // 0x60
-    private Action OnPillage;                                // 0x68
-    private Action<ValueTuple<int, int, int>> OnStarvation;  // 0x70
-
-    public Island Island { get; set; }
-    public bool Hidden { get; set; }
-}
-```
-
-```csharp
-// DiceKingdoms.Interface
-public class CameraMovement : MonoBehaviour
-{
-    public Nullable<CameraMovement.Focus> focus;                   // 0xA0
-
-    public bool Grabbed { get; }
-    public Island FocusedIsland { get; set; }
-
-    protected void Update();                                       // RVA 0x59D7E0
-    private void UpdatePositionFocus(CameraMovement.Focus focus);  // RVA 0x59C870
-}
-```
-
-```csharp
-public struct CameraMovement.Focus
-{
-    public float2 Position { get; }
-    public float Radius { get; }
-    public float EndTime { get; }
-    public bool StopAfterEnd { get; }
-
-    public bool Equals(CameraMovement.Focus other);                                           // RVA 0x5A2740
-    public override bool Equals(object obj);                                                  // RVA 0x5A27E0
-    public override int GetHashCode();                                                        // RVA 0x5A2900
-    public static bool op_Equality(CameraMovement.Focus left, CameraMovement.Focus right);    // RVA 0x5A2AD0
-    public static bool op_Inequality(CameraMovement.Focus left, CameraMovement.Focus right);  // RVA 0x5A2B80
-}
-```
-
-```csharp
-// DiceKingdoms.Interface
-public class InputActionMaps : ScriptableObject
-{
-    public InputActionMap Camera { get; set; }
-    public InputActionMap Building { get; set; }
-    public InputActionMap Interface { get; set; }
-
-    protected void OnEnable();                                                  // RVA 0x5A5B90
-    public InputActionMaps.DisableToken StartDisable(InputActionMap inputMap);  // RVA 0x5A5C60
-}
-```
-
-```csharp
-// DiceKingdoms.Game
-public class Log : NetworkedBehaviour
-{
-    public void AddMessage(FormattableString message);  // RVA 0x6402C0
-    public void AddMessage(StructuredText message);     // RVA 0x6401D0
-}
-```
-
-```csharp
-// DiceKingdoms.Interface
-public class StructuredText
-{
-    public string Render();  // RVA 0x595700
-}
-```
-
-```csharp
-// DiceKingdoms.Interface
-public class HasToolTip : MonoBehaviour, IPointerEnterHandler, IEventSystemHandler, IPointerExitHandler
-{
-    private string initialText;                    // 0x18
-    private LocalizedString localizedInitialText;  // 0x20
-    public StructuredText text;                    // 0x28
-    private ToolTips toolTips;                     // 0x30
-}
-```
-
-```csharp
-// DiceKingdoms.Interface
-public class ConfirmModal : MonoBehaviour
-{
-    public void OpenInformation(StructuredText icon, StructuredText description, Action onUnderstood, string dontShowAgainId);  // RVA 0x58A880
-    public void OpenConfirm(StructuredText icon, StructuredText description, Action onCancel, Action onConfirm, string dontShowAgainId);  // RVA 0x58A840
-}
-```

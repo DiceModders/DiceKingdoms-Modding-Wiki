@@ -4,9 +4,38 @@ summary: Audio (sound pool, music selection, mixer and volume curve), saved sett
 
 # Audio, settings, localization and tutorial
 
-*Code: [where to patch and the declarations](#code-reference).*
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
 
 ## Audio
+
+<!-- code: Sound | *fields -->
+```csharp
+// DiceKingdoms.Interface
+public class Sound : ScriptableObject
+{
+    public AudioClip[] clips;           // 0x18
+    public AudioMixerGroup mixerGroup;  // 0x20
+    public float minVolume;             // 0x28
+    public float maxVolume;             // 0x2C
+    public float minPitch;              // 0x30
+    public float maxPitch;              // 0x34
+    public bool loop;                   // 0x38
+}
+```
+<!-- /code -->
+
+<!-- code: AudioSources | Play -->
+```csharp
+// DiceKingdoms.Interface
+public class AudioSources : MonoBehaviour
+{
+    public AudioSources.AllocatedSource Play(Sound sound, Nullable<Vector3> positionOpt);  // RVA 0x580C20
+}
+```
+<!-- /code -->
+
+**Patch:** `AudioSources.instance.Play(sound, null)` plays any `Sound`.
 
 | Piece | What it is |
 |---|---|
@@ -22,6 +51,42 @@ summary: Audio (sound pool, music selection, mixer and volume curve), saved sett
 
 `Music` (match scene): calm track per civilization (Europe 6 clips, Middle East 3, Viking 9, Ancient 9, Maya 6), combat, decisive combat, winning and losing tracks. `Music.get_Track`
 (`0x590F70`), every frame:
+
+<!-- code: Music | *fields, *methods -->
+```csharp
+// DiceKingdoms.Interface
+public class Music : MonoBehaviour
+{
+    private Sound europeTrack;                                                     // 0x18
+    private Sound middleEastTrack;                                                 // 0x20
+    private Sound vikingTrack;                                                     // 0x28
+    private Sound ancientTrack;                                                    // 0x30
+    private Sound mayaTrack;                                                       // 0x38
+    private Sound combatTrack;                                                     // 0x40
+    private Sound combatDecisiveTrack;                                             // 0x48
+    private Sound winningTrack;                                                    // 0x50
+    private Sound loosingTrack;                                                    // 0x58
+    private float transitionDuration;                                              // 0x60
+    private AudioSources audioSources;                                             // 0x68
+    private bool someoneWinning;                                                   // 0x78
+    private Sound currentTrack;                                                    // 0x80
+    private AudioSources.AllocatedSource currentSource;                            // 0x88
+    private readonly List<AudioSources.AllocatedSource> dyingSources;              // 0xA0
+
+    protected void Awake();                                                        // RVA 0x590090
+    protected void OnEnable();                                                     // RVA 0x590290
+    protected void OnDisable();                                                    // RVA 0x590180
+    protected void Update();                                                       // RVA 0x590B40
+    private void OnEnterPhase();                                                   // RVA 0x5903A0
+    private void UpdateVolumes();                                                  // RVA 0x5908B0
+    private void UpdateVolume(AudioSources.AllocatedSource source, float factor);  // RVA 0x5907B0
+    private void UpdateTrack();                                                    // RVA 0x5906B0
+    private void Transition(Sound track);                                          // RVA 0x590440
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `Music.get_Track` to play your own track.
 
 1. Win phase with a result → winning if the winner is on your team, else losing.
 2. Combat phase, 5 s into the fight → **decisive** if somebody could win this turn (`WinPhase.CheckWin()` at phase start), else combat.
@@ -49,6 +114,29 @@ For mods: `AudioSources.instance.Play(sound, null)` plays any `Sound`; keep the 
 
 The game saves only **four settings files** (`video`, `audio`, `input`, `game`, JSON) and the flag file **`GameSettings/.did-tutorial`**. There are no save games, no PlayerPrefs and no Steam
 stats, achievements or leaderboards.
+
+<!-- code: SettingSets | *fields, *methods -->
+```csharp
+// DiceKingdoms.Meta
+public class SettingSets : MonoBehaviour
+{
+    private string localFolder;                                          // 0x18
+    public VideoSettings videoSettings;                                  // 0x20
+    public AudioSettings audioSettings;                                  // 0x28
+    public InputSettings inputSettings;                                  // 0x30
+    public GameSettings gameSettings;                                    // 0x38
+    private SettingSet[] settingSets;                                    // 0x40
+
+    protected void Awake();                                              // RVA 0x54F2A0
+    protected void OnDestroy();                                          // RVA 0x54F8D0
+    private string Path(SettingSet settingSet);                          // RVA 0x54F9A0
+    public static void Store(bool remote, string path, byte[] bytes);    // RVA 0x54FB20
+    public static bool Get(bool remote, string path, out byte[] bytes);  // RVA 0x54F6C0
+    public void Save();                                                  // RVA 0x54FA30
+    private void Load();                                                 // RVA 0x54F740
+}
+```
+<!-- /code -->
 
 `SettingSets` (`localFolder = "GameSettings"`, path relative to the game folder):
 
@@ -92,6 +180,16 @@ At the start every building button and Ready are hidden and **combat phases are 
 Unity **Localization** with SmartFormat, string tables in Addressables bundles, 421 keys × 6 languages. Game code goes through `StructuredTextStaticReferences.instance`
 (`LocalizeString(key)`).
 
+<!-- code: SteamLocaleSelector | *methods -->
+```csharp
+// DiceKingdoms.Meta
+public class SteamLocaleSelector : IStartupLocaleSelector
+{
+    public Locale GetStartupLocale(ILocalesProvider availableLocales);  // RVA 0x550170
+}
+```
+<!-- /code -->
+
 **Language at start** (`Localization.asset` startup selectors):
 
 1. `SteamLocaleSelector.GetStartupLocale` (`0x550170`), only with Steam: english → en; schinese, tchinese → zh; french → fr; russian → ru; **ukrainian → ru**; anything else, **German included → en**.
@@ -107,101 +205,3 @@ Texts are `StructuredText` with `ITextElement.Localized(key, args)`: the transla
 
 For mods: add entries to the string table at runtime (`LocalizationSettings.StringDatabase.GetTable(...)` → `AddEntry`) for the language in use (and again when it changes), or write your own
 `StructuredText`; icon tokens work without localization. The startup quirks can be fixed with a postfix on `SteamLocaleSelector.GetStartupLocale`.
-
-## Code reference
-
-Declarations from the IL2CPP dump of game version 1.0.4, trimmed to the members a patch usually needs. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra: `0x180000000 + RVA`). Names are stable between updates, offsets and RVAs are not. Private members are public in the BepInEx interop assemblies.
-
-### Where to patch
-
-| To | Patch / use |
-|---|---|
-| Play a sound | `AudioSources.instance.Play(sound, position)` |
-| Change the music | postfix `Music.get_Track` or edit the tracks' `clips` |
-| Store mod settings in Steam Cloud | `SettingSets.Store(true, path, bytes)` / `Get(true, path)` |
-| Fix the startup language | postfix `SteamLocaleSelector.GetStartupLocale` |
-
-### Declarations
-
-```csharp
-// DiceKingdoms.Interface
-public class Sound : ScriptableObject
-{
-    public AudioClip[] clips;           // 0x18
-    public AudioMixerGroup mixerGroup;  // 0x20
-    public float minVolume;             // 0x28
-    public float maxVolume;             // 0x2C
-    public float minPitch;              // 0x30
-    public float maxPitch;              // 0x34
-    public bool loop;                   // 0x38
-}
-```
-
-```csharp
-// DiceKingdoms.Interface
-public class AudioSources : MonoBehaviour
-{
-    public AudioSources.AllocatedSource Play(Sound sound, Nullable<Vector3> positionOpt);  // RVA 0x580C20
-}
-```
-
-```csharp
-// DiceKingdoms.Interface
-public class Music : MonoBehaviour
-{
-    private Sound europeTrack;                                                     // 0x18
-    private Sound middleEastTrack;                                                 // 0x20
-    private Sound vikingTrack;                                                     // 0x28
-    private Sound ancientTrack;                                                    // 0x30
-    private Sound mayaTrack;                                                       // 0x38
-    private Sound combatTrack;                                                     // 0x40
-    private Sound combatDecisiveTrack;                                             // 0x48
-    private Sound winningTrack;                                                    // 0x50
-    private Sound loosingTrack;                                                    // 0x58
-    private float transitionDuration;                                              // 0x60
-    private AudioSources audioSources;                                             // 0x68
-    private bool someoneWinning;                                                   // 0x78
-    private Sound currentTrack;                                                    // 0x80
-    private AudioSources.AllocatedSource currentSource;                            // 0x88
-    private readonly List<AudioSources.AllocatedSource> dyingSources;              // 0xA0
-
-    protected void Awake();                                                        // RVA 0x590090
-    protected void OnEnable();                                                     // RVA 0x590290
-    protected void OnDisable();                                                    // RVA 0x590180
-    protected void Update();                                                       // RVA 0x590B40
-    private void OnEnterPhase();                                                   // RVA 0x5903A0
-    private void UpdateVolumes();                                                  // RVA 0x5908B0
-    private void UpdateVolume(AudioSources.AllocatedSource source, float factor);  // RVA 0x5907B0
-    private void UpdateTrack();                                                    // RVA 0x5906B0
-    private void Transition(Sound track);                                          // RVA 0x590440
-}
-```
-
-```csharp
-// DiceKingdoms.Meta
-public class SettingSets : MonoBehaviour
-{
-    private string localFolder;                                          // 0x18
-    public VideoSettings videoSettings;                                  // 0x20
-    public AudioSettings audioSettings;                                  // 0x28
-    public InputSettings inputSettings;                                  // 0x30
-    public GameSettings gameSettings;                                    // 0x38
-    private SettingSet[] settingSets;                                    // 0x40
-
-    protected void Awake();                                              // RVA 0x54F2A0
-    protected void OnDestroy();                                          // RVA 0x54F8D0
-    private string Path(SettingSet settingSet);                          // RVA 0x54F9A0
-    public static void Store(bool remote, string path, byte[] bytes);    // RVA 0x54FB20
-    public static bool Get(bool remote, string path, out byte[] bytes);  // RVA 0x54F6C0
-    public void Save();                                                  // RVA 0x54FA30
-    private void Load();                                                 // RVA 0x54F740
-}
-```
-
-```csharp
-// DiceKingdoms.Meta
-public class SteamLocaleSelector : IStartupLocaleSelector
-{
-    public Locale GetStartupLocale(ILocalesProvider availableLocales);  // RVA 0x550170
-}
-```
