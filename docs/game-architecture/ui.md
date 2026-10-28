@@ -65,17 +65,22 @@ The Settings window (`SettingSetsInterface`) has four tabs (`Video`, `Audio`, `I
 
 ## Canvas size and aspect ratio
 
-The game's canvases use `CanvasScaler` in `ScaleWithScreenSize` mode with a 1920x1080 reference. The scene data (not the code) decides the match mode: the main `Canvas` matches **height**
-(always 1080 units tall, width = 1080 x ratio), `Canvas Over Dice` matches **width** (always 1920 wide, height = 1920 / ratio).
+The game's canvases use `CanvasScaler` in `ScaleWithScreenSize` mode with a 1920x1080 reference. The scene data (not the code) decides the match mode, and it differs between the
+two scenes (confirmed in game by switching the window between aspect ratios and logging the canvas sizes):
 
-| Ratio | Main canvas | Canvas Over Dice |
+- **In a match**, all three canvases (`Canvas`, `Canvas Over Dice`, `Canvas Background`) match **width**: always 1920 units wide, height = 1920 / ratio.
+- **In the main menu**, the `Canvas` matches **height**: always 1080 units tall, width = 1080 x ratio.
+
+| Ratio | Match canvases | Main menu canvas |
 |---|---|---|
 | 16:9 | 1920x1080 | 1920x1080 |
-| 16:10 | 1728x1080 | 1920x1200 |
-| 4:3 | 1440x1080 | 1920x1440 |
-| 5:4 | 1350x1080 | 1920x1536 |
-| 21:9 | 2520x1080 | 1920x823 |
-| 32:9 | 3840x1080 | 1920x540 |
+| 16:10 | 1920x1200 | 1728x1080 |
+| 4:3 | 1920x1440 | 1440x1080 |
+| 5:4 | 1920x1536 | 1350x1080 |
+| 21:9 | 1920x823 | 2520x1080 |
+| 32:9 | 1920x540 | 3840x1080 |
+
+So on a wide screen the match HUD gets **shorter** (a 21:9 screen has only 823 units of height for the HUD), and on a 4:3 or 5:4 screen it gets taller.
 
 Everything that is sized in units (the lobby box, setting rows, windows) scales with the screen. Anything placed by its top-left corner must be kept inside the canvas when the size changes. `Canvas.scaleFactor` (screen pixels per unit) is what a mouse delta has to be divided by when dragging.
 
