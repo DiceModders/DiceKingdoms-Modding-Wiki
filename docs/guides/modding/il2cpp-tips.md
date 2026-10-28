@@ -49,6 +49,21 @@ The BepInEx log prints `Registered mono type ... in il2cpp domain` for each regi
 - Font asset and material must be copied together from a live game text; a mismatched pair draws garbage glyphs.
 - A TMP text cut with "..." shows nothing at all if its box is shorter than one line. Size the box from the font's line height.
 
+## Things that throw or crash in this game
+
+- **`string.Format` and `$"..."` with Unity structs** (`Vector3`, `Bounds`, …) throw `MissingMethodException: String.Format(String, Il2CppSystem.Object)`: the struct is boxed to an
+  `Il2CppSystem.Object` and bound to an overload that does not exist at runtime. Build log text with plain concatenation and format numbers yourself
+  (`f.ToString("F2", CultureInfo.InvariantCulture)`).
+- **Stripped Unity methods** throw the same exception. `Mesh.RecalculateNormals()` is one of them in this build; compute normals yourself.
+- **`IslandGrid.GetBuilding`** returns a `Nullable<Building>` (a struct holding object references) and crashes the game natively through the interop. Walk `island.grid.Buildings` instead.
+- Runtime `Mesh` objects: use `IndexFormat.UInt32` above 65 535 vertices and `HideFlags.DontUnloadUnusedAsset`, or a scene change unloads them.
+- A Unity `Assert` in the game only logs (`Assert.raiseExceptions` is false), so a failed assertion does not stop the game's code.
+
+## Your own MonoBehaviour from a plugin
+
+`BasePlugin.AddComponent<T>()` registers the type and creates it on a hidden object that survives scene changes; an easy way to get `Update` calls in a plugin.
+The new Input System is used by the game: read keys with `UnityEngine.InputSystem.Keyboard.current.f8Key.wasPressedThisFrame` (pick keys the game does not use; F1–F3 are taken).
+
 ## Debugging
 
 - Read `BepInEx/LogOutput.log` first; `ErrorLog.log` usually holds little (launcher and crash-reporter lines).

@@ -57,7 +57,7 @@ public class BuildingType
 | `localPositionsInWater` | `int2[]` | `0x20` | Footprint variant used in water |
 | cost block | struct | `0x58 - 0x74` | resource cost |
 | `tier` | `int` | `0x78` | 1-3, see the table below |
-| `maxHealth` | `int` | `0x80` | Maximum health, see Health |
+| `health` | `int` | `0x80` | Maximum health |
 
 ### Class hierarchy
 
@@ -538,6 +538,8 @@ A building will be refused (silently, when loaded through an island code) if any
 *   covered by a nature tile (tree, rock, ...),
 
 *   overlapping another building.
+
+The full per-tile rule (ground must be grass or pier, flowers are allowed and removed, remains block) and every other check are on [Build phase](build-phase.md#check-functions).
 
 ## Unlocking and removing
 
