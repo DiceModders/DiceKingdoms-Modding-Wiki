@@ -33,20 +33,41 @@ nav:
     - Modding: 
       - Project Setup: guides/modding/project-setup.md
       - IL2CPP Tips: guides/modding/il2cpp-tips.md
-      - Publishing a Mod: guides/modding/publishing.md
+      - Hook Recipes: guides/modding/hook-recipes.md
+      - Custom Models: guides/modding/custom-models.md
       - Making a Civilization: guides/modding/making-a-civilization.md
+      - Publishing a Mod: guides/modding/publishing.md
   - Game architecture:
+    - Overview: game-architecture/overview.md
+    - Gameplay:
+      - Turn Loop and Phases: game-architecture/turn-phases.md
+      - Harvest and Dice: game-architecture/harvest.md
+      - Disasters: game-architecture/disasters.md
+      - Meteorites: game-architecture/meteorites.md
+      - Build Phase: game-architecture/build-phase.md
+      - Combat: game-architecture/combat.md
+      - Win Conditions: game-architecture/win-conditions.md
+      - AI: game-architecture/ai.md
+      - Game Data: game-architecture/game-data.md
     - Island:
       - Grid: game-architecture/island/grid.md
       - Generation: game-architecture/island/generation.md
       - Save Format: game-architecture/island/save-format.md
     - Resources: game-architecture/resources.md
     - Buildings: game-architecture/buildings.md
-    - Game UI: game-architecture/ui.md
-    - Rules and Civilizations: game-architecture/rules-and-civilizations.md
-    - Civilizations in the Game Code: game-architecture/civilizations.md
-    - Civilization Models and Sprites: game-architecture/civilization-assets.md
-    - Meteorites: game-architecture/meteorites.md
+    - Civilizations:
+      - Rules and Civilizations: game-architecture/rules-and-civilizations.md
+      - Civilizations in the Game Code: game-architecture/civilizations.md
+      - Civilization Models and Sprites: game-architecture/civilization-assets.md
+    - Multiplayer:
+      - Networking: game-architecture/networking.md
+      - Lobby, Menus and Steam: game-architecture/lobby-and-steam.md
+    - Presentation:
+      - Game UI: game-architecture/ui.md
+      - Interface Behaviour: game-architecture/interface.md
+      - Rendering and Visuals: game-architecture/rendering.md
+      - Audio, Settings and Localization: game-architecture/audio-settings-localization.md
+    - Developer Console: game-architecture/dev-console.md
     - Reverse-Engineering Notes: game-architecture/reverse-engineering.md
   - Reference:
     - Internals Reference: reference/internals.md

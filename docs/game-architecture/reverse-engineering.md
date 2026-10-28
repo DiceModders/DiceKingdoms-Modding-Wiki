@@ -52,7 +52,7 @@ use `ExportIsland` / `ImportIsland` and handle the clipboard yourself. The code 
 | `BuildData.CleanTile` | `0x628AB0` |
 | `BuildingType.id` | `+0x10` (this is the type id, not a category) |
 | `BuildingType.localPositions` / `localPositionsInWater` | `0x18` / `0x20` |
-| `BuildingType.tier` / max health | `+0x78` / `+0x80` |
+| `BuildingType.tier` / `health` (maximum) | `+0x78` / `+0x80` |
 | `BuildingType.get_DisplayName` | `0x5F0E10` |
 | `BuildingTypes.get_Types` | `0x5717B0` (save-file order, alphabetical by name) |
 
