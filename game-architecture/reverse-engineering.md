@@ -31,7 +31,7 @@ summary: Tools and method for reading the game code, plus RVAs and field offsets
 
 The radius of the island can be changed in the `Awake` hook; real land is then produced by normal generation. Resizing arrays does not work.
 `SaveIslandToClipboard` (`0x61A690`) and `LoadIslandFromClipboard` (`0x616810`) go through `GUIUtility.systemCopyBuffer`, which is unreliable outside `OnGUI`;
-use `ExportIsland` / `ImportIsland` and handle the clipboard yourself. The code format is in [Island code](island-code.md).
+use `ExportIsland` / `ImportIsland` and handle the clipboard yourself. The code format is in [Island save format](island/save-format.md).
 
 ## Players and game state
 
@@ -52,7 +52,7 @@ use `ExportIsland` / `ImportIsland` and handle the clipboard yourself. The code 
 | `BuildData.CleanTile` | `0x628AB0` |
 | `BuildingType.id` | `+0x10` (this is the type id, not a category) |
 | `BuildingType.localPositions` / `localPositionsInWater` | `0x18` / `0x20` |
-| `BuildingType.tier` / max health | `+0x78` / `+0x80` |
+| `BuildingType.tier` / `health` (maximum) | `+0x78` / `+0x80` |
 | `BuildingType.get_DisplayName` | `0x5F0E10` |
 | `BuildingTypes.get_Types` | `0x5717B0` (save-file order, alphabetical by name) |
 

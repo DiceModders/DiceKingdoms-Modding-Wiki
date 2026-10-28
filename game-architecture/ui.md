@@ -44,3 +44,43 @@ In the main menu the same style is under `Top Right/Top Right Buttons`. The Rule
 
 The Rules screen, Settings screen, About, Store and Scoreboard are separate screens that exist in the hierarchy but may be inactive. Cloning a template from an
 inactive screen works, but the screen must have been loaded.
+
+## Settings rows and the lobby settings box
+
+The Settings window (`SettingSetsInterface`) has four tabs (`Video`, `Audio`, `Input`, `Game`), each a `SettingSetInterface` with a `Vertical Scroll` (`ScrollRect`) whose `Viewport` is a
+`RectMask2D` and whose `Content` is a `VerticalLayoutGroup` + `ContentSizeFitter`. The settings box of the match-start screen (the "Lobby" tab) is built the same way, 430x424 units.
+`SettingSetInterface.GenerateElements` fills `Content` with an entry per setting; rows are made from prefabs the set references (`settingEntryInterfacePrefab`, `settingInterfacePrefabs`).
+
+- **Entry:** `Setting Entry` is a `HorizontalLayoutGroup` + `SettingEntryInterface` with a `Label` (125 wide in the lobby box) and a `Content` holder (`contentHolder`).
+  In the lobby box the holder is **305 wide and a `VerticalLayoutGroup`**; in the other tabs it is 500 wide and has no layout group. Its width is `0` until the layout has run, so a row that needs the width
+  has to measure it again later. Controls put into a holder with a layout group are stretched or stacked by it.
+- **Controls:** `SettingInterfaceBool` (a checkbox, `Toggle`), `SettingInterfaceFloat` (the slider of the Frame Rate Limit setting), `SettingInterfaceDropdown<T>` / `SettingInterfaceEnum*`,
+  `SettingInterfaceInputPath`, `SettingInterfaceLobbyCode`. Each is bound to a `Setting<T>` of a `SettingSet`; a clone has no setting, so the binding component is destroyed **before** the clone wakes up
+  (`SettingInterfaceFloat.Awake` adds a slider listener that writes `setting.Value` and would throw on every drag otherwise).
+- **Slider row:** `Label` (the value text, 34 wide) + `Slider` > `Background` (4 high), `Fill Area` > `Fill`, `Handle Slide Area` > `Handle` (20 wide, the height of the slider). The handle is round only when the slider's
+  rectangle is as tall as the handle is wide (20), and it sticks out about 5-10 units past both ends of the track, so the track must stay clear of any clipping edge.
+- **Scroll view of the lobby box:** the `Viewport` mask is as big as the whole frame (430x424), so a row scrolled to the edge is drawn over the frame's yellow border (the game's own rows never reach it);
+  the clip can be pulled in with `RectMask2D.padding` (2 units is the border's width). The `Scroll Bar` is 6x418 and spans the frame; its `Handle` has a `Shadow`, which at the bottom of the track hangs out of the frame.
+- The lobby box shows only the game's own rows in the unmodded game (they fit, so it does not scroll); once a mod adds rows, the scrollbar, the clip and the row widths all matter.
+
+## Canvas size and aspect ratio
+
+The game's canvases use `CanvasScaler` in `ScaleWithScreenSize` mode with a 1920x1080 reference. The scene data (not the code) decides the match mode, and it differs between the
+two scenes (confirmed in game by switching the window between aspect ratios and logging the canvas sizes):
+
+- **In a match**, all three canvases (`Canvas`, `Canvas Over Dice`, `Canvas Background`) match **width**: always 1920 units wide, height = 1920 / ratio.
+- **In the main menu**, the `Canvas` matches **height**: always 1080 units tall, width = 1080 x ratio.
+
+| Ratio | Match canvases | Main menu canvas |
+|---|---|---|
+| 16:9 | 1920x1080 | 1920x1080 |
+| 16:10 | 1920x1200 | 1728x1080 |
+| 4:3 | 1920x1440 | 1440x1080 |
+| 5:4 | 1920x1536 | 1350x1080 |
+| 21:9 | 1920x823 | 2520x1080 |
+| 32:9 | 1920x540 | 3840x1080 |
+
+So on a wide screen the match HUD gets **shorter** (a 21:9 screen has only 823 units of height for the HUD), and on a 4:3 or 5:4 screen it gets taller.
+
+Everything that is sized in units (the lobby box, setting rows, windows) scales with the screen. Anything placed by its top-left corner must be kept inside the canvas when the size changes. `Canvas.scaleFactor` (screen pixels per unit) is what a mouse delta has to be divided by when dragging.
+

@@ -12,7 +12,7 @@ Classes, methods and field offsets found by reverse engineering the game. In Bep
 - Anything marked as tested was also confirmed by a live run in game.
 
 !!! warning "Build specific"
-    All RVAs and offsets are from **one game build**. They move after a game update; re-run Il2CppDumper to get new ones, and rely on the names. <!-- TODO: add Steam build id / game version here -->
+    All RVAs and offsets are from **one game build**. They move after a game update; re-run Il2CppDumper to get new ones, and rely on the names. These are from game version **1.0.4**.
 
 RVAs are relative to the base of `GameAssembly.dll`.
 
@@ -66,7 +66,7 @@ RVAs are relative to the base of `GameAssembly.dll`.
 | `BuildingType` | `localPositions` (`int2[]`) | `0x18` |
 | `BuildingType` | `localPositionsInWater` | `0x20` |
 | `BuildingType` | `id` | `0x10` |
-| `BuildingType` | `tier` / `maxHealth` | `0x78` / `0x80` |
+| `BuildingType` | `tier` / `health` (maximum) | `0x78` / `0x80` |
 | `BuildingType` | cost block | `0x58 - 0x74` |
 | `BuildData` | island grid chain | `+0xA0` -> grid `+0x98` |
 | `UnlockBuildingTechnology` | `BuildingTypes*` / id | `0x38` / `0x40` |
