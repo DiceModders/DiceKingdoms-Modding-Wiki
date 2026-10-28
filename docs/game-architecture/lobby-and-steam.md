@@ -4,6 +4,9 @@ summary: Main menu, custom games, matchmaking, the in-game lobby, match start, l
 
 # Lobby, menus and Steam
 
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
+
 ## Main menu
 
 `MainMenu.Awake` (`0x532D60`):
@@ -66,6 +69,34 @@ network down.
 `LobbySettings : SettingSet`: `lobbyCode`, `timerSpeed` (FAST / SLOW / UNLIMITED), `multiMeteor`, `teams`, `wonderVictory`. Defaults: FAST, multi-meteor off, teams off, wonder victory on.
 Synced to clients through `GameState.lobbySettingsNetworked`. The lobby code is 7 characters from `ABCDEFGHJKMPQRST23456789`.
 
+The settings object:
+
+<!-- code: LobbySettings | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class LobbySettings : SettingSet
+{
+    public SettingSet.Setting<LobbySettings.LobbyCode> lobbyCode;    // 0x28
+    public SettingSet.Setting<LobbySettings.TimerSpeed> timerSpeed;  // 0x30
+    public SettingSet.Setting<bool> multiMeteor;                     // 0x38
+    public SettingSet.Setting<bool> teams;                           // 0x40
+    public SettingSet.Setting<bool> wonderVictory;                   // 0x48
+}
+```
+<!-- /code -->
+
+<!-- code: LobbySettings.TimerSpeed |  -->
+```csharp
+public enum LobbySettings.TimerSpeed
+{
+    FAST = 0,
+    SLOW = 1,
+    UNLIMITED = 2,
+}
+```
+<!-- /code -->
+
 ## Steam lobby keys
 
 `MainMenu.LobbyConsts`:
@@ -87,6 +118,36 @@ Synced to clients through `GameState.lobbySettingsNetworked`. The lobby code is 
 ## Inventory and civilizations
 
 Steam item definitions:
+
+The Steam inventory of a player:
+
+<!-- code: PlayerInventory | *fields, *props, *methods -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public struct PlayerInventory
+{
+    public static readonly PlayerInventory FALLBACK;                      // static
+
+    public Civilization[] UnlockedCivilizations { get; }
+
+    public static PlayerInventory FromSteamworks(InventoryItem[] items);  // RVA 0x56E170
+}
+```
+<!-- /code -->
+
+<!-- code: Player | NextCivilization -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Player : NetworkedBehaviour
+{
+    public void NextCivilization();  // RVA 0x570500
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `PlayerInventory.FromSteamworks` to add civilizations for local tests (solo, or when you host).
 
 | Id | Name | Meaning |
 |---|---|---|

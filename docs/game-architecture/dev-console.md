@@ -4,11 +4,42 @@ summary: The built-in developer console - when cheats are available, every comma
 
 # Developer console and debug keys
 
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
+
 The game ships **CommandTerminal** (`Terminal : MonoBehaviour`, commands registered with `[RegisterCommand]`). The commands are in `DiceKingdoms.Meta.Cheats` and `MiscCommands`.
 
 ## When cheats work
 
 `Cheats.get_Available` (`0x52A840`):
+
+The cheat state is on `Cheats.instance`:
+
+<!-- code: Cheats | instance, gameState, defLimit, enabledDisasters, forcedDisaster, rich, speedFactor, Available, CheckAvailable, DefLimit, ForcedDisaster, NetworkTime -->
+```csharp
+namespace DiceKingdoms.Meta;
+
+public class Cheats : MonoBehaviour
+{
+    private static Cheats instance;           // static
+    private GameState gameState;              // 0x28
+    private int defLimit;                     // 0x30
+    private bool enabledDisasters;            // 0x34
+    private Disaster forcedDisaster;          // 0x38
+    private bool rich;                        // 0x40
+    private float speedFactor;                // 0x44
+
+    private bool Available { get; }
+
+    private static bool CheckAvailable();     // RVA 0x528D40
+    public static int DefLimit();             // RVA 0x5293B0
+    public static Disaster ForcedDisaster();  // RVA 0x529960
+    public static float NetworkTime();        // RVA 0x52A110
+}
+```
+<!-- /code -->
+
+**Patch:** force `Cheats.get_Available` / `CheckAvailable` to return true to unlock the console; or set the fields of `Cheats.instance` from code.
 
 ```
 Available = Cheats.gameState != null && gameState.players.Count(p => !p.IsAI) < 2
@@ -21,6 +52,23 @@ Each command has a `Front…` handler (parses the arguments) and a `Command…` 
 `forcedDisaster` `0x38`, `rich` `0x40`, `speedFactor` `0x44`), which the game logic then reads. There is no network message: it works match-wide only because the single human is the host.
 
 ## Commands
+
+The command flags:
+
+<!-- code: MiscCommands | *props -->
+```csharp
+namespace DiceKingdoms.Meta;
+
+public static class MiscCommands
+{
+    public static bool Cinematic { get; set; }
+    public static bool FreeCam { get; set; }
+    public static bool DebugBuild { get; set; }
+    public static bool DebugAttack { get; set; }
+    public static bool DebugLobbies { get; set; }
+}
+```
+<!-- /code -->
 
 | Command | Effect |
 |---|---|

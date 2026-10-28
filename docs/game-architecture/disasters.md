@@ -4,11 +4,57 @@ summary: The disasters phase - which disaster happens, who it hits, what each on
 
 # Disasters
 
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
+
 ## Data
 
 The `Disasters` asset holds one object of each disaster class, in this order (`Values`, index 0..12):
 starvation, robbers, disease, lightning, fire, thunderstorm, revolt, tornado, plague, satanism, pirates, tsunami, meteorite.
 Base class `Disaster`: `name` `0x10`, `icon` `0x18`, `affectedOthers` `0x20`, `threshold` `0x24`.
+
+Every disaster is a `Disaster` object; `Disasters` holds them all:
+
+<!-- code: Disaster | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public abstract class Disaster
+{
+    public string name;         // 0x10
+    public Sprite icon;         // 0x18
+    public int affectedOthers;  // 0x20
+    public int threshold;       // 0x24
+}
+```
+<!-- /code -->
+
+<!-- code: Disasters | *fields, Values -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Disasters : ScriptableObject
+{
+    public Starvation starvation;      // 0x18
+    public Robbers robbers;            // 0x20
+    public Disease disease;            // 0x28
+    public Lightning lightning;        // 0x30
+    public Fire fire;                  // 0x38
+    public Thunderstorm thunderstorm;  // 0x40
+    public Revolt revolt;              // 0x48
+    public Tornado tornado;            // 0x50
+    public Plague plague;              // 0x58
+    public Satanism satanism;          // 0x60
+    public Pirates pirates;            // 0x68
+    public Tsunami tsunami;            // 0x70
+    public Meteorite meteorite;        // 0x78
+
+    public Disaster[] Values { get; set; }
+}
+```
+<!-- /code -->
+
+**Patch:** the objects live in `gameState.disastersPhase.disasters`; change their fields (thresholds, `affectedOthers`, the parameters below) at runtime.
 
 | # | Disaster | Threshold (disaster points) | Hits | Parameters |
 |---|---|---|---|---|
@@ -29,6 +75,41 @@ Base class `Disaster`: `name` `0x10`, `icon` `0x18`, `affectedOthers` `0x20`, `t
 ## Which disaster happens
 
 `DisastersPhase.RandomOccurrences` (`0x646940`), for every island:
+
+The choice is made in `DisastersPhase`; each result is a `DisasterOccurrence`:
+
+<!-- code: DisastersPhase | disasters, RandomOccurrences, Disaster, ApplyChanges -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class DisastersPhase : TurnPhase<DisastersData, DisastersIslandState>
+{
+    private Disasters disasters;                             // 0xF0
+
+    public Disaster Disaster(int disasters, out int count);  // RVA 0x645630
+    private DisasterOccurrence[] RandomOccurrences();        // RVA 0x646940
+    protected override void ApplyChanges(Action done);       // RVA 0x645530
+}
+```
+<!-- /code -->
+
+<!-- code: DisasterOccurrence | *props -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class DisasterOccurrence
+{
+    private NetRef<Player> SourceRef { get; }
+    private NetRef<Player> TargetRef { get; }
+    public Disaster Disaster { get; }
+    public Player Source { get; }
+    public Player Target { get; }
+    public uint Seed { get; }
+}
+```
+<!-- /code -->
+
+**Patch:** `DisastersPhase.Disaster(points, out count)` picks the disaster for a number of points; `RandomOccurrences` builds the whole list (server).
 
 1. `d` = the island's stored **disaster points**.
 2. `idx = FindLastIndex(Values, v => v.threshold >= 0 && v.threshold <= d)`. The thresholds go up in order, so **only one disaster per island happens: the strongest one whose threshold
@@ -53,7 +134,132 @@ Then:
 `Building.Active` is simply `affectedByDisaster == null` (`0x5F15A0`). An affected building (hungry, sick, …) **does not roll its die** and does not count as active population for that turn.
 The building tints (hungry / sick / burnt / died in combat) show the state.
 
+The building flags involved:
+
+<!-- code: Building | affectedByDisaster, Active -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public struct Building : IEquatable<Building>
+{
+    public Disaster affectedByDisaster;  // 0x18
+
+    public bool Active { get; }
+}
+```
+<!-- /code -->
+
 ## Effects
+
+Each disaster's parameters are fields of its class, and the effect itself is an `IslandGrid` method:
+
+<!-- code: Robbers | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Robbers : Disaster
+{
+    private Resource[] losableResources;                     // 0x28
+    public ResourceParticle resourceParticlePrefab;          // 0x30
+    private readonly List<Resource> storedLosableResources;  // 0x38
+}
+```
+<!-- /code -->
+
+<!-- code: Disease | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Disease : Disaster
+{
+    private Transform visualPrefab;  // 0x28
+    private int percentageAffected;  // 0x30
+}
+```
+<!-- /code -->
+
+<!-- code: Lightning | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Lightning : Disaster
+{
+    public int nbTile;                     // 0x28
+    private LightningVisual visualPrefab;  // 0x30
+    private DayNightCycle dayNightCycle;   // 0x38
+}
+```
+<!-- /code -->
+
+<!-- code: Thunderstorm | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Thunderstorm : Disaster
+{
+    public int nbTile;                     // 0x28
+    private LightningVisual visualPrefab;  // 0x30
+    private DayNightCycle dayNightCycle;   // 0x38
+}
+```
+<!-- /code -->
+
+<!-- code: Revolt | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Revolt : Disaster
+{
+    public ResourceParticle resourceParticlePrefab;  // 0x28
+    private int percentageLost;                      // 0x30
+}
+```
+<!-- /code -->
+
+<!-- code: Plague | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Plague : Disaster
+{
+    private Transform visualPrefab;  // 0x28
+    private int percentageAffected;  // 0x30
+}
+```
+<!-- /code -->
+
+<!-- code: Pirates | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Pirates : Disaster
+{
+    private Resource[] losableResources;             // 0x28
+    private int percentageLost;                      // 0x30
+    public ResourceParticle resourceParticlePrefab;  // 0x38
+}
+```
+<!-- /code -->
+
+<!-- code: IslandGrid | ActivePopulation, CanGetSick, StormDisaster, GetRandomBurnable, FireDisaster, SatanismDisaster -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
+{
+    public int ActivePopulation { get; }
+
+    public bool CanGetSick(BuildingType buildingType);               // RVA 0x614280
+    public bool CanGetSick(Building building);                       // RVA 0x613D70
+    public void SatanismDisaster(Building house);                    // RVA 0x61A1F0
+    public void StormDisaster(int2 position, bool4 connected);       // RVA 0x61AD40
+    public Nullable<Building> GetRandomBurnable(ref Random random);  // RVA 0x615710
+    public void FireDisaster(Building.Id buildingId);                // RVA 0x614AF0
+}
+```
+<!-- /code -->
+
+**Patch:** change the parameter fields, or the `IslandGrid` method the effect calls.
 
 | Disaster | Effect |
 |---|---|
@@ -79,6 +285,36 @@ non-wall neighbour of it (the Hospital protects its neighbours and their neighbo
 
 ### Tsunami
 
+The tsunami's parameters and the grid methods it uses:
+
+<!-- code: Tsunami | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Tsunami : Disaster
+{
+    private int radius;                             // 0x28
+    private int startDistance;                      // 0x2C
+    private int startToImpactDurationMilliseconds;  // 0x30
+    private TsunamiTileVisual tileVisualPrefab;     // 0x38
+    private TsunamiVisual visualPrefab;             // 0x40
+}
+```
+<!-- /code -->
+
+<!-- code: IslandGrid | GetTsunamiImpact, GetTsunamiTiles, TsunamiDisaster -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
+{
+    public Nullable<int2> GetTsunamiImpact(ref Random random);          // RVA 0x615C00
+    public IEnumerable<int2> GetTsunamiTiles(int2 center, int radius);  // RVA 0x615EB0
+    public void TsunamiDisaster(int2 position);                         // RVA 0x61C970
+}
+```
+<!-- /code -->
+
 - Impact point (`GetTsunamiImpact` `0x615C00`): from a random land tile, a 3-wide ray toward the island centre; the first land tile with water next to it is the impact.
 - Tiles (`GetTsunamiTiles` `0x625890`): land tiles in rings up to radius 5 around the impact with a clear straight line from it. The line may not cross a hill edge (`INNER_CLIFF`),
   so **tiles behind a hill are safe** (confirmed in game).
@@ -88,6 +324,33 @@ non-wall neighbour of it (the Hospital protects its neighbours and their neighbo
 ## Playback and the camera
 
 `DisastersPhase.ExecuteOccurrences` (`0x645900`) runs on every client and builds one sequence:
+
+Playback runs in `DisastersPhase`; the camera lock is `CameraMovement.focus`:
+
+<!-- code: DisastersPhase | ExecuteOccurrences, ExecuteOccurrencesRPC -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class DisastersPhase : TurnPhase<DisastersData, DisastersIslandState>
+{
+    private void ExecuteOccurrencesRPC(DisasterOccurrence[] occurrences);             // RVA 0x6457D0
+    private void ExecuteOccurrences(DisasterOccurrence[] occurrences, Action onEnd);  // RVA 0x645900
+}
+```
+<!-- /code -->
+
+<!-- code: CameraMovement | focus -->
+```csharp
+namespace DiceKingdoms.Interface;
+
+public class CameraMovement : MonoBehaviour
+{
+    public Nullable<CameraMovement.Focus> focus;  // 0xA0
+}
+```
+<!-- /code -->
+
+**Patch:** to keep the camera free, set `cameraMovement.focus = null` every frame while the disasters phase is active (display only).
 
 1. **Small disasters** (everything except tornado, tsunami and meteorite): the camera flies to **your own island** (0.8 s) and is locked; they all play **at the same time** on all islands.
 2. **Big disasters** (tornado, tsunami, meteorite), grouped by target island: for each, the camera flies to that island (0.8 s, locked), waits 0.5 s, plays them one after another,

@@ -4,6 +4,9 @@ summary: The build phase - action types, planning and committing, the Preview fl
 
 # Build phase
 
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
+
 During the build phase the client **plans** actions. Each one goes to the server (`[ServerRPC] PlanActionRPC(BuildData.Action)`), the server stores it and echoes it to the other clients
 (`PlanActionClientRPC`). The checks and resource changes happen in `BuildData.DoAction`, either right away (on a [Preview](#preview-instant-or-at-sync) island) or at sync in
 `BuildPhase.ApplyChanges`.
@@ -11,6 +14,62 @@ During the build phase the client **plans** actions. Each one goes to the server
 ## Action types
 
 `BuildData.Action.Type`:
+
+Every build action is a `BuildData.Action` with one of these types; each type has its own public method on `BuildData`:
+
+<!-- code: BuildData.Action.Type |  -->
+```csharp
+public enum BuildData.Action.Type
+{
+    REPAIR_BUILDING = 0,
+    BURN_BUILDING = 1,
+    CLEAN_TILE = 2,
+    PLACE_BUILDING = 3,
+    PLACE_BUILDING_BULK = 4,
+    BUY_RESOURCE = 5,
+    LEARN_TECHNOLOGY = 6,
+    SEND_RESOURCES = 7,
+    RECEIVE_RESOURCES = 8,
+}
+```
+<!-- /code -->
+
+<!-- code: BuildData.Action | *fields -->
+```csharp
+public struct BuildData.Action
+{
+    public BuildData.Action.Type type;     // 0x0
+    public int2 position;                  // 0x4
+    public Building.Id buildingId;         // 0xC
+    public Building building;              // 0x10
+    public Building[] buildings;           // 0x38
+    public Resource resource;              // 0x40
+    public Technology technology;          // 0x48
+    public ResourceAmount resourceAmount;  // 0x50
+    public Player player;                  // 0x70
+}
+```
+<!-- /code -->
+
+<!-- code: BuildData | RepairBuilding, BurnBuilding, CleanTile, PlaceBuilding, PlaceBuildingBulk, BuyResource, LearnTechnology, SendResources -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildData : PhaseData<BuildData, BuildIslandState>
+{
+    public bool CleanTile(int2 position);                                          // RVA 0x628AB0
+    public bool RepairBuilding(Building.Id buildingId);                            // RVA 0x62B1E0
+    public bool BurnBuilding(Building.Id buildingId);                              // RVA 0x6282C0
+    public bool PlaceBuilding(Building building);                                  // RVA 0x62A920
+    public bool PlaceBuildingBulk(Building[] buildings);                           // RVA 0x62A860
+    public bool BuyResource(Building.Id marketId, Resource resource);              // RVA 0x628340
+    public bool LearnTechnology(Building.Id universityId, Technology technology);  // RVA 0x62A1A0
+    public bool SendResources(Player target, ResourceAmount resourceAmount);       // RVA 0x62B300
+}
+```
+<!-- /code -->
+
+**Patch:** prefix one of these public methods to block or change one action type for the local player.
 
 | # | Type | Public method | Notes |
 |---|---|---|---|
@@ -30,6 +89,26 @@ During the build phase the client **plans** actions. Each one goes to the server
 
 The public methods only fill an `Action` and call `PlanAction` (`0x62AB20`):
 
+Planning goes through these `BuildData` members:
+
+<!-- code: BuildData | Actions, PlanAction, PlanActionRPC, PlanActionClientRPC, ReceiveResources -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildData : PhaseData<BuildData, BuildIslandState>
+{
+    public List<BuildData.Action> Actions { get; }
+
+    private void PlanActionRPC(BuildData.Action action);                  // RVA 0x62AA90
+    private void PlanActionClientRPC(BuildData.Action action);            // RVA 0x62AA00
+    private bool PlanAction(BuildData.Action action);                     // RVA 0x62AB20
+    private void ReceiveResources(Player source, ResourceAmount amount);  // RVA 0x62AFD0
+}
+```
+<!-- /code -->
+
+**Patch:** prefix `BuildData.PlanAction` (private) to see or block every planned action in one place.
+
 1. Return false if the build phase is not `ACTIVE`: no actions are accepted after the timer ends.
 2. If this island's `BuildData.Preview` is true, run `DoAction` now; if it fails, the action is dropped.
 3. The owner sends `PlanActionRPC` to the server; the server sends `PlanActionClientRPC` to everybody except the owner. Each side calls `PlanAction` again.
@@ -41,12 +120,44 @@ The public methods only fill an `Action` and call `PlanAction` (`0x62AB20`):
 `BuildPhase.ApplyChanges` (`0x62C6C0`), at sync: for every island, every stored action whose island is not `Preview` goes through `DoAction`; **failed actions are skipped silently**.
 Successful placements and technologies are counted for the game log (hammer icon followed by `NxBuilding`, culture icon followed by the technologies).
 
+Committing happens in `BuildPhase`:
+
+<!-- code: BuildPhase | *fields, ApplyChanges -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildPhase : TurnPhase<BuildData, BuildIslandState>
+{
+    private readonly Dictionary<BuildingType, int> buildingTypeCount;          // 0xE8
+    private readonly List<ValueTuple<Island, Technology>> learntTechnologies;  // 0xF0
+
+    protected override void ApplyChanges(Action done);                         // RVA 0x62C6C0
+}
+```
+<!-- /code -->
+
 So the server checks every action, but for islands it does not preview it checks them only at sync.
 
 ## Preview: instant or at sync
 
 `PhaseData.Preview` decides whether this machine applies an island's actions **the moment they arrive** (true) or **only at the end of the phase** (false). It has nothing to do with the
 camera. `PhaseData.Enter` (`0xE60440`) sets it for every island, on every machine, at the start of every phase (and on rejoin):
+
+The flag lives on the per-island phase data:
+
+<!-- code: PhaseData | Preview, Island, Enter -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public abstract class PhaseData<TData, TState> : NetworkedBehaviour, IPhaseData
+{
+    public Island Island { get; set; }
+    public bool Preview { get; set; }
+
+    public void Enter(bool restore);  // RVA 0xE60440 (shared generic body)
+}
+```
+<!-- /code -->
 
 1. The local machine controls the island's owner (`Player.IsInitialOwner`) → **true** (your own island).
 2. Else, on the server, if the owner is an **AI** → **true** (the host runs the AIs).
@@ -69,6 +180,32 @@ either; the host checks and applies it at sync like everybody else. (Confirmed i
 `FixAction` (inlined at the start of `DoAction` `0x628BA0`): a single placed building's type goes through `UpgradedBuildingType` (Guard Tower → Guard Tower Up once the upgrade is
 learnt), and every placed building gets `SetNewlyBuilt(turnCounter)`.
 
+Checks, effects and prices are on `BuildData`:
+
+<!-- code: BuildData | toolCost, repairToolAmount, marketOffers, FixAction, DoAction, JustPlacedBuilding, Offer, AvailableMarket, AvailableUniversity, UnavailableUniversity -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildData : PhaseData<BuildData, BuildIslandState>
+{
+    public ResourceAmount toolCost;                                   // 0xB8
+    public int repairToolAmount;                                      // 0xD8
+    public BuildData.MarketOffer[] marketOffers;                      // 0xE0
+
+    public Nullable<Building.Id> AvailableUniversity { get; set; }
+    public Nullable<Building.Id> UnavailableUniversity { get; set; }
+    public Nullable<Building.Id> AvailableMarket { get; set; }
+
+    private void FixAction(ref BuildData.Action action);              // RVA 0x629F70
+    public bool DoAction(ref BuildData.Action action);                // RVA 0x628BA0
+    public bool JustPlacedBuilding(Building.Id buildingId);           // RVA 0x62A090
+    public Nullable<BuildData.MarketOffer> Offer(Resource resource);  // RVA 0x62A470
+}
+```
+<!-- /code -->
+
+**Patch:** `DoAction` is where every action is checked and applied (on preview islands at once, otherwise at sync). Prices: `toolCost`, `repairToolAmount`, `marketOffers`.
+
 | # | Checks (in order) | Effect |
 |---|---|---|
 | 0 Repair | can pay `toolCost`; building exists; `health < type.health` | pay; `IslandGrid.RepairBuilding(id, repairToolAmount)` = min(health + 60, max) |
@@ -89,6 +226,50 @@ learnt), and every placed building gets `SetNewlyBuilt(turnCounter)`.
 - A building's id is its anchor position: `Building.id = (y << 16) | x`.
 
 ### Check functions
+
+The checks, on `BuildData` and on the island grid:
+
+<!-- code: BuildData | CanBuildType, Unlocked, DemoLocked, UpgradedBuildingType, CanAfford, CanAffordBulk, CanAffordMarket, CanAffordTechnology, CanAffordTool, BulkCount, CanRepair, CanBurn, CanRemoveNature, CanRemoveRemains -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildData : PhaseData<BuildData, BuildIslandState>
+{
+    public bool CanAffordTool { get; }
+
+    private bool CanBuildType(BuildingType buildingType);                 // RVA 0x628760
+    public static int BulkCount(BuildingType buildingType, int count);    // RVA 0x628290
+    private bool CanRepair(Building.Id buildingId);                       // RVA 0x6289E0
+    private bool CanBurn(Building.Id buildingId);                         // RVA 0x628830
+    public bool CanRemoveNature(int2 position);                           // RVA 0x6288B0
+    public bool CanRemoveRemains(int2 position);                          // RVA 0x628960
+    public bool CanAfford(BuildingType buildingType);                     // RVA 0x6286E0
+    public bool CanAffordBulk(BuildingType buildingType, int count);      // RVA 0x6283D0
+    public bool CanAffordMarket(BuildData.MarketOffer offer);             // RVA 0x6284E0
+    public bool CanAffordTechnology(Technology technology);               // RVA 0x628660
+    public bool Unlocked(BuildingType buildingType);                      // RVA 0x62BAA0
+    public bool DemoLocked(BuildingType buildingType);                    // RVA 0x628B60
+    public BuildingType UpgradedBuildingType(BuildingType buildingType);  // RVA 0x62BE70
+}
+```
+<!-- /code -->
+
+<!-- code: IslandGrid | CanPlaceBuilding, AddBuilding, RemoveBuilding, RepairBuilding, BuildingAt -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
+{
+    public Nullable<Building.Id> BuildingAt(int2 position);                // RVA 0x613A20
+    public void RepairBuilding(Building.Id buildingId, int repairAmount);  // RVA 0x619E70
+    public bool CanPlaceBuilding(Building building);                       // RVA 0x6143A0
+    public void AddBuilding(Building building);                            // RVA 0x611500
+    public void RemoveBuilding(Building.Id id, float delay = 0);           // RVA 0x619360
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `IslandGrid.CanPlaceBuilding` for tile rules, `BuildData.Unlocked` / `CanBuildType` for which types may be built.
 
 | Function | Rule |
 |---|---|
@@ -111,6 +292,36 @@ learnt), and every placed building gets `SetNewlyBuilt(turnCounter)`.
 
 `DoCleanTile`:
 
+Clean rewards and the event, and the grid methods that remove the tile content:
+
+<!-- code: BuildData | NatureYields, onCleanTile -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildData : PhaseData<BuildData, BuildIslandState>
+{
+    public Action<int2, Nullable<NatureTile>, ResourceAmount> onCleanTile;              // 0xF8
+
+    public static CleanTileTool.YieldAmount NatureYields(Nullable<NatureTile> nature);  // RVA 0x62A270
+    private CleanTileTool.YieldAmount NatureYields(int2 position);                      // RVA 0x62A3D0
+}
+```
+<!-- /code -->
+
+<!-- code: IslandGrid | RemoveNature, RemoveBuildingRemains -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
+{
+    public void RemoveNature(int2 position);                             // RVA 0x619DB0
+    public void RemoveBuildingRemains(Building.Id id, float delay = 0);  // RVA 0x618F40
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `BuildData.NatureYields` to change clean rewards; `onCleanTile` fires after every clean.
+
 1. Remains on the tile: reward = the remains' `remainsReward`; the remains are removed.
 2. Nature (`NatureYields` `0x62A270`), ×2 with **Double Clean Tile**:
 
@@ -129,6 +340,37 @@ learnt), and every placed building gets `SetNewlyBuilt(turnCounter)`.
 Classes: `UnlockBuildingTechnology`, `AddRollTechnology` (+1 re-roll), `DoubleCleanTileTechnology`, `ReplaceBuildings` (Guard Tower upgrade), `ReplaceSoldiers` (Templars replace Soldiers,
 Warlocks replace Archers), `RitualsTechnology`, `ShipCapacityTechnology` (`Statistics.ShipCapacity`), `TradeEfficiencyTechnology` (`Statistics.TradeFactor`). Costs: [Game data](game-data.md#technologies);
 trees: [Civilizations in the game code](civilizations.md#tech-trees).
+
+Technologies that replace buildings, and the learning checks:
+
+<!-- code: ReplaceBuildings | *fields, *methods -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class ReplaceBuildings : Technology
+{
+    private BuildingTypes buildingTypes;                                // 0x38
+    private BuildingTypeName baseBuildingType;                          // 0x40
+    private BuildingTypeName upgradedBuildingType;                      // 0x44
+
+    public override Sprite Icon(PlayerSkins skins, PlayerColor color);  // RVA 0x6215D0
+    public override void OnLearn(Island island);                        // RVA 0x621650
+    private bool <OnLearn>b__8_0(Building b);                           // RVA 0x621900
+}
+```
+<!-- /code -->
+
+<!-- code: Statistics | LearnTechnology, IsTechnologyLearnable -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Statistics : IslandSyncedBehaviour<Statistics.SyncData>
+{
+    public void LearnTechnology(Technology technology);        // RVA 0x623A90
+    public bool IsTechnologyLearnable(Technology technology);  // RVA 0x6237C0
+}
+```
+<!-- /code -->
 
 **Guard Tower upgrade:** `ReplaceBuildings.OnLearn` (`0x621650`) replaces every Guard Tower on the island with a Guard Tower Up at the same place, **keeping its health number** (a damaged tower
 is not healed). New Guard Towers are placed as the upgraded type from then on.

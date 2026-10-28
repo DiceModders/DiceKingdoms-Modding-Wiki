@@ -4,6 +4,9 @@ summary: How the AI plays - difficulties, the rubber band, build orders and the 
 
 # AI
 
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
+
 - `AIPlay` (a component on the `GameState` object) runs **on the server only**. `AIPlay.PlayPhase(phaseData, AIState) → AIState` (`0x567640`) is called **once per phase, when the phase ends
   (at sync)**, for every AI island; it dispatches to `PlayStart`, `PlayHarvest`, `PlayBuild` and the combat code. So the AI never acts during a phase, only at its end.
 - `Player.AIState` (networked): `Difficulty`, `Strategy`, `TechnologiesToResearch`, `BuildingToPlace` (its plan, kept between phases).
@@ -14,6 +17,77 @@ summary: How the AI plays - difficulties, the rubber band, build orders and the 
 ## AIConfiguration
 
 A MonoBehaviour asset inside `sharedassets1.assets` (not a loose file). Changing it needs a plugin (edit the object at runtime).
+
+The AI tuning values and the per-player AI state:
+
+<!-- code: AIConfiguration | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class AIConfiguration : ScriptableObject
+{
+    public int hammerToKeep;                                        // 0x18
+    public int shipPerBuilding;                                     // 0x1C
+    public int sorcererTowerLimit;                                  // 0x20
+    public int turnCountLimit;                                      // 0x24
+    public int topBuildingCountToPlace;                             // 0x28
+    public float attackScoreRandomness;                             // 0x2C
+    public AIConfiguration.DifficultyLevelConfiguration passive;    // 0x30
+    public AIConfiguration.DifficultyLevelConfiguration peasant;    // 0x60
+    public AIConfiguration.DifficultyLevelConfiguration bourgeois;  // 0x90
+    public AIConfiguration.DifficultyLevelConfiguration general;    // 0xC0
+    public AIConfiguration.DifficultyLevelConfiguration king;       // 0xF0
+    public AIConfiguration.DifficultyLevelConfiguration sorcerer;   // 0x120
+    public int turnCountBerserk;                                    // 0x150
+    public float soldierFactor;                                     // 0x154
+    public float archerFactor;                                      // 0x158
+    public float templarFactor;                                     // 0x15C
+    public float sorcererFactor;                                    // 0x160
+    public float requireShipFactor;                                 // 0x164
+    public float guardTowerFactor;                                  // 0x168
+    public float towerUpgradeFactor;                                // 0x16C
+    public float wallFactor;                                        // 0x170
+    public float inhabitantFactor;                                  // 0x174
+    public float builtResourcesFactor;                              // 0x178
+    public float storedResourcesFactor;                             // 0x17C
+    public float castleFactor;                                      // 0x180
+}
+```
+<!-- /code -->
+
+<!-- code: Player.AIState | *fields -->
+```csharp
+public struct Player.AIState
+{
+}
+```
+<!-- /code -->
+
+<!-- code: Player.AIState.DifficultyLevel |  -->
+```csharp
+public enum Player.AIState.DifficultyLevel
+{
+    PASSIVE = 0,
+    PEASANT = 1,
+    BOURGEOIS = 2,
+    GENERAL = 3,
+    KING = 4,
+    SORCERER = 5,
+}
+```
+<!-- /code -->
+
+<!-- code: Player.AIState.AIStrategy |  -->
+```csharp
+public enum Player.AIState.AIStrategy
+{
+    MILITARY = 0,
+    WONDER = 1,
+}
+```
+<!-- /code -->
+
+**Patch:** change the fields of `AIPlay.configuration` at runtime (host).
 
 | Constant | Value | Use |
 |---|---|---|
@@ -45,6 +119,22 @@ Scoring weights: soldier 4, archer 8, templar 9, sorcerer 18, requireShip 0.3, g
 `custom-build-orders.txt` exists in the game folder (next to `Dice-Kingdoms.exe`), it is read instead** (confirmed in game; the log still says "Loaded 15 build orders."). So the AI's build
 orders can be changed with a text file alone, no plugin needed. Keep the same format:
 
+Build orders are loaded and picked in `AIPlay`:
+
+<!-- code: AIPlay | customBuildOrdersPath, InitBuildOrders, SampleBuildOrder -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class AIPlay : MonoBehaviour
+{
+    private string customBuildOrdersPath;                                                       // 0x40
+
+    private void InitBuildOrders();                                                             // RVA 0x564260
+    private AIPlay.BuildOrder SampleBuildOrder(ref Random random, Civilization civilization, Player.AIState.AIStrategy[] validStrategies);  // RVA 0x568710
+}
+```
+<!-- /code -->
+
 ```
 civilization=VIKING weight=2 strategy=MILITARY name=military_macro [
     technologies [ UNLOCK_FISHING_SHIP UNLOCK_ARCHERY_RANGE ... ]
@@ -61,9 +151,38 @@ market, lumber, quarry, archery, wonder, sorcerer. `SampleBuildOrder` (`0x568710
 `PlayStart` (`0x567FE0`) places the start buildings with a spiral from the centre, 4 orientations from a random start, **Farms only at Manhattan distance ≥ 15 from the centre**,
 no extra disease risk. Then it picks its strategy and build order.
 
+Every phase starts in `AIPlay.PlayPhase`:
+
+<!-- code: AIPlay | PlayPhase, PlayStart -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class AIPlay : MonoBehaviour
+{
+    public Player.AIState PlayPhase(IPhaseData data, Player.AIState state);  // RVA 0x567640
+    public Player.AIState PlayStart(StartData data, Player.AIState state);   // RVA 0x567FE0
+}
+```
+<!-- /code -->
+
+**Patch:** prefix / postfix `AIPlay.PlayPhase` to change what the AI does at the end of any phase.
+
 ## Harvest
 
 `PlayHarvest` (`0x566620`), after the AI's dice were rolled, for each re-roll:
+
+The harvest decision:
+
+<!-- code: AIPlay | PlayHarvest -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class AIPlay : MonoBehaviour
+{
+    public Player.AIState PlayHarvest(HarvestData data, Player.AIState state);  // RVA 0x566620
+}
+```
+<!-- /code -->
 
 - It predicts the next disaster. If that would be Plague, Disease (after turn 3), Pirates (WONDER AI) or Revolt (MILITARY AI), it re-rolls up to 5 dice **without** a disaster point,
   lowest yield first (dice showing a disaster point cannot be re-rolled, for players either).
@@ -75,6 +194,28 @@ no extra disease risk. Then it picks its strategy and build order.
 ## Build
 
 `PlayBuild` (`0x565500`):
+
+Building, cleaning and market use:
+
+<!-- code: AIPlay | PlayBuild, BuildAndClean, WhereToPlaceBuilding, PlaceBuildingSomewhere, PlaceBuildingAt, CleanRemains, CleanNature, UseMarket -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class AIPlay : MonoBehaviour
+{
+    public Player.AIState PlayBuild(BuildData data, Player.AIState state);                      // RVA 0x565500
+    private void BuildAndClean(BuildData data, Player.AIState state, List<BuildingType> buildingToPlace);  // RVA 0x560AD0
+    private Nullable<ValueTuple<Building, ResourceAmount>> WhereToPlaceBuilding(BuildData data, BuildingType buildingType, HashSet<int2> wonderReserved);  // RVA 0x56AAF0
+    private bool PlaceBuildingSomewhere(BuildData data, BuildingType buildingType, HashSet<int2> wonderReserved, List<BuildingType> buildingToPlace);  // RVA 0x565300
+    private void UseMarket(BuildData data, Player.AIState state);                               // RVA 0x56A620
+    private void CleanRemains(BuildData data, Player.AIState state, List<BuildingType> buildingToPlace);  // RVA 0x561D90
+    private bool CleanNature(BuildData data);                                                   // RVA 0x5616A0
+    private void PlaceBuildingAt(BuildData data, Building building, int wallsThickness, List<BuildingType> buildingToPlace);  // RVA 0x564C10
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `WhereToPlaceBuilding` to choose other spots.
 
 1. **Research**, if it has an active University: walk its technology list; skip ones not yet learnable; stop at the first learnable one it cannot afford.
 2. Clean remains (rebuild-first), burn Sorcerer Towers above the limit (a House is queued for each), build and clean, use the Market, build and clean again.
@@ -102,6 +243,23 @@ Never used by the AI: repairing buildings.
 ## Attack
 
 At the end of the combat phase (inside `PlayPhase`):
+
+Target choice:
+
+<!-- code: AIPlay | GetWarTarget, DefenseScore, SoldierFactor -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class AIPlay : MonoBehaviour
+{
+    private Nullable<ValueTuple<Island, Building[]>> GetWarTarget(CombatData data, Player.AIState state, int targetMaxCount);  // RVA 0x562FA0
+    private float SoldierFactor(Island x);                                                      // RVA 0x568FB0
+    private float DefenseScore(Island x);                                                       // RVA 0x5623F0
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `GetWarTarget` to choose other targets.
 
 1. No attack for a Passive AI, or without soldiers or a free Dock. Ships = min(free Docks, soldiers / ship capacity); targets = max(1, ships / 2).
 2. `GetWarTarget` (`0x562FA0`):

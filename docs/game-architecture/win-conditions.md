@@ -4,6 +4,9 @@ summary: How a match is won or lost - defeat (no Castle left), losing a Castle, 
 
 # Win conditions
 
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
+
 There are only two ways to win: **military** (everybody else is out) and **wonder victory** (lobby option, on by default). `WinState { winnerRef, reason (MILITARY 0 / WONDER 1), turn }`.
 
 ## Defeat
@@ -22,6 +25,20 @@ It is recomputed for every island after every phase's `ApplyChanges`, so it is *
 `IslandGrid.RemoveBuilding` (`0x619360`) runs for every removed building (burn, combat, disasters). It clears the tiles and leaves **remains** (walls do not leave remains). If the building
 is a Castle:
 
+The grid methods that remove a Castle:
+
+<!-- code: IslandGrid | RemoveBuilding, BurnAllBuildings -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class IslandGrid : IslandSyncedBehaviour<IslandGrid.SyncData>
+{
+    public void RemoveBuilding(Building.Id id, float delay = 0);  // RVA 0x619360
+    private void BurnAllBuildings(int2 center);                   // RVA 0x613A80
+}
+```
+<!-- /code -->
+
 - `IslandGrid.BurnAllBuildings` (`0x613A80`) removes **every building that is not a Castle**, in order of distance from the Castle with a growing delay (the spreading fire).
 - `Statistics.SetCapacity(ZERO)`: all storage capacity becomes 0, which also **empties everything stored**, hammers included. The capacity comes back at the end of the phase
   (from the remaining buildings), but the stored amounts stay at 0.
@@ -32,6 +49,48 @@ is a Castle:
 ## Free-for-all
 
 `WinPhase.CheckWin` (`0x57AB10`): a game with only one island never ends by itself. Otherwise it calls `CheckWinTeam` when the lobby option **Teams** is on, else `CheckWinFFA` (`0x579EA0`):
+
+The checks are in `WinPhase`; the result is a `WinState`:
+
+<!-- code: WinPhase | *fields, CheckWin, CheckWinFFA, CheckWinTeam, WinNow, ShouldSkip -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class WinPhase : TurnPhase<WinData, WinIslandState>
+{
+    public const int WONDER_TURN_DELAY = 1;
+
+    private Nullable<WinPhase.WinState> WinNow();        // RVA 0x57B340
+    public Nullable<WinPhase.WinState> CheckWin();       // RVA 0x57AB10
+    private Nullable<WinPhase.WinState> CheckWinFFA();   // RVA 0x579EA0
+    private Nullable<WinPhase.WinState> CheckWinTeam();  // RVA 0x57A410
+    public override bool ShouldSkip();                   // RVA 0x57B2D0
+}
+```
+<!-- /code -->
+
+<!-- code: WinPhase.WinState | *fields -->
+```csharp
+public struct WinPhase.WinState : IEquatable<WinPhase.WinState>
+{
+    private NetRef<Player> winnerRef;        // 0x0
+    public WinPhase.WinState.Reason reason;  // 0x8
+    public int turn;                         // 0xC
+}
+```
+<!-- /code -->
+
+<!-- code: WinPhase.WinState.Reason |  -->
+```csharp
+public enum WinPhase.WinState.Reason
+{
+    MILITARY = 0,
+    WONDER = 1,
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `WinPhase.CheckWin` to change the win rules (host).
 
 1. `alive` = islands whose owner is not defeated.
 2. `alive == 0` → **draw** (it happens when the last players lose their last Castle in the same combat phase).
