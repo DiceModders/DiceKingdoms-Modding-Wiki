@@ -18,7 +18,7 @@ The Technologies tab shows the tech tree of the civilization chosen in the civil
 ### Adding a civilization
 
 To make a new civilization selectable you have to: append an option to the `TMP_Dropdown`, append a boxed enum value (`Enum.ToObject`) to `values`, and answer
-`TechTree(civilization)` for that number. [UiKit](../guides/modding/uikit-game-screens.md#civilizations-on-the-rules-screen) does this with `UiKit.Rules.AddCivilization`.
+`TechTree(civilization)` for that number.
 A player's biome is chosen with a switch over the built-in civilizations 0..4 and throws for any other value, so a new civilization has to map to one of them
 for its visuals. Anything else the game looks up per civilization (for example `PlayerSkins` / `SkinRegistry` entries) must come from your mod.
 
@@ -29,5 +29,4 @@ The row is `Scoreboard Row(Clone)` with a `Name` child (about 200 wide), the sta
 `Button Send` child. That button appears on the resource cells after a market is built, to send resources to other players.
 
 The board's frame grows by about 112 units for every cell that is added. The vanilla frame spans roughly x 269..1651 on a 1920 screen, so a mod column
-should take the place of the empty trailing cell instead of widening the board. UiKit does this: it clones a stat cell, destroys the clone's `ScoreboardStat`
-(so the game stops driving it) and writes the text from your function.
+should take the place of the empty trailing cell instead of widening the board.

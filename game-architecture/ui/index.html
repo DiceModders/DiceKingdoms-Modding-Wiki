@@ -542,21 +542,6 @@
             
             <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="../island-code/"
-        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
-        
-        Island Code
-        
-        
-        
-        
-    </a>
-</li>
-            
-            
-            
-            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
-    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
         data-size="default" href="../meteorites/"
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
         
@@ -694,7 +679,7 @@
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
     <h1 id="game-ui">Game UI</h1>
-<p>The interface is Unity uGUI with TextMeshPro. The facts below were collected from the game version 1.0.4 and are what <a href="../../guides/modding/uikit/">UiKit</a> relies on.</p>
+<p>The interface is Unity uGUI with TextMeshPro. The facts below were collected from the game version 1.0.4.</p>
 <h2 id="canvases">Canvases</h2>
 <div class="table-wrapper"><table>
 <thead>
@@ -723,7 +708,7 @@
 <li>Subclasses: <code>ButtonIcon</code> (an icon, used by the top-right bar: <code>Top &gt; Icon</code>) and <code>ButtonLabel</code> (a text button: <code>Top &gt; Label</code>).</li>
 <li>Art: <code>Button-1-{Ready,Hovered,Pressed,Disabled}</code> (384x384, 9-slice border 32, pixels per unit 200, type Sliced, 32x32 units in the HUD). <code>Button-2-*</code> is the second
   style, used for the selected look. The Unity <code>Button</code> uses a sprite swap, plus a <code>Shadow</code> component.</li>
-<li>A sliced button needs a size of about twice its border. At exactly 32 units the centre slice is empty and rounding leaves hairlines, so UiKit uses 31.75.</li>
+<li>A sliced button needs a size of about twice its border. At exactly 32 units the centre slice is empty and rounding leaves hairlines.</li>
 <li>Label: <code>TextMeshProUGUI</code>, font <code>Main-Font-Normal</code>, size 20 with auto size, colour RGBA(0.969, 0.940, 0.893), material <code>Main-Font-Normal-Shadow</code>, centred.</li>
 </ul>
 <h2 id="windows-and-frames">Windows and frames</h2>
@@ -842,12 +827,6 @@ inactive screen works, but the screen must have been loaded.</p>
                         <a class="text-2xl font-medium" href="../rules-and-civilizations/">
                             
                             Rules and Civilizations
-                            
-                        </a>
-                        
-                        <a class="text-2xl font-medium" href="../island-code/">
-                            
-                            Island Code
                             
                         </a>
                         

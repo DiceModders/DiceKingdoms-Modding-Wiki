@@ -4,7 +4,7 @@ summary: How the game's user interface is built - canvases, buttons, window art,
 
 # Game UI
 
-The interface is Unity uGUI with TextMeshPro. The facts below were collected from the game version 1.0.4 and are what [UiKit](../guides/modding/uikit.md) relies on.
+The interface is Unity uGUI with TextMeshPro. The facts below were collected from the game version 1.0.4.
 
 ## Canvases
 
@@ -24,7 +24,7 @@ Game buttons are components of the game, not plain Unity colours:
 - Subclasses: `ButtonIcon` (an icon, used by the top-right bar: `Top > Icon`) and `ButtonLabel` (a text button: `Top > Label`).
 - Art: `Button-1-{Ready,Hovered,Pressed,Disabled}` (384x384, 9-slice border 32, pixels per unit 200, type Sliced, 32x32 units in the HUD). `Button-2-*` is the second
   style, used for the selected look. The Unity `Button` uses a sprite swap, plus a `Shadow` component.
-- A sliced button needs a size of about twice its border. At exactly 32 units the centre slice is empty and rounding leaves hairlines, so UiKit uses 31.75.
+- A sliced button needs a size of about twice its border. At exactly 32 units the centre slice is empty and rounding leaves hairlines.
 - Label: `TextMeshProUGUI`, font `Main-Font-Normal`, size 20 with auto size, colour RGBA(0.969, 0.940, 0.893), material `Main-Font-Normal-Shadow`, centred.
 
 ## Windows and frames
