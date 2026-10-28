@@ -91,7 +91,7 @@ New build orders would need a game update; there is no hook for adding them.
 ## What cannot be changed
 
 - **The biome** (ground, trees, rocks, cliffs' base look) comes from the built-in civilization yours is based on; there is no sixth biome.
-- **Technology costs and effects**, building costs, unit stats: the same for everybody.
+- **Technology costs and effects, building costs and stats, unit stats**: the same for everybody. Only the models (and the tech tree) differ per civilization.
 - **Unlocking:** the Steam inventory decides which built-in civilizations a player has (`UnlockedCivilizations`).
 - **Number of civilizations:** 5..127 (see above).
 

@@ -15,7 +15,7 @@ The game has five civilizations, the enum `DiceKingdoms.Interface.Civilization`:
 | 4 | `MAYA` | `JUNGLE` |
 
 The civilization is almost not a gameplay concept: it chooses **how a player looks**, **which tech tree the player gets**, **which AI build orders an AI uses** and **what the civilization is called**.
-Buildings, units, costs and the technologies themselves are the same for everybody. This page lists every place where the number matters and what that place does with a number it does not know,
+Each civilization has its **own models** for buildings, units, ships and nature, but the building and unit **types**, their stats and costs, and the technologies themselves are the same for everybody. This page lists every place where the number matters and what that place does with a number it does not know,
 which is what a mod civilization has to deal with. [Making a civilization](../guides/modding/making-a-civilization.md) is the practical guide.
 
 ## Where the number is used
