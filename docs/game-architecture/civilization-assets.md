@@ -4,7 +4,7 @@ summary: Names of the models (prefabs) and sprites a civilization is made of - b
 
 # Civilization assets: models and sprites
 
-What a civilization looks like is a set of prefabs (3D models) and sprites (icons). The names below come from the [ModCore](../guides/modding/modcore.md) game data dump (`[Debug] DumpGameData`), taken from the game's loaded assets, so they are the real names. How the game picks them is in [Civilizations in the game code](civilizations.md); how a mod supplies its own is in [Making a civilization](../guides/modding/making-a-civilization.md).
+What a civilization looks like is a set of prefabs (3D models) and sprites (icons). The names below were listed from the game's loaded assets (`Resources.FindObjectsOfTypeAll`, game version 1.0.4), so they are the real names. How the game picks them is in [Civilizations in the game code](civilizations.md); how a mod supplies its own is in [Making a civilization](../guides/modding/making-a-civilization.md).
 
 ## Models (prefabs)
 
@@ -71,7 +71,7 @@ The icons are packed in one atlas per civilization (`Buildings Europe Atlas`, `.
 | Rules screens | `rules-building-1..4`, `rules-units-1..2`, `rules-upgrades-1`, `rules-disasters-1`, `rules-game-phases-1..4`, `rules-how-to-play-1..3`, `rules-title-banner` |
 | Menu | `settings`, `host`, `exit`, `ai`, `steam`, `discord`, `about`, `key`, `logo-title`, `back-to-menu`, `scoreboard`, `scoreboard-button` |
 
-The complete list is what the dump writes to `BepInEx/ModCore-sprites.txt` (`name | texture | size`); sprites in an atlas appear twice, once as `repacked` and once with the atlas texture.
+The complete list can be printed from a mod with `Resources.FindObjectsOfTypeAll<Sprite>()` (name, `texture.name`, size); sprites in an atlas appear twice, once as `repacked` and once with the atlas texture.
 
 ## Naming a new civilization's assets
 

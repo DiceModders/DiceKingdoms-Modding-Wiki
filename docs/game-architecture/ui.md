@@ -77,6 +77,5 @@ The game's canvases use `CanvasScaler` in `ScaleWithScreenSize` mode with a 1920
 | 21:9 | 2520x1080 | 1920x823 |
 | 32:9 | 3840x1080 | 1920x540 |
 
-Everything that is sized in units (the lobby box, setting rows, windows) scales with the screen. Anything placed by its top-left corner must be kept inside the canvas when the size changes
-(UiKit does this for its windows). `Canvas.scaleFactor` (screen pixels per unit) is what a mouse delta has to be divided by when dragging.
+Everything that is sized in units (the lobby box, setting rows, windows) scales with the screen. Anything placed by its top-left corner must be kept inside the canvas when the size changes. `Canvas.scaleFactor` (screen pixels per unit) is what a mouse delta has to be divided by when dragging.
 

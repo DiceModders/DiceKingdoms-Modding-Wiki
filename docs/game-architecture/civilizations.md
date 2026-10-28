@@ -16,7 +16,7 @@ The game has five civilizations, the enum `DiceKingdoms.Interface.Civilization`:
 
 The civilization is almost not a gameplay concept: it chooses **how a player looks**, **which tech tree the player gets**, **which AI build orders an AI uses** and **what the civilization is called**.
 Buildings, units, costs and the technologies themselves are the same for everybody. This page lists every place where the number matters and what that place does with a number it does not know,
-which is what a mod civilization has to deal with. [ModCore](../guides/modding/modcore.md#civilizations) does all of it; [Making a civilization](../guides/modding/making-a-civilization.md) is the practical guide.
+which is what a mod civilization has to deal with. [Making a civilization](../guides/modding/making-a-civilization.md) is the practical guide.
 
 ## Where the number is used
 
@@ -30,7 +30,7 @@ which is what a mod civilization has to deal with. [ModCore](../guides/modding/m
 | `AIPlay.SampleBuildOrder(random, civilization, strategies)` | Keeps the build orders written for exactly that civilization. | Throws `No build order matching civilization=N, strategies=...`. |
 | `Player.NextCivilization` | The castle click on the match-start screen: steps through `Player.Inventory.UnlockedCivilizations` (Steam inventory) and wraps around. | Only unlocked civilizations are ever offered. |
 | `ITextElement.Localized` with the key `civilization.{value}.name` | The civilization's name in the text table. | A missing-translation text. |
-| `Rules` window | The civilization drop-down lists `Enum.GetValues(typeof(Civilization))`. | Not listed (ModBridge adds the entries). |
+| `Rules` window | The civilization drop-down lists `Enum.GetValues(typeof(Civilization))`. | Not listed; a mod has to append its entries (see [Rules and civilizations](rules-and-civilizations.md)). |
 
 Not used by gameplay: `IconRenderer` has one sprite atlas per civilization for buildings and units (an icon-rendering tool, with `buildingIconsFolder` and `testFolder` fields; the icons in
 the game come from the prefabs, below), and `IslandGrid.testCivilization`, `TestCombat.attackCivilization/defenseCivilization` and `Player.TestInit` are test code.
@@ -108,8 +108,9 @@ the orders of the civilization it is "like".
 ## Networking
 
 A player's `PlayerSkins` travels as **one byte** (the sender writes a byte, the receiver reads an `sbyte` and calls the constructor). So a civilization number must fit in a signed byte, and 0..4 are taken:
-**mod civilizations get 5..127** (123 numbers). Both sides must know the number: a client that does not have the mod would throw in the constructor on receiving it. ModCore therefore
-publishes `key=id` pairs in each member's Steam data (`modcore.civs`), offers the castle click only civilizations everybody has, and has the host move a player off a civilization somebody lacks.
+**mod civilizations get 5..127** (123 numbers). Both sides must know the number: a client that does not have the mod would throw in the constructor on receiving it. A mod therefore has to
+make sure every lobby member has a civilization before it can be picked (for example by publishing its civilizations in the Steam lobby member data, offering the castle click only civilizations
+everybody has, and moving a player off a civilization somebody lacks).
 
 ## Localization
 

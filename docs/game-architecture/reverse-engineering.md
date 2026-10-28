@@ -31,7 +31,7 @@ summary: Tools and method for reading the game code, plus RVAs and field offsets
 
 The radius of the island can be changed in the `Awake` hook; real land is then produced by normal generation. Resizing arrays does not work.
 `SaveIslandToClipboard` (`0x61A690`) and `LoadIslandFromClipboard` (`0x616810`) go through `GUIUtility.systemCopyBuffer`, which is unreliable outside `OnGUI`;
-use `ExportIsland` / `ImportIsland` and handle the clipboard yourself. The code format is in [Island code](island-code.md).
+use `ExportIsland` / `ImportIsland` and handle the clipboard yourself. The code format is in [Island save format](island/save-format.md).
 
 ## Players and game state
 

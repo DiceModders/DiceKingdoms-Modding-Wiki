@@ -25,7 +25,7 @@ A Thunderstore package is a zip with these files at its root:
 | `icon.png` | 256x256 picture |
 | `YourMod.dll` | The mod. Put it in a `plugins` folder if you want the archive to merge into the game folder by hand. |
 
-List other mods in `dependencies` (for example UiKit) in the form `Author-Name-1.0.0`, instead of copying their DLLs. Mod managers install dependencies
+List other mods in `dependencies` (for example a library mod yours needs) in the form `Author-Name-1.0.0`, instead of copying their DLLs. Mod managers install dependencies
 automatically. In code add `[BepInDependency("plugin.guid")]` so that the dependency loads first.
 
 !!! tip
