@@ -6,6 +6,7 @@ This site is intended for the documentation of DiceKingdoms in order to make mod
 
 - **Playing with mods:** [Mods Installation](guides/mod-installation.md).
 - **Writing a mod:** [Project Setup](guides/modding/project-setup.md), [IL2CPP tips](guides/modding/il2cpp-tips.md), then the tested [Hook recipes](guides/modding/hook-recipes.md).
+- **Shared libraries:** [Modding libraries](libraries/index.md) - ModCore (lobby rules, civilizations, gameplay values), UiKit (windows and game screens) and ModBridge, each with examples.
 - **How the game works:** start with the [Overview](game-architecture/overview.md) and the [Turn loop](game-architecture/turn-phases.md), then one page per phase:
   [Harvest](game-architecture/harvest.md), [Disasters](game-architecture/disasters.md), [Build phase](game-architecture/build-phase.md), [Combat](game-architecture/combat.md),
   [Win conditions](game-architecture/win-conditions.md). The [AI](game-architecture/ai.md) and all numbers in [Game data](game-architecture/game-data.md).

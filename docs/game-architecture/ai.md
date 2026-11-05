@@ -146,6 +146,19 @@ Building short names: house, cot (Cottage), church, farm, racks (Barracks), dock
 market, lumber, quarry, archery, wonder, sorcerer. `SampleBuildOrder` (`0x568710`) picks one at random, weighted, among those for the AI's civilization and allowed strategies
 (an unknown civilization throws). The log line `AI <name> has strategy MILITARY and build order military_macro` comes from `PlayStart`.
 
+How the text is read (all in `InitBuildOrders`, no error handling):
+
+- Blocks are found with one regular expression:
+  `civilization=(\w+)\s+weight=(\d+)\s+strategy=(\w+)\s+name=(\w+)\s*\[\s*technologies\s*\[([^]]*)\]\s*buildings\s*\[([^]]*)\]\s*\]`.
+  Anything that does not match (comments, a misspelt keyword, a name with a dash) is silently skipped.
+- `civilization` and `strategy` go through `Enum.TryParse`, so a **number** works too (`civilization=17` for a mod civilization).
+- Technologies are split on whitespace and looked up by `TechnologyName`; buildings by the short names above (`ParseBuildingType` throws `ArgumentOutOfRangeException` for any other word).
+- **One bad name in any block throws, and no order is kept at all.** `buildOrders` stays null, so every later `SampleBuildOrder` reads the text again and throws again:
+  every AI stops playing, for every civilization. Check a custom file with one AI in a local game before sharing it.
+- No block for the AI's civilization and allowed strategies also throws (`No build order matching civilization=...`).
+- The orders are read once per `AIPlay` and kept in `buildOrders`; set it to null to make the game read the text again.
+- The research list is walked in order, skipping technologies that are not learnable yet, so an order written for another tech tree still works but researches in a different order.
+
 ## Start phase
 
 `PlayStart` (`0x567FE0`) places the start buildings with a spiral from the centre, 4 orientations from a random start, **Farms only at Manhattan distance ≥ 15 from the centre**,

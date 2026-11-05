@@ -85,8 +85,12 @@ and again when the language changes (each language's table is created when it lo
 
 ## 6. AI
 
-AIs play from build orders embedded in the game (3 per built-in civilization), written for exactly one civilization, so a mod civilization's AI uses those of the civilization it is based on.
-New build orders would need a game update; there is no hook for adding them.
+AIs play from build orders (3 per built-in civilization), written for exactly one civilization. A mod civilization has none, and `SampleBuildOrder` throws without one, so either
+hand it the orders of the civilization it is based on (prefix `SampleBuildOrder` and change the `civilization` argument) or give it its own: the build-order text accepts the
+civilization as a number (`civilization=17`), so orders can be added through `custom-build-orders.txt` or a file of your own set as `AIPlay.customBuildOrdersPath` before
+`InitBuildOrders` runs. Check every block first: one unknown name stops every AI (see [AI](../../game-architecture/ai.md#build-orders)).
+When the tech tree differs from the base civilization's, reorder the research list so each technology comes after one of its prerequisites; the AI skips technologies it cannot
+learn yet.
 
 ## What cannot be changed
 
@@ -107,7 +111,7 @@ New build orders would need a game update; there is no hook for adding them.
 | Building and unit icons | one per player colour per model | `Sprite[]` in the prefab | the prefab's own |
 | Tech tree | 1 | `TechTree` asset | tree of the base civilization |
 | Name | 1 per language | text table entry | missing-translation text |
-| AI build orders | - | embedded text | those of the base civilization |
+| AI build orders | 1 per strategy (any number) | build-order text (`civilization=<number>`) | none: `SampleBuildOrder` throws |
 
 ## Finding the game's own prefabs and sprites
 
