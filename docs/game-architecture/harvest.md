@@ -4,10 +4,42 @@ summary: The harvest phase - which buildings roll dice, die faces, re-rolls, pas
 
 # Harvest and dice
 
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
+
 ## Who rolls dice
 
 `HarvestData.Roll` (`0x649BC0`): only buildings whose type is **`BuildingTypeHousing`** (or its subclass `BuildingTypeCastle`) roll, and only while `Building.Active`
 (a hungry or sick building is inactive).
+
+Dice come from housing buildings; a building hit by a disaster does not roll:
+
+<!-- code: BuildingTypeHousing | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildingTypeHousing : BuildingType
+{
+    public ResourceAmount[] possibleYields;  // 0xE8
+    public Color diceColor;                  // 0xF0
+    public Unit.Type unitType;               // 0x100
+    public Dice dicePrefab;                  // 0x108
+}
+```
+<!-- /code -->
+
+<!-- code: Building | affectedByDisaster, Active -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public struct Building : IEquatable<Building>
+{
+    public Disaster affectedByDisaster;  // 0x18
+
+    public bool Active { get; }
+}
+```
+<!-- /code -->
 
 | `BuildingTypeHousing` field | Offset | Meaning |
 |---|---|---|
@@ -38,6 +70,31 @@ Every die except the Sorcerer Tower's has exactly one face with 1 disaster point
 
 `HarvestData.Reset` (`0x649520`):
 
+Rolls and re-rolls are handled by `HarvestData`:
+
+<!-- code: HarvestData | BASE_RE_ROLLS, ReRollsRemaining, TotalReRolls, Reset, ReRoll, ReRollRPC, Roll, RollResultsRPC, FirstRoll -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class HarvestData : PhaseData<HarvestData, HarvestIslandState>
+{
+    private const int BASE_RE_ROLLS = 2;
+
+    public int ReRollsRemaining { get; set; }
+    public int TotalReRolls { get; set; }
+
+    private void ReRollRPC(Building.Id[] buildings);                                            // RVA 0x6491D0
+    public void ReRoll(Building.Id[] buildingIds);                                              // RVA 0x649380
+    private IEnumerator FirstRoll();                                                            // RVA 0x648FB0
+    private void Roll(Building.Id[] buildingIds);                                               // RVA 0x649BC0
+    private void RollResultsRPC(ValueTuple<Building.Id, ResourceAmount>[] results, int reRollsRemaining);  // RVA 0x6498E0
+    protected override void Reset();                                                            // RVA 0x649520
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `HarvestData.Reset` and set `TotalReRolls` / `ReRollsRemaining` for more re-rolls; change the faces in `HarvestData.Roll`.
+
 - `BASE_RE_ROLLS = 2`; `TotalReRolls = 2 + ` the sum of `AddRollTechnology.value` over learnt technologies (technology `ADDITIONAL_ROLL`, +1).
 - The server makes the first roll. The player picks dice and calls `ReRoll(Building.Id[])` → `ReRollRPC`; the server rolls them again and broadcasts `RollResultsRPC(results, reRollsRemaining)`.
 - Dice are animated client-side; the result is decided on the server before the animation (see [Rendering](rendering.md#dice)).
@@ -45,6 +102,26 @@ Every die except the Sorcerer Tower's has exactly one face with 1 disaster point
 ## Total yield
 
 `HarvestData.ComputeTotalYields` (`0x648530`) builds `TotalYields` from scratch:
+
+The total is computed and paid out in `HarvestData`:
+
+<!-- code: HarvestData | TotalYields, Yield, ComputeTotalYields, SetAIYields, AddResources -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class HarvestData : PhaseData<HarvestData, HarvestIslandState>
+{
+    public ResourceAmount TotalYields { get; set; }
+
+    public ResourceAmount Yield(Building.Id buildingId);  // RVA 0x649F60
+    private void ComputeTotalYields();                    // RVA 0x648530
+    public void SetAIYields(ResourceAmount yields);       // RVA 0x649EE0
+    public void AddResources();                           // RVA 0x648470
+}
+```
+<!-- /code -->
+
+**Patch:** prefix `HarvestData.AddResources` and change `__instance.TotalYields` to change what a player receives (the dice on screen keep their faces).
 
 1. every dice result of this harvest;
 2. plus `BuildingTypeProducer.Yield(building, island)` of every **active** producer building (passive income, below);
@@ -56,6 +133,60 @@ Every die except the Sorcerer Tower's has exactly one face with 1 disaster point
 ## Passive producers
 
 Subclasses of `BuildingTypeProducer` implement `Yield(Island, Building)`:
+
+Passive income comes from the producer building types:
+
+<!-- code: BuildingTypeProducer | *methods -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public abstract class BuildingTypeProducer : BuildingType
+{
+    public abstract ResourceAmount Yield(Island island, Building building);
+}
+```
+<!-- /code -->
+
+<!-- code: BuildingTypeProducerFixed | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildingTypeProducerFixed : BuildingTypeProducer
+{
+    public ResourceAmount yield;  // 0xE8
+}
+```
+<!-- /code -->
+
+<!-- code: BuildingTypeProducerNature | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildingTypeProducerNature : BuildingTypeProducer
+{
+    private Resource yieldResource;  // 0xE8
+    private NatureTile natureTile;   // 0xEC
+    private int tilesNeeded;         // 0xF0
+}
+```
+<!-- /code -->
+
+<!-- code: BuildingTypeProducerAmplifier | *fields -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildingTypeProducerAmplifier : BuildingTypeProducer
+{
+    private BuildingTypes buildingTypes;                 // 0xE8
+    private Resource yieldResource;                      // 0xF0
+    private BuildingTypeName amplifiedBuildingTypeName;  // 0xF4
+    private int amplifyFactor;                           // 0xF8
+    private int amplifyFactorProximityBonus;             // 0xFC
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `Yield` of the producer class to change a building's passive income.
 
 | Class | Formula | Buildings |
 |---|---|---|
@@ -69,6 +200,37 @@ Subclasses of `BuildingTypeProducer` implement `Yield(Island, Building)`:
 ## Storage capacity
 
 `Island.RecomputeStorageCapacities` (`0x61F270`): the capacity is the **sum of `BuildingType.storageCapacity` over all buildings** on the island. Nothing else adds to it.
+
+Capacities are recomputed on the island and stored in its `Statistics`:
+
+<!-- code: Island | statistics, Recompute, RecomputeStorageCapacities -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Island : NetworkedBehaviour
+{
+    public Statistics statistics;               // 0xA0
+
+    public void Recompute();                    // RVA 0x61F590
+    private void RecomputeStorageCapacities();  // RVA 0x61F270
+}
+```
+<!-- /code -->
+
+<!-- code: Statistics | Storage, SetCapacity -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Statistics : IslandSyncedBehaviour<Statistics.SyncData>
+{
+    public ResourceStorage Storage { get; set; }
+
+    public void SetCapacity(ResourceAmount capacity);  // RVA 0x624010
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `Island.RecomputeStorageCapacities` (private), change `statistics.Storage.capacity` and call `SetCapacity`.
 
 | Building | Storage |
 |---|---|
@@ -86,6 +248,25 @@ Subclasses of `BuildingTypeProducer` implement `Yield(Island, Building)`:
 The resources are kept in `Utility.AntiCheat.EncryptedStorage<ResourceStorage>` inside `Statistics`: the 64 bytes of `ResourceStorage` XOR a random per-write key XOR a per-launch static key.
 A memory scanner will not find plain values. **Mods do not need to decrypt anything:** read `Statistics.get_Storage` (plain `ResourceStorage`) and change resources with
 `Statistics.AddResource` / `RemoveResource` / `SetCapacity`.
+
+Read and change resources through `Statistics`, never the raw memory:
+
+<!-- code: Statistics | Storage, AddResource, RemoveResource, HasResource, ShipCapacity, TradeFactor -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Statistics : IslandSyncedBehaviour<Statistics.SyncData>
+{
+    public ResourceStorage Storage { get; set; }
+    public int ShipCapacity { get; }
+    public int TradeFactor { get; }
+
+    public void AddResource(ResourceAmount resourceAmount);     // RVA 0x622C90
+    public bool HasResource(ResourceAmount resourceAmount);     // RVA 0x623650
+    public void RemoveResource(ResourceAmount resourceAmount);  // RVA 0x623B20
+}
+```
+<!-- /code -->
 
 ## Food upkeep
 

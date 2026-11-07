@@ -20,6 +20,21 @@ Example: `Castle Maya`, `Guard Tower Up Viking`. The building type enum (`Buildi
 
 A few buildings have several scene instances named `Cottage Maya (1)`, `House Ancient (2)` and so on. Those are variants placed in the scene, not separate prefabs.
 
+#### Building sizes
+
+The same building is not the same size in every civilization. When you make a replacement model, compare it with these so it does not look too big or too small next to the others. The numbers are the bounds of the original meshes in prefab space: height from the ground up, and the width along the two ground axes. The unit is about one tile.
+
+| Building | Europe | Middle East | Viking | Ancient | Maya |
+| --- | --- | --- | --- | --- | --- |
+| Windmill height | 2.69 | 2.85 | 3.53 | 1.41 | 1.95 |
+| Windmill width | 2.60 x 1.98 | 1.77 x 1.82 | 2.52 x 2.05 | 1.34 x 1.50 | 1.50 x 1.59 |
+| Storage height | 0.77 | 0.99 | 1.96 | 0.92 | 1.32 |
+| Storage width | 1.95 x 2.92 | 2.02 x 3.00 | 1.92 x 2.99 | 2.03 x 2.99 | 1.95 x 2.83 |
+| University height | 1.85 | 2.15 | 2.24 | 2.18 | 1.88 |
+| University width | 2.76 x 3.00 | 3.00 x 3.02 | 2.83 x 3.19 | 3.00 x 3.02 | 3.11 x 3.36 |
+
+Storage and university widths follow their tiles, so only their height changes between civilizations. Windmills differ in both height and width. The windmill's turning part is fixed to a bone of the original rig, so a replacement that reuses the rig keeps the same pivot height for its sails or wheel.
+
 ### Units (`UnitVisual`)
 
 Ten unit types, each in every civilization: `Archer`, `Bourgeois`, `General`, `King`, `Peasant`, `Priest`, `Soldier`, `Sorcerer`, `Templar`, `Warlock` (example: `Soldier Europe`). The skin registry also holds `Inhabitant King <civ>` and `Inhabitant Sorcerer <civ>` models.

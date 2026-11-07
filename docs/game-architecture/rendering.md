@@ -4,6 +4,9 @@ summary: How the game looks - HDRP, the colored-paper palette shader, player and
 
 # Rendering, visuals and animation
 
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
+
 ## Pipeline
 
 - **HDRP**, two pipeline assets for the two quality levels (`HDRenderPipelineAsset-Low`, `-Normal`; Normal is the default).
@@ -18,6 +21,26 @@ Buildings, units, ships and props use the `ColoredPaper` shader (`_ColorPalette`
 Lit windows use the emission palette (cells (5,0) orange and (5,1) yellow are the only emissive ones).
 
 ### Player and team colours
+
+The colour helpers:
+
+<!-- code: ColoredPaperUtils | *props, *methods -->
+```csharp
+namespace DiceKingdoms.Interface;
+
+public class ColoredPaperUtils : MonoBehaviour
+{
+    public PlayerColor PlayerColor { set; }
+    private ColoredPaperOverrides.Overrides Overrides { set; }
+
+    protected void Awake();                                                            // RVA 0x5A0550
+    public void Tint(ColoredPaperUtils.TintColors tint);                               // RVA 0x5A0D00
+    public void CopyFrom(ColoredPaperUtils other);                                     // RVA 0x5A07F0
+    public static void SlowSetPlayerColor(Transform object, PlayerColor playerColor);  // RVA 0x5A09D0
+    public static void SlowTint(Transform object, ColoredPaperUtils.TintColors tint);  // RVA 0x5A0C20
+}
+```
+<!-- /code -->
 
 1. `PlayerColors.Init` (`0x56DD40`) makes one `PlayerColor` per colour. Its constructor copies the palette texture and repaints **cell (7, 7)** with the player's colour (`CustomColorPalette`).
 2. Faces that show the owner's colour have their UVs on cell (7, 7). On the Castle that is the **flag** and the King's clothes; the castle body itself has none.
@@ -40,6 +63,32 @@ In free-for-all `Team.Same` is true only for the same player. A new colour list 
 
 Prefab parts: `Visual`, `Damaged Visual` (a copy of the mesh), `Fires` (3 fire particle systems), `Damage Particles`, `Remains` particles, `onlyEnableWhenActive` objects.
 
+A building's visual object:
+
+<!-- code: BuildingVisual | visual, damagedVisual, firesHolder, onlyEnableWhenActive, buildingTints, icons, Apply, ApplyLater, OnPlace, OnHit, Icon -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class BuildingVisual : MonoBehaviour
+{
+    private BuildingTints buildingTints;                                                  // 0x18
+    private Transform firesHolder;                                                        // 0x30
+    private Transform visual;                                                             // 0x38
+    private Transform damagedVisual;                                                      // 0x40
+    private List<GameObject> onlyEnableWhenActive;                                        // 0x48
+    public Sprite[] icons;                                                                // 0x58
+
+    public void ApplyLater(Building building, IslandGrid grid, float delay);              // RVA 0x60D130
+    public virtual void Apply(Building building, IslandGrid grid, bool preview = False);  // RVA 0x60D370
+    public void OnHit();                                                                  // RVA 0x60DE30
+    public void OnPlace(Building target);                                                 // RVA 0x60DF40
+    public Sprite Icon(PlayerColor color);                                                // RVA 0x60DDC0
+}
+```
+<!-- /code -->
+
+**Patch:** postfix `BuildingVisual.Apply` runs whenever a building is built or refreshed (see [Custom models](../guides/modding/custom-models.md)).
+
 | State | What changes | Tint (`BuildingTints`) |
 |---|---|---|
 | normal | – | none |
@@ -61,6 +110,41 @@ Prefab parts: `Visual`, `Damaged Visual` (a copy of the mesh), `Fires` (3 fire p
 
 `DayNightCycle` (`DiceKingdoms.Environment`), `ApplyTimeOfDay` (`0x57CC70`):
 
+The day / night component:
+
+<!-- code: DayNightCycle | *fields, TimeOfDay, Cloudiness, ApplyTimeOfDay, Update -->
+```csharp
+namespace DiceKingdoms.Environment;
+
+public class DayNightCycle : MonoBehaviour
+{
+    private Light sun;                                          // 0x18
+    private Volume dayVolume;                                   // 0x20
+    private Volume nightVolume;                                 // 0x28
+    private Sound seaAmbientSound;                              // 0x30
+    private Sound natureNightAmbientSound;                      // 0x38
+    private AnimationCurve sunIntensity;                        // 0x40
+    private float timeOfDaySmoothing;                           // 0x48
+    private float cloudinessSmoothing;                          // 0x4C
+    private float sunYaw;                                       // 0x50
+    private float sunMaxIntensity;                              // 0x54
+    private AudioSources audioSources;                          // 0x58
+    private Nullable<AudioSources.AllocatedSource> seaAudio;    // 0x60
+    private Nullable<AudioSources.AllocatedSource> nightAudio;  // 0x80
+    private float timeOfDay;                                    // 0xA0
+    private float cloudiness;                                   // 0xA4
+    private float targetTimeOfDay;                              // 0xA8
+    private float targetCloudiness;                             // 0xAC
+
+    public float TimeOfDay { get; set; }
+    public float Cloudiness { get; set; }
+
+    protected void Update();                                    // RVA 0x57D150
+    private void ApplyTimeOfDay(float timeOfDay);               // RVA 0x57CC70
+}
+```
+<!-- /code -->
+
 - Sun rotation = (timeOfDay × 360°, sunYaw, 0); `k = sunIntensity(timeOfDay) × (1 − cloudiness)`; sun intensity = k × max. **Day volume weight = k, Night volume weight = 1 − k.**
 - `sunIntensity`: 0 → 0, 0.05 → 0.8, 0.25 → 1, 0.45 → 0.8, 0.5 → 0, 1 → 0. Day is 0 – 0.5, night 0.5 – 1.
 - `timeOfDay` moves **forward only** toward `targetTimeOfDay` (wrapping past 1), smoothing 1 per second; cloudiness smoothing 5.
@@ -76,6 +160,24 @@ Prefab parts: `Visual`, `Damaged Visual` (a copy of the mesh), `Fires` (3 fire p
 ## Building orientation and the camera
 
 `GridTransform.Apply` (`0x60F050`): `GridTransform` = tile `position`, `orientation` 0..3, `mirroring`.
+
+Orientation is applied by `GridTransform`:
+
+<!-- code: GridTransform | *fields, Apply -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public struct GridTransform
+{
+    public int2 position;                                      // 0x0
+    public GridTransform.Orientation orientation;              // 0x8
+    public GridTransform.Mirroring mirroring;                  // 0xC
+    public static readonly GridTransform IDENTITY;             // static
+
+    public void Apply(Transform transform, Transform parent);  // RVA 0x60F050
+}
+```
+<!-- /code -->
 
 - Orientations: **0 EAST, 1 NORTH, 2 WEST, 3 SOUTH**. Each step turns the model **90° counter-clockwise seen from above**. Mirroring flips the local X scale.
 - The model's pivot is the centre of the building's tile (0, 0); grid y = Unity Z. Islands are never rotated.

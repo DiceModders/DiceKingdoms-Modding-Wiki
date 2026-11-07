@@ -37,6 +37,22 @@ nav:
       - Custom Models: guides/modding/custom-models.md
       - Making a Civilization: guides/modding/making-a-civilization.md
       - Publishing a Mod: guides/modding/publishing.md
+  - Modding Libraries:
+    - Overview: libraries/index.md
+    - ModCore:
+      - Getting Started: libraries/modcore/index.md
+      - Lobby and Rules: libraries/modcore/lobby.md
+      - Match and Players: libraries/modcore/match-and-players.md
+      - Civilizations: libraries/modcore/civilizations.md
+      - Gameplay Values: libraries/modcore/gameplay-values.md
+      - Models, Pictures and Caches: libraries/modcore/assets.md
+      - Mod Switch: libraries/modcore/mod-switch.md
+      - Tools: libraries/modcore/tools.md
+    - UiKit:
+      - Getting Started: libraries/uikit/index.md
+      - Windows and Widgets: libraries/uikit/windows-and-widgets.md
+      - Game Screens: libraries/uikit/game-screens.md
+    - ModBridge: libraries/modbridge.md
   - Game architecture:
     - Overview: game-architecture/overview.md
     - Gameplay:
