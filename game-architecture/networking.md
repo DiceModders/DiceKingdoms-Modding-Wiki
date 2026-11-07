@@ -4,6 +4,9 @@ summary: Host-authoritative MLAPI over Steam P2P - what runs where, every client
 
 # Networking
 
+!!! info "Code blocks"
+    Declarations from the IL2CPP dump of game version 1.0.4, trimmed to what each section uses. `// 0x..` is the field offset, `// RVA 0x..` the method address in `GameAssembly.dll` (in Ghidra `0x180000000 + RVA`). Names stay stable between updates, offsets and RVAs do not. Private members are public in the BepInEx interop assemblies.
+
 ## Model
 
 - **Host-authoritative MLAPI over Steam P2P.** The host (lobby owner) is the MLAPI server and also a client; the other players are clients.
@@ -18,6 +21,25 @@ summary: Host-authoritative MLAPI over Steam P2P - what runs where, every client
     which every client runs itself.
 
 ## Client → server RPCs
+
+The `Player` RPCs and their public wrappers:
+
+<!-- code: Player | NextColorRPC, NextCivilizationRPC, JoinStartGameSlotRPC, AcknowledgeRPC, ChatRPC, Chat, Acknowledge -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Player : NetworkedBehaviour
+{
+    private void NextColorRPC();                                   // RVA 0x5706E0
+    private void NextCivilizationRPC();                            // RVA 0x5704F0
+    private void JoinStartGameSlotRPC(int slot);                   // RVA 0x56F9F0
+    public void Acknowledge(Acknowledgeable acknowledgeable);      // RVA 0x56F270
+    private void AcknowledgeRPC(Acknowledgeable acknowledgeable);  // RVA 0x56F240
+    public void Chat(string message);                              // RVA 0x56F550
+    private void ChatRPC(string message);                          // RVA 0x56F390
+}
+```
+<!-- /code -->
 
 | Class | RPC | Purpose |
 |---|---|---|
@@ -42,9 +64,33 @@ There are 17 ClientRPCs in `DiceKingdoms.Game` (results, echoes, enter / sync / 
 
 ## Player ids
 
+The id field and the members that use it:
+
+<!-- code: Player | initialOwnerId, InitialOwnerId, IsInitialOwner, LocalPlayer, IsAI, UserName, UpdateUserName, NetworkStart -->
+```csharp
+namespace DiceKingdoms.Game;
+
+public class Player : NetworkedBehaviour
+{
+    private readonly NetworkedVar<ulong> initialOwnerId;  // 0xC8
+
+    public ulong InitialOwnerId { get; }
+    public bool IsInitialOwner { get; }
+    public bool IsAI { get; }
+    public static Player LocalPlayer { get; set; }
+    public string UserName { get; set; }
+
+    public override void NetworkStart();                  // RVA 0x56FBA0
+    public void UpdateUserName();                         // RVA 0x570DC0
+}
+```
+<!-- /code -->
+
+**Patch:** `Player.LocalPlayer` is you; the host is the player with `InitialOwnerId == gameState.OwnerClientId`.
+
 - The MLAPI client id is the transport's id for a connection. With the game's Steam transport this is the player's **SteamId** (64 bit).
 - `Player.initialOwnerId` (`NetworkedVar<ulong>` `0xC8`) is set by the host in `Player.NetworkStart` and never changes: humans = their client id, **AIs = fake ids counting down from
-  `ulong.MaxValue`**. It is the player's identity for the whole match, also after a reconnect. `Player.Local` = the player with `initialOwnerId == LocalClientId`.
+  `ulong.MaxValue`**. It is the player's identity for the whole match, also after a reconnect. `Player.LocalPlayer` = the player with `initialOwnerId == LocalClientId`.
 
 Places that need a **real Steam id** (they call Steam with it):
 

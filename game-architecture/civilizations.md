@@ -102,8 +102,12 @@ civilization=VIKING weight=2 strategy=MILITARY name=military_macro [
 
 The civilization is a `Civilization` enum name, the strategy is `WONDER` or `MILITARY`, and `buildings` is the order in which the AI builds, written with short words (house, cot,
 church, farm, racks, dock, land, storage, mill, fish, guard, cat, university, market, lumber, quarry, archery, wonder, sorcerer; they read as HOUSE, COTTAGE, CHURCH, FARM, BARRACKS, DOCK, LAND_CAMP, STORAGE, WINDMILL,
-FISHING_SHIP, GUARD_TOWER, CATHEDRAL, UNIVERSITY, MARKET, LUMBER_CAMP, STONE_QUARRY, ARCHERY_RANGE, WONDER, SORCERER_TOWER). The text is a compiled-in constant, so a mod cannot add orders; a mod civilization's AI uses
-the orders of the civilization it is "like".
+FISHING_SHIP, GUARD_TOWER, CATHEDRAL, UNIVERSITY, MARKET, LUMBER_CAMP, STONE_QUARRY, ARCHERY_RANGE, WONDER, SORCERER_TOWER).
+
+The text is a compiled-in constant, but `custom-build-orders.txt` in the game folder replaces it (see [AI](ai.md#build-orders)), and the civilization value is read with
+`Enum.TryParse`, which also accepts a **number**: `civilization=17` gives civilization 17 its own orders. A plugin can therefore add orders for a mod civilization by writing that
+file (or pointing `customBuildOrdersPath` at its own file before `InitBuildOrders` runs). Without any order for its civilization and strategy, `SampleBuildOrder` throws, so a mod
+civilization needs either its own orders or a hook that hands it another civilization's.
 
 ## Networking
 
