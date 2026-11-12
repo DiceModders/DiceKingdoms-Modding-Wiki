@@ -133,3 +133,7 @@ ui.Native.Dialogs.Info("Saved.", onClose: null);
 ```
 
 `icon` is `null` (no icon), `DialogsApi.WarningIcon`, or a text icon token such as `{o.question-mark}`. A text icon is a small glyph scaled up to the icon box and looks blurry; the warning sign is drawn by UiKit at full resolution and is removed again when the dialog closes, so the game's own questions never show it. `dontShowAgainId` adds the game's "don't show again" box.
+
+- The callbacks run just after the button press, not inside it: the game calls a button's callback **before** it closes the dialog, so a dialog opened from inside the callback would be closed at once (and the first dialog's cancel would run). With UiKit, opening another dialog from `onConfirm` is safe.
+- With a ticked "don't show again" id the game does not open the dialog and confirms at once.
+- While any game dialog is open (UiKit's or the game's own, such as Back to menu), the `AboveGame` layer is hidden: it is a screen overlay and would cover the dialog, and the game accepts no other input then. It returns when the dialog closes.
