@@ -56,6 +56,7 @@ ui.Native.Settings.AddBlock(new SettingsBlockSpec {
 | `AddDropdown(label, options, index, changed)` | Drop-down |
 | `AddButton(label, buttonText, clicked)`, `AddButtons(label, (text, clicked)...)` | Buttons |
 | `AddStepper(label, valueText, step)` | `-` value `+` |
+| `AddKey(label, keyText, clicked)` | The game's own key box from Settings > Input (click it to capture a key; show the key with `SetText`) |
 | `AddInfo(text)` | Wrapped paragraph |
 
 Rows return handles; update them instead of rebuilding. Text providers are read when the row attaches and after each step, never polled.
@@ -69,6 +70,29 @@ SettingsRowHandle? toggle = block.AddToggle("Demo", true, on => { info?.SetText(
 toggle?.SetValue(false);
 info?.SetEnabled(false);
 stepper?.SetVisible(Core.Lobby.IsHost);
+```
+
+A header (a block's `Title` or `AddHeader`) is centred on the row like the game's own section titles. A title long enough to reach over the label column is moved right so it starts where the controls start (or as far as the right edge allows). This is measured on the visible page after layout, because the lobby box and the Settings pages use different row templates and a hidden page has no sizes yet.
+
+`SetText` changes the text of an info or stepper row. The text on a button row's buttons changes with `SetButtonText(text, index)`; `index` counts the buttons of an
+`AddButtons` row from 0.
+
+A key row uses the game's own key box, so it looks like the game's keys in Settings > Input. Clicking it calls you; show the key with `SetText`:
+
+```csharp
+SettingsRowHandle? row = null;
+row = block.AddKey("Open my window", key.Keys, () => {
+    row?.SetText("...");                                    // waiting for the key
+    key.Capture(keys => row?.SetText(keys));                 // ModCore hotkey: the next key press
+});
+```
+
+```csharp
+SettingsRowHandle? keyRow = null;
+keyRow = block.AddButtons("Open my window",
+    ("Open", () => MyWindow.Open()),
+    ("Close", () => MyWindow.Close()));
+keyRow?.SetButtonText("Hide", 1);                                       // the second button
 ```
 
 ## Scoreboard
@@ -94,3 +118,18 @@ var entry = ui.Native.Rules.AddCivilization(civ.Id, "My Civ");
 entry?.SetName("My Civ (beta)");
 entry?.Dispose();   // removes the entry
 ```
+
+## Dialogs
+
+The game's own yes/no dialog and information box (`ConfirmModal`). They exist on the match screen; elsewhere the calls return `false` and nothing opens.
+
+```csharp
+bool shown = ui.Native.Dialogs.Confirm(
+    "Island grid 121 is experimental. Use it?",
+    onConfirm: () => Accept(),
+    onCancel: () => Revert(),
+    icon: DialogsApi.WarningIcon);                 // a sharp warning sign; null = no icon, like the game's own questions
+ui.Native.Dialogs.Info("Saved.", onClose: null);
+```
+
+`icon` is `null` (no icon), `DialogsApi.WarningIcon`, or a text icon token such as `{o.question-mark}`. A text icon is a small glyph scaled up to the icon box and looks blurry; the warning sign is drawn by UiKit at full resolution and is removed again when the dialog closes, so the game's own questions never show it. `dontShowAgainId` adds the game's "don't show again" box.

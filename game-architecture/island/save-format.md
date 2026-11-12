@@ -39,8 +39,10 @@ buildings[]   : i32 count, then count x Building
 remains[]     : i32 count, then count x Building      (destroyed buildings, same layout)
 groundTiles   : RLE  (i32 totalLength, then runs of {i32 runLength, i32 value})
 natureTiles   : RLE  (same layout)
-innerCliffs[] : i32 count, then count x { i32 c, i32 a, i32 b, i32 x, i32 y, i32 orient, i32 mirror }
+innerCliffs[] : i32 count, then count x { i32 kind, i32 width, i32 height, i32 x, i32 y, i32 orient, i32 mirror }
 ```
+
+`innerCliffs` are the hill pieces (`InnerCliff`): `kind` is `0` = `MAIN`, `1` = `EXTENSION`; `width` and `height` are the piece's size before rotation; `x`, `y`, `orient` and `mirror` are its grid transform, as for buildings. Note that `kind` comes **before** the size, although `InnerCliff.Key` declares `size` first. A real island reads like `0 3 3 ...` (a 3 x 3 main hill) and `1 1 2 ...` (a 1 x 2 slope). Only the five pieces listed in [Generation - Hill pieces](generation.md#hill-pieces-innercliff) exist; any other combination breaks `ImportIsland` (see there). The tiles under every piece must be ground `4` in `groundTiles`.
 
 `Building` (used by both `buildings` and `remains`):
 

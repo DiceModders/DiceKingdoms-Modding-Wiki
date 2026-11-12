@@ -220,7 +220,7 @@ public class Log : NetworkedBehaviour
 <!-- /code -->
 
 - **Tooltips:** add `HasToolTip` to a UI object and set `.text` (a `StructuredText`); shown after 0.4 s.
-- **Dialogs:** `ConfirmModal.OpenConfirm(icon, description, onCancel, onConfirm, dontShowAgainId)` and `OpenInformation(icon, description, onUnderstood, dontShowAgainId)`: the game's own dialog, reusable.
+- **Dialogs:** `ConfirmModal.OpenConfirm(icon, description, onCancel, onConfirm, dontShowAgainId)` and `OpenInformation(icon, description, onUnderstood, dontShowAgainId)`: the game's own dialog, reusable. The icon is a `StructuredText` drawn by a label (`iconLabel`) in a large box, so an icon token such as `{o.question-mark}` is a small text glyph scaled up and looks blurry. The game's own questions (Back to menu) pass `StructuredText.EMPTY`. For a sharp picture, put an `Image` with your own high-resolution sprite over `iconLabel` and remove it when the dialog closes, because the game reuses the same dialog for its own questions. UiKit does this for `DialogsApi.WarningIcon`.
 - **Game log:** `Log` is networked. **`Log.AddMessage(StructuredText)` works on the server only** (a client just logs a warning); the entry syncs to every client, so a host-side mod can post
   messages everybody sees. Rows are visible 30 s and fade in 1 s.
 - **Chat** (`ChatInterface`): Enter opens the field and disables the other input maps; sending calls `Player.Local.Chat(text)` (the host adds it to the log). While chat is open every chat and

@@ -212,10 +212,14 @@
 
                 
 
-                <div data-orientation="vertical" role="none" data-slot="separator"
+                
+                
+                
+                <div class="hidden 3xl:flex items-center gap-2">
+                    <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
-                <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
+                    <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
     class="lucide lucide-gallery-horizontal">
@@ -224,6 +228,7 @@
     <path d="M22 3v18"></path>
 </svg>
 </button>
+                </div>
                 <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
@@ -586,6 +591,21 @@
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
         
         Mod Switch
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../../libraries/modcore/hotkeys/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Hotkeys
         
         
         
@@ -1407,6 +1427,36 @@ GameState --Island(Player)--&gt; Island of a given player
 <p>Multiplying <code>size</code> (an earlier "size scale" approach) caused frustum-error log spam, a disappearing mouse cursor and compounding corruption on import. Raising <code>HardLimit.radius</code> is the safe approach. Pushing land toward the edge of the allocated array (roughly radius 24-26) is the danger zone - test incrementally.</p>
 </div>
 <p>See also: <a href="../generation/">Island Generation</a>.</p>
+<h2 id="tile-layers-in-memory">Tile layers in memory</h2>
+<p>Each tile layer is an <code>IslandGrid.Layer&lt;T&gt;</code>: one flat array, row by row from the bottom (<code>index = y * width + x</code>).</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Offset in <code>Layer&lt;T&gt;</code></th>
+<th>Field</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+0x10</td>
+<td><code>T[]</code> contents (array elements start at +0x20 of the array, its length is at +0x18)</td>
+</tr>
+<tr>
+<td>+0x18</td>
+<td>width</td>
+</tr>
+<tr>
+<td>+0x1C</td>
+<td>height</td>
+</tr>
+<tr>
+<td>+0x20</td>
+<td><code>modified</code> (byte; set it after writing so the game redraws)</td>
+</tr>
+</tbody>
+</table></div>
+<p>The layers on <code>IslandGrid</code> (this build): buildings +0x108, building remains +0x118, nature +0x128, ground +0x138, inner cliffs <code>List&lt;InnerCliff&gt;</code> +0x140, <code>size</code> +0xF0. Element sizes: <code>GroundTile</code> is a 4-byte enum; <code>Nullable&lt;NatureTile&gt;</code>, <code>Nullable&lt;Building.Id&gt;</code> and <code>Nullable&lt;Unit.Id&gt;</code> are 8 bytes (a <code>hasValue</code> byte, then the 4-byte value at +4).</p>
+<p>Reading these directly is the fast and reliable way to scan a whole island from a mod. Through Il2CppInterop, methods that return a <code>Nullable&lt;&gt;</code> struct (<code>BuildingAt</code>, <code>RemainsAt</code>) came back <code>null</code>, and per-tile calls are slow on big grids. The offsets change with game updates: re-check them against the dump.</p>
 <h2 id="clipboard-import-export">Clipboard import / export</h2>
 <p><code>SaveIslandToClipboard</code> and <code>LoadIslandFromClipboard</code> go through <code>GUIUtility.systemCopyBuffer</code>, which was unreliable when called outside <code>OnGUI</code>. A mod should call <code>ExportIsland</code> / <code>ImportIsland</code> directly and do its own clipboard handling, then use the <a href="../save-format/">format</a> page to process the string.</p>
 <h2 id="developer-cheats">Developer cheats</h2>
@@ -1624,6 +1674,12 @@ GameState --Island(Player)--&gt; Island of a given player
         
         <a href="#island-radius-hardlimitradius" data-active="false" data-depth="2">
             Island radius (HardLimit.radius)
+        </a>
+        
+
+        
+        <a href="#tile-layers-in-memory" data-active="false" data-depth="2">
+            Tile layers in memory
         </a>
         
 

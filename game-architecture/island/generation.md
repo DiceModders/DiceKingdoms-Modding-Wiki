@@ -234,10 +234,41 @@ public struct InnerCliffs
 
 | Field              | Value    | Meaning                                                     |
 |--------------------|----------|-------------------------------------------------------------|
-| `numberMains`      | `[2..3]` | (min, max) number of main cliff formations.                 |
+| `numberMains`      | `[2..3]` | (min, max) number of main cliff formations per island.      |
 | `numberExtensions` | `[1..3]` | (min, max) number of branches per main cliff.               |
-| `minDistance`      | 8        | Minimum distance between neighboring cliffs.                |
-| `minSpacing`       | 5        | Minimum gap between branches within a single cliff.         |
+| `minDistance`      | 8        | Minimum distance of a main cliff from the grid centre (keeps the castle area free). |
+| `minSpacing`       | 5        | Minimum distance between cliffs (`Free` checks it against every cliff already placed). |
+
+Main cliffs are tried at random positions of the whole grid, 256 attempts in total; every placed main then gets its branches (256 attempts each). The numbers are per island, not per tile.
+
+#### Hill pieces (`InnerCliff`)
+
+A hill on the island is a list of pieces, `IslandGrid.innerCliffs` (`List<InnerCliff>`). Each piece is a key and a transform:
+
+```c#
+public struct InnerCliff
+{
+    public Key key;                 // which piece
+    public GridTransform transform; // position, orientation 0-3, mirroring 0/1 - the same transform as buildings
+    public struct Key { public int2 size; public Kind kind; }
+    public enum Kind { MAIN = 0, EXTENSION = 1 }
+}
+```
+
+The game has five pieces, each with several 3D models per civilization (`InnerCliffVisualHub`):
+
+| Kind | Size | Looks like |
+|---|---|---|
+| `MAIN` | 3 x 3 | the big connected hill |
+| `MAIN` | 2 x 2 | a smaller hill |
+| `EXTENSION` | 2 x 2 | a slope added to a hill |
+| `EXTENSION` | 1 x 2 | a narrow slope |
+| `EXTENSION` | 1 x 1 | a single tile sticking out of a hill |
+
+- **Tiles:** `InnerCliff.Positions()` is the box between `transform.Transform(0, 0)` and `transform.Transform(size - 1)`, so a rotated piece covers its size turned by 90 degrees. `GridTransform.Transform(p) = position + (rotate(p) with x * (mirror ? -1 : 1))`, the same rule as building footprints.
+- **Ground:** the tiles under a piece are ground `INNER_CLIFF` (4). `AddInnerCliff` does **not** set the ground; it only adds the piece to the list and spawns a model. Ground 4 with no piece is a hill without a model: it looks like flat ground but blocks building like a hill. `RemoveInnerCliff` sets the tiles back to grass.
+- **Model:** `AddInnerCliff` asks `PlayerSkins.GetInnerCliffVisualHubPrefab(key)` and picks one of the hub's models at random (`RandomExtensions.NextSample`), so the same island looks a little different every time it is loaded or applied.
+- **Unknown keys break the island.** `DefaultPrefabs.InnerCliff(key)` reads a dictionary; a key the game has no piece for throws `KeyNotFoundException`, and `AddInnerCliff` then fails with a `NullReferenceException` **after** the piece was already added to the list. `ImportIsland` stops halfway, and the broken entries make later rebuilds (and quitting the match) fail again and again. Check keys before importing an island code. The field order in island codes is in [Save format](save-format.md).
 
 ### 6. Nature
 
@@ -300,9 +331,20 @@ public struct Dots
 | `probabilityAtIdealMoisture`             | 0.6   | Fish probability at the ideal point (0..1).                            |
 | `probabilityAtMaximumMoistureAmplitude`  | 0     | Probability at maximum deviation.                                      |
 | `probabilityPower`                       | 1.5   | Curve exponent: how fast probability falls off with deviation.         |
-| `maximumDistance`                        | 22    | Maximum distance from the shore where fish may appear.                 |
-| `validMarginDistance`                    | 2     | Allowed offset from the water edge.                                    |
+| `maximumDistance`                        | 22    | Maximum distance from the **grid centre** (not the shore) where fish may appear. |
+| `validMarginDistance`                    | 2     | Every tile within this distance of a fish must be valid for fish (water): fish keep this far from land. |
 | `maxCount`                               | 20    | Hard cap on the number of fish dots.                                   |
+
+How `Dots` places fish (`GenerateJob.<Execute>g__Dots|9_6`):
+
+1. Walk every tile **row by row, starting at the bottom row** (`y = 0`), left to right.
+2. Skip tiles that already have nature.
+3. Skip the tile unless every tile within `validMarginDistance` (a spiral around it) is valid for the nature type (`NatureTileExtensions.ValidOn`; water for fish).
+4. Skip it unless it lies within `maximumDistance` of the grid centre.
+5. Moisture check: `|moisture - idealMoisture| < maximumMoistureAmplitude`, then a random roll against the probability for that moisture.
+6. Stop as soon as `maxCount` fish are placed.
+
+So the fish are a band of open water between "two tiles from land" and the `maximumDistance` circle. Because of step 6, when the band has more candidates than `maxCount`, the fish fill up from the bottom and the top of the island gets none. On the game's own islands the band is narrow enough that this rarely shows; on a bigger island it always does (see [Island size for modders](#island-size-for-modders)).
 
 #### 6.3. Flowers
 
@@ -400,22 +442,25 @@ public struct ScoreData
 }
 ```
 
-`GenerateJob` is the Burst executor. Besides its fields (`parameters`, `references`, `seed`, `ground`, `nature`, `innerCliffs`, `score`) it carries a set of static helpers:
+`GenerateJob` is the Burst executor. Besides its fields (`parameters`, `references`, `seed`, `ground`, `nature`, `innerCliffs`, `score`), `Execute` uses these local functions (compiler names `<Execute>g__Name|9_n`):
 
-```
-IsInIsland(distance, moistureRange)
-Gaussian(ref displayClass)
-Height(int2 position, ref displayClass)
-Moisture(int2 position, ref displayClass)
-GetGroundTile(GroundTile a, GroundTile b)  // blending neighboring types
-AssignGround(...)                          // ground type from alt/moisture/limit
-PlaceInnerCliffs(...)
-PlaceBlobs(...)
-PlaceDots(...)
-ScoreTerritory(...)
-```
+| Function | What it does |
+|---|---|
+| `InRange(value, range)`, `Sample(gaussian)` | helpers; `Sample` draws from a `Gaussian` |
+| `Altitude(position)`, `Moisture(position)` | noise values of a tile |
+| `TileAltitude(tile)`, `Max(left, right)` | order of ground types: water lowest, then sand, then grass |
+| `Allow(position, tile, ground, allowed)` | sea-level flood fill (see below) |
+| `Free(cliff, ...)`, `Add(cliff, ...)` | inner cliffs: spacing check, then place |
+| `Blobs(blobs, ...)`, `Blob(maxSize, ...)`, `Valid(position, ...)` | trees and rocks clusters |
+| `Dots(dots, ...)` | fish |
+| `BuildSpace`, `NaturalResources`, `Cliffs` | the three parts of `ScoreData` |
 
-`AssignGround` is where a concrete `GroundTile` is picked from altitude, moisture, and `HardLimit`. It runs first because all subsequent nature passes filter by ground type.
+Order in `Execute`: altitude and ground per tile, the connected land is kept (`ComputeConnectedComponents`), the sea level, inner cliffs, trees, rocks, fish, flowers, then the score.
+
+**Sea level.** `Allow` starts at tile (0, 0) with water. Every tile gets the lowest ground type that a path from the open sea reaches it through, never lower than its own. In the game this function calls itself for the four neighbours of every tile it changes, so its depth grows with the sea area. See "Island size for modders" below.
+
+!!! warning "Patching job code"
+    The game runs the **Burst** copy of `GenerateJob` (`lib_burst_generated.dll`), not the IL2CPP method. A Harmony patch on `GenerateJob.Execute` or its local functions never runs. Changing what a Burst job does needs a native patch of the Burst library.
 
 ## BuildMesh, MeshOutput and MeshJob
 
@@ -575,3 +620,18 @@ public sealed class References : Il2CppSystem.ValueType
 |------------------|--------------------------------------------------------------|
 | `innerCliffKeys` | Cliff prefab keys used by `PlaceInnerCliffs` to pick a cliff type. |
 
+## Island size for modders
+
+- The altitude falls off with `distance / distance to the grid corner`, so the slope towards the sea is set by the grid size (49 x 49), not by `hardLimit.radius`. Raising the radius alone (22 -> 24) adds almost no land, because the noise is already under sea level near the old limit; to fill a bigger radius, divide `altitude.distanceVerticalScale` by the same factor.
+- `generationParameters` is read from the island grid when the island is generated, so a prefix on `IslandGrid.Awake` can change it. The host generates the islands in `GameState.SpawnIslands` and sends every tile to the clients (`IslandGrid.ApplySync`, run-length encoded), so every computer's grid must have the same size.
+- The radius is useful up to half the grid (24). A bigger grid means changing `IslandGrid.size`:
+    - on the island prefab (`GameState.islandPrefab.grid`) before `GameState.SpawnIslands`, because the islands are spaced with the prefab's size (see [Turn phases](../turn-phases.md));
+    - on every island in an `IslandGrid.Awake` prefix, on every computer: `Awake` builds every tile layer from it.
+- The islands exist before `GameState.StartGame` runs, so a lobby rule that resizes them must be read when they spawn. ModCore freezes the rules at that moment; check `ModCore.Lobby.Rules.Fixed` so menu and editor islands stay normal.
+- What follows the size by itself: the combat map (`CombatGrid.Init`, twice the island), the meshes (32-bit indices) and the network data (run-length, so it grows with the coast, not with the area).
+- The camera: `CameraMovement.Focus` gets its radius from the grid, and the start view is `radius / tan(fov / 2)` high, so a big island opens far away. The panning area (`baseHorizontalBound`) is measured around the map centre and does not grow by itself.
+- Put the prefab and the camera back on `ModCore.Match.Reset`: they live on after the match.
+- **Grids above 119 tiles crash without ModCore.** The sea-level fill (`Allow`) recurses once per sea tile and runs on a Unity job thread with a 1 MB stack, which holds about 9,300 calls. At 121 x 121 the game closes with a stack overflow while `SpawnIslands` generates the islands, with nothing in the log. ModCore replaces the Burst function with an iterative version that gives the same islands (see [ModCore](../../libraries/modcore/index.md)). Tested up to 201.
+- **Amounts do not grow by themselves.** `innerCliffs.numberMains`, `nature.trees.count`, `nature.rocks.count` and `nature.fish.maxCount` are per island. A bigger land keeps the same number of hills, forests and rock fields unless they are scaled too. Grow the counts with the land area and fish with the coast length; leave the cluster `size` alone.
+- **Fish on a big island.** `fish.maximumDistance` is measured from the grid centre, so it has to grow with the land radius or every fish lands inside the land's circle and none can be placed. Once it does, the band of open water holds far more candidates than `maxCount`, and because `Dots` fills rows from the bottom (see [Dots](#62-dots)) the fish pile up below the island. A clean fix on the host: lift `maxCount` during generation, then keep a random selection of the fish (up to the target count) before the island is drawn and sent. `GameState.SpawnIslands` calls `IslandGrid.SetGenerateOutput`, which copies the ground and nature layers in (`GenerateOutput.GetGround` / `GetNature`) and then calls `SetInnerCliffs`, `BuildMesh` and `UpdateNatureVisuals`; a prefix on `UpdateNatureVisuals` while `SpawnIslands` runs sees the finished nature layer. Clients receive the finished island (`ApplySync`), so only the host changes it.
+- **Island codes are tied to the grid size.** `IslandGrid.ImportIsland` loads into the grid the island already has and throws `IndexOutOfRangeException` for a code of another size. Re-centre the tiles, buildings, remains and inner cliffs on the target size first.

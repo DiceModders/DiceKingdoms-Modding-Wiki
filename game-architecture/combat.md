@@ -183,6 +183,8 @@ public class CombatPhase : TurnPhase<CombatData, CombatIslandState>
 ```
 <!-- /code -->
 
+**Walkable regions** (`ComputeConnectedComponents`): labels every walkable tile of the island (passable ground, or a tile with a building or building remains) with the id of its region, so units only head for targets they can reach. The game's local function `Visit` floods a region by calling itself once per tile, so one big land region on a big island overflows the stack when combat starts. ModCore replaces it with a loop (see [ModCore](../libraries/modcore/index.md#game-fixes)). If you rewrite it yourself, read the layers directly: through Il2CppInterop, `IslandGrid.BuildingAt` and `RemainsAt` return `Nullable<Building.Id>` and came back `null`, and a try/catch per tile is far too slow (one CLR exception per tile froze the game). The layer layout (`IslandGrid.Layer<T>`: array at +0x10, width +0x18, height +0x1C, `modified` +0x20; `index = y * width + x`) is in [Grid](island/grid.md).
+
 <!-- code: Deployment | Owner, UnitTypes, Counts, SourceBuilding, Left, OnLeave, AttackDeployment, DefenseSoldierDeployment, DefenseHouseDeployment, Leave -->
 ```csharp
 namespace DiceKingdoms.Game;

@@ -212,10 +212,14 @@
 
                 
 
-                <div data-orientation="vertical" role="none" data-slot="separator"
+                
+                
+                
+                <div class="hidden 3xl:flex items-center gap-2">
+                    <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
-                <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
+                    <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
     class="lucide lucide-gallery-horizontal">
@@ -224,6 +228,7 @@
     <path d="M22 3v18"></path>
 </svg>
 </button>
+                </div>
                 <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
@@ -586,6 +591,21 @@
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
         
         Mod Switch
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="hotkeys/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Hotkeys
         
         
         
@@ -1425,12 +1445,28 @@ loaded; put code that needs them into <code>WhenGameDataLoaded</code>, which run
 <td><code>Core.Mods.Switch</code></td>
 </tr>
 <tr>
+<td>React to keys the player can rebind in Settings &gt; Input</td>
+<td><a href="hotkeys/">Hotkeys</a></td>
+<td><code>Core.Hotkeys</code></td>
+</tr>
+<tr>
 <td>Patch game methods by name, reflection, raw memory</td>
 <td><a href="tools/">Tools</a></td>
 <td><code>Tools.Patcher</code>, <code>Tools.Reflect</code>, <code>Tools.Mem</code></td>
 </tr>
 </tbody>
 </table></div>
+<h2 id="game-fixes">Game fixes</h2>
+<p>ModCore fixes two game functions that call themselves once per tile and overflow the stack on big islands. Both are always on and produce exactly the
+game's results:</p>
+<ul>
+<li><strong>Island generation</strong> (<code>IslandGeneration.GenerateJob</code>'s sea-level fill <code>Allow</code>): grids above 119 tiles closed the game while the islands were
+  generated. The game runs this job as Burst code, which Harmony cannot reach, so ModCore finds both Burst copies (AVX2 and SSE2) of the function by their
+  first bytes and makes them jump to an iterative C# version. If a game update changes those bytes, ModCore logs
+  <code>sea level fill: Burst code not found</code> and leaves the game's code alone.</li>
+<li><strong>Walkable regions</strong> (<code>CombatPhase.ComputeConnectedComponents</code>): a Harmony prefix replaces the recursive region labelling with a loop.</li>
+</ul>
+<p>See <a href="../../game-architecture/island/generation/">Island generation</a> for how the game's function works.</p>
   </div>
 </article>
                                 <div id="bottom-navigation" class="mx-auto flex h-16 w-full max-w-2xl items-center justify-between gap-2 px-4 md:px-0">
@@ -1621,6 +1657,12 @@ loaded; put code that needs them into <code>WhenGameDataLoaded</code>, which run
         
         <a href="#features" data-active="false" data-depth="2">
             Features
+        </a>
+        
+
+        
+        <a href="#game-fixes" data-active="false" data-depth="2">
+            Game fixes
         </a>
         
 

@@ -212,10 +212,14 @@
 
                 
 
-                <div data-orientation="vertical" role="none" data-slot="separator"
+                
+                
+                
+                <div class="hidden 3xl:flex items-center gap-2">
+                    <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
-                <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
+                    <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
     class="lucide lucide-gallery-horizontal">
@@ -224,6 +228,7 @@
     <path d="M22 3v18"></path>
 </svg>
 </button>
+                </div>
                 <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
@@ -586,6 +591,21 @@
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
         
         Mod Switch
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../libraries/modcore/hotkeys/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Hotkeys
         
         
         
@@ -1700,14 +1720,15 @@ has two.</p>
 <p><strong>Patch:</strong> postfix <code>GameState.SpawnIslands</code> on the host to move islands or replace their grids.</p>
 <p><strong>Island positions</strong> (one per player):</p>
 <ul>
-<li><code>g</code> = island grid size (49 × 49 by default), <code>halfDiag</code> = √((g.x/2)² + (g.y/2)²) ≈ 34.6, <code>step</code> = halfDiag × 0.001.</li>
+<li><code>g</code> = the grid size of the island <strong>prefab</strong> (<code>GameState.islandPrefab.grid.size</code>, not of the spawned islands) (49 × 49 by default), <code>halfDiag</code> = √((g.x/2)² + (g.y/2)²) ≈ 34.6, <code>step</code> = halfDiag × 0.001.</li>
 <li>Starting at radius <code>r = step</code>, take a random point in an ellipse with radii (r × 16/9, r), turned 45°. Reject it if it overlaps an island already placed (|dx| ≤ g.x and |dy| ≤ g.y);
   otherwise <code>r</code> grows by <code>step</code> and it tries again. Islands are packed tightly, in a 16:9 oval turned 45°; more players make it wider.</li>
 <li>The points are sorted by angle around the origin and given to the players in list order, so neighbours in the player list are neighbours around the circle.</li>
 </ul>
 <p><strong>Island shapes (fairness):</strong> 256 islands are generated and sorted by score (natural resources + build space + cliffs). Only the <strong>middle N</strong> (N = number of players) are kept and shuffled,
 so every player gets an island of about median quality. Generation itself: <a href="../island/generation/">Island generation</a>.</p>
-<p>A layout mod can postfix <code>SpawnIslands</code> to move islands or replace grids, but it must run on the host so every client gets the same world.</p>
+<p>A layout mod can postfix <code>SpawnIslands</code> to move islands or replace grids, but it must run on the host so every client gets the same world.
+A mod that makes islands bigger must change the prefab's grid size <strong>before</strong> <code>SpawnIslands</code> (a prefix): changing only the spawned islands keeps the 49-tile spacing, and the bigger islands overlap their neighbours.</p>
 <h2 id="snapshots-and-rejoin">Snapshots and rejoin</h2>
 <p><code>TurnPhase.TakeSnapshot</code> stores <code>(Island, IslandGrid.SyncData, Statistics.SyncData)</code> for every island when a phase is entered; <code>SnapshotStore</code> keeps them under <code>(player, turn, phase)</code>.
 <code>GameState.Restore()</code>, <code>RestoreTurnPhase</code> and <code>Rejoin(Player)</code> let a player who reconnects rebuild the state (<code>PhaseData.RejoinClientRPC</code>).</p>

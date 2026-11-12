@@ -212,10 +212,14 @@
 
                 
 
-                <div data-orientation="vertical" role="none" data-slot="separator"
+                
+                
+                
+                <div class="hidden 3xl:flex items-center gap-2">
+                    <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
-                <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
+                    <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
     class="lucide lucide-gallery-horizontal">
@@ -224,6 +228,7 @@
     <path d="M22 3v18"></path>
 </svg>
 </button>
+                </div>
                 <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
@@ -586,6 +591,21 @@
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
         
         Mod Switch
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../libraries/modcore/hotkeys/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Hotkeys
         
         
         
@@ -1620,6 +1640,7 @@ when every island reported its fight finished.</p>
 </code></pre></div>
 <!-- /code -->
 
+<p><strong>Walkable regions</strong> (<code>ComputeConnectedComponents</code>): labels every walkable tile of the island (passable ground, or a tile with a building or building remains) with the id of its region, so units only head for targets they can reach. The game's local function <code>Visit</code> floods a region by calling itself once per tile, so one big land region on a big island overflows the stack when combat starts. ModCore replaces it with a loop (see <a href="../../libraries/modcore/#game-fixes">ModCore</a>). If you rewrite it yourself, read the layers directly: through Il2CppInterop, <code>IslandGrid.BuildingAt</code> and <code>RemainsAt</code> return <code>Nullable&lt;Building.Id&gt;</code> and came back <code>null</code>, and a try/catch per tile is far too slow (one CLR exception per tile froze the game). The layer layout (<code>IslandGrid.Layer&lt;T&gt;</code>: array at +0x10, width +0x18, height +0x1C, <code>modified</code> +0x20; <code>index = y * width + x</code>) is in <a href="../island/grid/">Grid</a>.</p>
 <!-- code: Deployment | Owner, UnitTypes, Counts, SourceBuilding, Left, OnLeave, AttackDeployment, DefenseSoldierDeployment, DefenseHouseDeployment, Leave -->
 <div class="codehilite"><pre><span></span><code><span class="k">namespace</span><span class="w"> </span><span class="nn">DiceKingdoms.Game</span><span class="p">;</span>
 

@@ -371,7 +371,7 @@ public class GameState : NetworkedBehaviour
 
 **Island positions** (one per player):
 
-- `g` = island grid size (49 × 49 by default), `halfDiag` = √((g.x/2)² + (g.y/2)²) ≈ 34.6, `step` = halfDiag × 0.001.
+- `g` = the grid size of the island **prefab** (`GameState.islandPrefab.grid.size`, not of the spawned islands) (49 × 49 by default), `halfDiag` = √((g.x/2)² + (g.y/2)²) ≈ 34.6, `step` = halfDiag × 0.001.
 - Starting at radius `r = step`, take a random point in an ellipse with radii (r × 16/9, r), turned 45°. Reject it if it overlaps an island already placed (|dx| ≤ g.x and |dy| ≤ g.y);
   otherwise `r` grows by `step` and it tries again. Islands are packed tightly, in a 16:9 oval turned 45°; more players make it wider.
 - The points are sorted by angle around the origin and given to the players in list order, so neighbours in the player list are neighbours around the circle.
@@ -380,6 +380,7 @@ public class GameState : NetworkedBehaviour
 so every player gets an island of about median quality. Generation itself: [Island generation](island/generation.md).
 
 A layout mod can postfix `SpawnIslands` to move islands or replace grids, but it must run on the host so every client gets the same world.
+A mod that makes islands bigger must change the prefab's grid size **before** `SpawnIslands` (a prefix): changing only the spawned islands keeps the 49-tile spacing, and the bigger islands overlap their neighbours.
 
 ## Snapshots and rejoin
 

@@ -34,6 +34,21 @@ The playable land is limited by `Parameters.HardLimit.radius`, default **22**. S
 
 See also: [Island Generation](generation.md).
 
+## Tile layers in memory
+
+Each tile layer is an `IslandGrid.Layer<T>`: one flat array, row by row from the bottom (`index = y * width + x`).
+
+| Offset in `Layer<T>` | Field |
+|---|---|
+| +0x10 | `T[]` contents (array elements start at +0x20 of the array, its length is at +0x18) |
+| +0x18 | width |
+| +0x1C | height |
+| +0x20 | `modified` (byte; set it after writing so the game redraws) |
+
+The layers on `IslandGrid` (this build): buildings +0x108, building remains +0x118, nature +0x128, ground +0x138, inner cliffs `List<InnerCliff>` +0x140, `size` +0xF0. Element sizes: `GroundTile` is a 4-byte enum; `Nullable<NatureTile>`, `Nullable<Building.Id>` and `Nullable<Unit.Id>` are 8 bytes (a `hasValue` byte, then the 4-byte value at +4).
+
+Reading these directly is the fast and reliable way to scan a whole island from a mod. Through Il2CppInterop, methods that return a `Nullable<>` struct (`BuildingAt`, `RemainsAt`) came back `null`, and per-tile calls are slow on big grids. The offsets change with game updates: re-check them against the dump.
+
 ## Clipboard import / export
 
 `SaveIslandToClipboard` and `LoadIslandFromClipboard` go through `GUIUtility.systemCopyBuffer`, which was unreliable when called outside `OnGUI`. A mod should call `ExportIsland` / `ImportIsland` directly and do its own clipboard handling, then use the [format](save-format.md) page to process the string.

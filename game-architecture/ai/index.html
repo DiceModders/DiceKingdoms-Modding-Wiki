@@ -212,10 +212,14 @@
 
                 
 
-                <div data-orientation="vertical" role="none" data-slot="separator"
+                
+                
+                
+                <div class="hidden 3xl:flex items-center gap-2">
+                    <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
-                <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
+                    <button class="ghost icon" title="Toggle layout" onclick="toggleLayout(event)">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
     class="lucide lucide-gallery-horizontal">
@@ -224,6 +228,7 @@
     <path d="M22 3v18"></path>
 </svg>
 </button>
+                </div>
                 <div data-orientation="vertical" role="none" data-slot="separator"
     class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
 </div>
@@ -586,6 +591,21 @@
         class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
         
         Mod Switch
+        
+        
+        
+        
+    </a>
+</li>
+            
+            
+            
+            <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="../../libraries/modcore/hotkeys/"
+        class="peer/menu-button flex items-center gap-2 rounded-md p-2 text-left ring-sidebar-ring outline-hidden transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md data-[active=true]:border-accent data-[active=true]:bg-accent 3xl:fixed:w-full 3xl:fixed:max-w-48">
+        
+        Hotkeys
         
         
         
@@ -1634,7 +1654,8 @@ no extra disease risk. Then it picks its strategy and build order.</p>
 </code></pre></div>
 <!-- /code -->
 
-<p><strong>Patch:</strong> postfix <code>WhereToPlaceBuilding</code> to choose other spots.</p>
+<p><strong>Patch:</strong> <code>WhereToPlaceBuilding</code> returns a large struct (<code>Nullable&lt;ValueTuple&lt;Building, ResourceAmount&gt;&gt;</code>). A Harmony patch on it through Il2CppInterop corrupted the result in testing (the AI then looped forever), so patch its callers instead: <code>BuildAndClean</code> (calls it once, for the Wonder reservation) and <code>PlaceBuildingSomewhere</code> (<code>bool</code>). To change where it searches, prefix <code>SpiralGrid.Enumerate(center, size)</code> (a <code>ref int size</code>) while one of those callers runs.</p>
+<p><strong>Cost on big islands:</strong> the spiral covers the whole grid (<code>size</code> = grid side), all 4 orientations per tile, for every building of every AI. On a 201 grid that is about 160,000 placement checks per building, and the game freezes for seconds on each AI turn. Limiting the square to the town (the farthest land building plus a margin, and a coast ring for Docks and Fishing Ships) keeps the AI as fast as on a normal island. <code>PlaceBuildingSomewhere</code> also returns <code>true</code> when the placement failed (game bug), so a building that fits nowhere is retried every round.</p>
 <ol>
 <li><strong>Research</strong>, if it has an active University: walk its technology list; skip ones not yet learnable; stop at the first learnable one it cannot afford.</li>
 <li>Clean remains (rebuild-first), burn Sorcerer Towers above the limit (a House is queued for each), build and clean, use the Market, build and clean again.</li>

@@ -228,7 +228,9 @@ public class AIPlay : MonoBehaviour
 ```
 <!-- /code -->
 
-**Patch:** postfix `WhereToPlaceBuilding` to choose other spots.
+**Patch:** `WhereToPlaceBuilding` returns a large struct (`Nullable<ValueTuple<Building, ResourceAmount>>`). A Harmony patch on it through Il2CppInterop corrupted the result in testing (the AI then looped forever), so patch its callers instead: `BuildAndClean` (calls it once, for the Wonder reservation) and `PlaceBuildingSomewhere` (`bool`). To change where it searches, prefix `SpiralGrid.Enumerate(center, size)` (a `ref int size`) while one of those callers runs.
+
+**Cost on big islands:** the spiral covers the whole grid (`size` = grid side), all 4 orientations per tile, for every building of every AI. On a 201 grid that is about 160,000 placement checks per building, and the game freezes for seconds on each AI turn. Limiting the square to the town (the farthest land building plus a margin, and a coast ring for Docks and Fishing Ships) keeps the AI as fast as on a normal island. `PlaceBuildingSomewhere` also returns `true` when the placement failed (game bug), so a building that fits nowhere is retried every round.
 
 1. **Research**, if it has an active University: walk its technology list; skip ones not yet learnable; stop at the first learnable one it cannot afford.
 2. Clean remains (rebuild-first), burn Sorcerer Towers above the limit (a House is queued for each), build and clean, use the Market, build and clean again.
