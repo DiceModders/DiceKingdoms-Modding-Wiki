@@ -88,6 +88,22 @@ foreach (string line in Core.Lobby.Compatibility.Warnings)
 bool ok = Core.Lobby.Compatibility.IsCompatible;
 ```
 
+**Builds.** Each mod that changes the simulation also publishes a fingerprint of its DLL. Same version but a different file (changed code, or a Debug build) gives a warning such as "Alice has a different build of My Mod 1.0.0: if the match desyncs, use the same files."; the match still uses the mod. To give everybody who builds the same code the same file, build reproducibly:
+
+```xml
+<PropertyGroup>
+  <Deterministic>true</Deterministic>
+  <PathMap>$(MSBuildProjectDirectory)\=/_/</PathMap>
+  <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  <EnableSourceLink>false</EnableSourceLink>
+  <EmbedUntrackedSources>false</EmbedUntrackedSources>
+</PropertyGroup>
+```
+
+Without these the DLL contains the build folder, the git commit and copies of generated files, so two people building the same code get different files. Data that changes what is simulated (a tech tree, values) belongs inside the DLL (an embedded resource), not in a loose file next to it, or the fingerprint does not cover it.
+
+**The host decides.** When the rules are fixed for a match, the host writes the values it uses into the lobby data (`modcore.decision`, cleared when the match ends). A client that fixes its rules later uses the host's values, so a late lobby update or a rejoin after a member without the mod left cannot give it other values (for a grid size that would mean islands of another size). Before the host's values have arrived every computer decides by itself from the same lobby data.
+
 ModCore is desync protection, not anticheat: it warns before the match and falls back to the game's own values. During a match the host refuses a player who joins (or rejoins) without every rule the match uses, in the same version, through the network layer's own connection approval; the others keep playing.
 
 ## Choices and text rules
