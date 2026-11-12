@@ -47,6 +47,7 @@ nav:
       - Gameplay Values: libraries/modcore/gameplay-values.md
       - Models, Pictures and Caches: libraries/modcore/assets.md
       - Mod Switch: libraries/modcore/mod-switch.md
+      - Hotkeys: libraries/modcore/hotkeys.md
       - Tools: libraries/modcore/tools.md
     - UiKit:
       - Getting Started: libraries/uikit/index.md

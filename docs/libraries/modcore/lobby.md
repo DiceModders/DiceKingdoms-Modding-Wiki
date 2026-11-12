@@ -27,7 +27,7 @@ Core.Lobby.Changed += () => RefreshMyWindow();
 
 ## Lobby rules
 
-A rule is a setting the host edits before the match. Its value lives in the Steam lobby data, so everybody reads the same value, and it is **frozen when the match starts**.
+A rule is a setting the host edits before the match. Its value lives in the Steam lobby data, so everybody reads the same value, and it is **frozen for the match** from the moment the islands start to spawn (a little before `Match.Started`).
 Outside a Steam lobby (a local game) the player sets it for himself. Always read `Value` in gameplay code.
 
 ```csharp
@@ -50,7 +50,7 @@ if (meteors.Value) SpawnMeteor();                          // host's value, froz
 | `AffectsSimulation` | `false` for purely visual rules: they never cause a warning |
 | `Group` / `InGroup(group)` | The heading it is listed under (below) |
 
-Prefix keys with your mod id; registering a key twice returns the same rule. `Core.Lobby.Rules.All` lists every rule with the mod that registered it, `Registered` fires for new ones.
+Prefix keys with your mod id; registering a key twice returns the same rule. `Core.Lobby.Rules.All` lists every rule with the mod that registered it, `Registered` fires for new ones. `Core.Lobby.Rules.Fixed` is true while the values are frozen for a match; a rule that changes the islands (read in `IslandGrid.Awake`) should act only then, so menu and editor islands stay normal.
 
 ## Rule groups (per civilization)
 
@@ -84,8 +84,25 @@ used only when every member has the **same version** of that mod, so different v
 
 ```csharp
 foreach (string line in Core.Lobby.Compatibility.Warnings)
-    Log.LogWarning(line);   // "Alice has My Mod 1.0.0, the host has 1.1.0: this rule may desync." / "Bob does not have My Mod, this rule may desync."
+    Log.LogWarning(line);   // "Alice has My Mod 1.0.0, the host has 1.1.0: this rule will be off for everyone in the match." / "Bob does not have My Mod, this rule will be off for everyone in the match."
 bool ok = Core.Lobby.Compatibility.IsCompatible;
 ```
 
-ModCore is desync protection, not anticheat: it warns before the match and falls back to the game's own values; it cannot stop anybody from playing.
+ModCore is desync protection, not anticheat: it warns before the match and falls back to the game's own values. During a match the host refuses a player who joins (or rejoins) without every rule the match uses, in the same version, through the network layer's own connection approval; the others keep playing.
+
+## Choices and text rules
+
+`Rules.Choice` is one value out of a few named ones; ModBridge shows the game's own drop-down. Use it instead of several toggles that exclude each other.
+
+```csharp
+var castle = Core.Lobby.Rules.Choice("author.my-mod.castle", "Castle hits", 0, new[] { "Game rule", "Any meteor", "Never" });
+if (castle.Value == 2) ProtectCastles();
+```
+
+`Rules.Text` carries a text value, for data your own window edits (for example many changed numbers in one compact string). It is synced, frozen at match start and checked like every rule, but ModBridge draws no row for it. Steam keeps up to about 8 KB per value.
+
+```csharp
+var values = Core.Lobby.Rules.Text("author.my-mod.values", "My values", "", visible: () => false);
+values.Changed += text => Apply(Parse(text));   // every player, whenever the host changes it
+if (values.Editable) values.TrySet("archer.range=8;castle.health=400");   // host, before the match
+```

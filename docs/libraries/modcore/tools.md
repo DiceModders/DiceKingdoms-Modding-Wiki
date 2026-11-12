@@ -23,6 +23,19 @@ static class MyPatches {
 }
 ```
 
+### Switchable patches
+
+A patch on a method the game calls very often (every frame, every tile) costs time even when its prefix returns at once. `Switch` prepares such a patch without applying it; turn it on only while it is needed. Switching applies or removes it with Harmony, so while it is off the game method runs untouched.
+
+```csharp
+PatchSwitch camera = patcher.Switch(typeof(CameraMovement), "Position", typeof(MyPatches), postfix: nameof(MyPatches.Position));
+Core.Match.Started += () => camera.On = BigIsland;   // only during matches that need it
+Core.Match.Ended += () => camera.On = false;
+bool ok = camera.Valid;                               // false when the method was not found
+```
+
+Switch on events (match start or end, a setting changed, the mod's own switch), never per frame.
+
 ## GameTypes
 
 Finds a game type by its simple or full name in the interop assemblies, and suggests similar names when it is not found.

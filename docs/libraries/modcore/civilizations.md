@@ -6,9 +6,14 @@ summary: ModCore civilizations API - adding a civilization, its own tech tree, n
 
 ## Add a civilization
 
-`Add` registers a civilization the game accepts everywhere it uses the number (tech tree, skins, network, castle click, AI). The key is hashed into a fixed id (5..127), the same
-on every machine. `skinsLike` is the built-in civilization whose biome and looks are used for everything you do not replace (0 Europe, 1 Middle East, 2 Viking, 3 Ancient, 4 Maya).
-Players can only pick it when every lobby member has the mod (same version).
+`Add` registers a civilization the game accepts everywhere it uses the number (tech tree, skins, network, castle click, AI). The key is hashed into an id (5..127); when
+another civilization on the same computer already has it, the next free one is used. `skinsLike` is the built-in civilization whose biome and looks are used for everything you
+do not replace (0 Europe, 1 Middle East, 2 Viking, 3 Ancient, 4 Maya). Players can only pick it when every lobby member has the mod (same version).
+
+The id is local: another computer with other civilizations installed may give the same civilization another number. In a lobby the host publishes a table
+(lobby data `modcore.civtable`, key = number) and ModCore translates the player skins the game sends (local number -> host number -> the receiver's number), so you
+never see a foreign number. The table only grows and is frozen when the islands spawn. If your mod puts a civilization number into data other players read (a lobby rule,
+a message), convert it with `Core.Civilizations.ToLobbyNumber(civ.Id)` and back with `FromLobbyNumber(n)` (-1: not listed / not installed here).
 
 ```csharp
 GameTechTree myTree = null;
@@ -123,3 +128,14 @@ civilization=ANY weight=1 strategy=WONDER name=culture [
 - Orders for a built-in civilization (0..4) are added next to the game's.
 - Strategies: `MILITARY`, `WONDER`. Building names: see [AI build orders](../../game-architecture/ai.md#build-orders).
 - Calling again replaces your earlier orders for that civilization; `RemoveBuildOrders(civ.Id)` removes them.
+
+## Changing looks during a match
+
+Models are made when a building is placed, so a change to a civilization's looks (for example with `Reskin`) only shows on new buildings. `RefreshLooks` rebuilds the building models of every island (or of one player's island) from the current looks at once, without the building animation. Units, ships and nature take their models when they are made, so they follow the new looks from then on. It only changes what this computer draws.
+
+```csharp
+Core.Civilizations.Reskin(2).Building(GameBuildingTypeName.CASTLE, europeCastlePrefab);   // Viking castles look like Europe ones
+Core.Civilizations.RefreshLooks();                                                     // every island, now
+Core.Civilizations.Reskin(2).Building(GameBuildingTypeName.CASTLE, null);               // null: the game's own model again
+Core.Civilizations.RefreshLooks(Core.Players.Local);                                   // only your island
+```

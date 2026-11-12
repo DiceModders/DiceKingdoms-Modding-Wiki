@@ -30,9 +30,12 @@ window?.BringToFront();
 | `Title`, `Size`, `Position`, `Center` | Layout of the window |
 | `Layer`, `SortingOrder` | `BehindGame`, `Game` or `AboveGame`, and the order inside it |
 | `Draggable`, `Closable`, `Fullscreenable`, `FullscreenButton` | Behaviour |
+| `CloseOnEscape(bool)` | Escape closes the front-most window that has a close button (on by default; not while a text field has the focus) |
 | `Ornament` | `None`, `Border`, `BorderWithTwoCorners`, `BorderWithFourCorners`, `Classic` |
 | `Show`, `Hide`, `Toggle`, `Close`, `Fullscreen`, `Restore`, `Dispose` | State |
 | `TitleBar` | A container in the title bar for extra buttons |
+
+The layers follow the game's HUD canvas. `BehindGame` and `Game` use the HUD's Screen Space - Camera mode, so they can sit behind or among the game's own panels. `AboveGame`, the default, is a Screen Space - Overlay canvas: it draws over everything, and nothing on it moves with the camera. A camera-space canvas is re-placed in front of the camera every frame; at the game's near plane (0.1) one screen pixel is under 0.0001 world units, so float rounding while the camera moves makes edges and pictures on such a canvas shimmer, worse the farther the camera is from the map centre.
 
 ## Layout
 
@@ -112,3 +115,12 @@ map?.OnScroll(notches => Zoom(notches));   // positive = up
 ```
 
 Pointer kinds: `Down`, `Up`, `Click`, `Move`, `Drag`, `Enter`, `Exit`. Events carry `Button` (0 left, 1 right, 2 middle), `Uv`, `Position` and `Delta`.
+
+`OnResize(size => ...)` is called with the picture's size in canvas units after a layout pass changed it (window resized, full screen, a panel shown or hidden), and once when it first gets a size. Nothing runs while the size stays the same.
+
+**A sharp, steady picture.** A texture stretched by an uneven factor resamples differently whenever the picture moves by a fraction of a pixel, so a map drawn with hard pixels looks noisy and can shimmer. For a map that should stay crisp at any size, draw the texture at the picture's size in screen pixels (canvas units times the root canvas's `scaleFactor`), turn `KeepAspect` off, use point filtering, and redraw from `OnResize`. Zoom and pan then become "which part to draw", not a texture scale. `Texture2D.LoadRawTextureData(IntPtr, int)` with a pinned `Color32[]` uploads a full picture without the copy that `SetPixels32` makes.
+
+```csharp
+map?.KeepAspect(false);
+map?.OnResize(_ => Redraw());              // texture = picture size in screen pixels
+```
