@@ -58,4 +58,18 @@ public override void Load() {
 | Change unit, building and technology values safely | [Gameplay values](gameplay-values.md) | `Core.Units`, `Core.Balance` |
 | Own models, pictures, fast cached loading | [Models, pictures and caches](assets.md) | `Tools.Meshes`, `Tools.Sprites`, `Tools.TextureCache` ... |
 | Let players switch your mod on and off in game | [Mod switch](mod-switch.md) | `Core.Mods.Switch` |
+| React to keys the player can rebind in Settings > Input | [Hotkeys](hotkeys.md) | `Core.Hotkeys` |
 | Patch game methods by name, reflection, raw memory | [Tools](tools.md) | `Tools.Patcher`, `Tools.Reflect`, `Tools.Mem` |
+
+## Game fixes
+
+ModCore fixes two game functions that call themselves once per tile and overflow the stack on big islands. Both are always on and produce exactly the
+game's results:
+
+- **Island generation** (`IslandGeneration.GenerateJob`'s sea-level fill `Allow`): grids above 119 tiles closed the game while the islands were
+  generated. The game runs this job as Burst code, which Harmony cannot reach, so ModCore finds both Burst copies (AVX2 and SSE2) of the function by their
+  first bytes and makes them jump to an iterative C# version. If a game update changes those bytes, ModCore logs
+  `sea level fill: Burst code not found` and leaves the game's code alone.
+- **Walkable regions** (`CombatPhase.ComputeConnectedComponents`): a Harmony prefix replaces the recursive region labelling with a loop.
+
+See [Island generation](../../game-architecture/island/generation.md) for how the game's function works.

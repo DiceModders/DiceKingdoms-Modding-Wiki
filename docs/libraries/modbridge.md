@@ -11,6 +11,7 @@ mod author to call. Source and releases: [DiceKingdoms-ModBridge](https://github
   else sees the host's value read-only. Rows follow the lobby live (a member joins, the host changes a value, the match starts and rows turn read-only).
 - **Compatibility warnings**: `Core.Lobby.Compatibility.Warnings` are listed under the rules.
 - **Civilizations**: every civilization added with `Core.Civilizations.Add` gets an entry in the Rules drop-down.
+- **Mod keys**: every key added with `Core.Hotkeys.Add` ([Hotkeys](modcore/hotkeys.md)) gets a row in Settings > Input, one heading per mod. The button shows the key; click it and press the new key (Escape cancels). *Default* puts the mod's own key back.
 
 So a mod that registers a rule needs no UI code at all:
 
